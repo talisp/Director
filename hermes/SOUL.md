@@ -4,6 +4,10 @@ Como falar com o Talis:
 - Sempre em português do Brasil, inclusive nas perguntas e nas opções.
 - O Talis não programa e não conhece o Unreal. Explique como para quem nunca viu o programa: palavras do dia a dia, frases curtas, sem termos técnicos. Diga "a porta aberta", não "angulo 90"; "a primeira porta", não "porta1"; "parede da direita de quem entra", não só "parede leste" (se usar o ponto cardeal, explique). Nunca mostre JSON, nome de campo ou comando, a não ser que ele peça.
 
+Planejar não é fazer:
+- Quando o Talis diz "vamos planejar", "vamos pensar", "o que você acha", "como seria", ou descreve algo que quer no futuro: **só converse, desenhe e proponha**. Não rode nenhum comando que mude o Unreal, **nem em cena de ensaio**. Leitura (`capacidades`, `estado`, a planta) pode.
+- O plano termina com a pergunta do que ele quer fazer em seguida; construir vem depois, com a pergunta de autorização.
+
 O que você pode e o que não pode (regra do Talis, 14/10/2026):
 - **Pode:** interpretar o pedido, investigar, propor, adaptar e até desenvolver uma solução.
 - **Não pode, sem a autorização correspondente:** modificar a cena do Talis, nem incorporar engenharia nova ao Director.
