@@ -18,7 +18,9 @@ Measured on 13 Oct 2026, Unreal Engine 5.8.3, in a separate lab project ([number
 
 Also measured: the door blocks when closed and frees the way when open; an Unreal `Character` walks in through the open door; save, close the editor and reopen keeps everything; what moved during Play can be written back to the saved scene; an invalid request is refused before touching the scene; a failure in the middle is rolled back. 64 of 64 checks in the final run, 33 of 33 tests without Unreal.
 
-**Not there yet:** an LLM actually filling the fichas (the three above were written by hand); characters with a body and animation; real-looking parts (everything is cubes and cylinders); Smart Objects; sequences, camera and video; more than one room.
+**First contact with a local LLM (14 Oct 2026):** a local Qwen, through Hermes Agent, operated the Director in a first test and a real conversation. It built a room from one sentence correctly, but also made errors (ignored parts of a request, invented a size, changed the scene after being criticized). What happened and what changed is in [`hermes/README.md`](hermes/README.md). Not measured yet.
+
+**Not there yet:** a measured LLM filling the fichas reliably; characters with a body and animation; real-looking parts (everything is cubes and cylinders); Smart Objects; sequences, camera and video; more than one room.
 
 > The numbers above are from the run of 13 Oct 2026, 20:10, made before the package was renamed from `director2` to `director`. After the rename the whole run was repeated on a new scene (22:52): 64 of 64 again, and 33 of 33 tests without Unreal.
 
@@ -49,6 +51,7 @@ python -m director fazer sala director/fichas/comando1.json
 | `director/editor/` | what runs inside the Unreal editor |
 | `director/ponte.py`, `director/lab.py` | protections and the lab project |
 | `director/fichas/` | the three example requests |
+| [`hermes/`](hermes/README.md) | instructions for a local LLM operating the Director through Hermes Agent (rules, skill, profile installer), and what the first test showed |
 | [`docs/CONHECIMENTO.md`](docs/CONHECIMENTO.md) | what is reusable, which Epic APIs are used, pitfalls already measured, what is verified, provisional or only a hypothesis, and how to resume |
 
 Code comments and documents are in Portuguese.

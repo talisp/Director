@@ -1,0 +1,39 @@
+# Exemplo do config.yaml do perfil "director" do Hermes (o que roda nesta máquina, sem segredos).
+# A chave do servidor do modelo fica só no .env do perfil (HERMES_CUSTOM_QWEN_L40S_API_KEY).
+# O operador mexe no Unreal só pelo Director: sem servidores MCP; ferramentas ligadas só
+# terminal, file, skills, todo e clarify (as outras são desligadas com `hermes -p director tools disable ...`).
+model:
+  default: qwen3.8-flash-next-q8_0
+  provider: qwen-l40s
+  base_url: http://127.0.0.1:8080/v1
+  api_mode: chat_completions
+  key_env: HERMES_CUSTOM_QWEN_L40S_API_KEY
+  context_length: 1048576
+providers:
+  qwen-l40s:
+    name: QWEN-L40S
+    base_url: http://127.0.0.1:8080/v1
+    model: qwen3.8-flash-next-q8_0
+    request_timeout_seconds: 3600
+    stale_timeout_seconds: 3600
+    key_env: HERMES_CUSTOM_QWEN_L40S_API_KEY
+fallback_providers: []
+terminal:
+  backend: local
+  cwd: <pasta do Director>
+  timeout: 900
+memory:
+  memory_enabled: false
+  user_profile_enabled: false
+agent:
+  max_turns: 60
+  reasoning_effort: high
+display:
+  language: pt
+telemetry:
+  shared_metrics:
+    enabled: false
+    send: false
+mcp_servers: {}
+platform_toolsets:
+  cli: [clarify, file, skills, terminal, todo]
