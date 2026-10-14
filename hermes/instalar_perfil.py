@@ -10,6 +10,7 @@ Uso, na raiz do Director, com o Python que roda o Director:
 """
 import io
 import os
+import shutil
 import sys
 import time
 
@@ -46,6 +47,14 @@ def main(argv: list) -> int:
             os.replace(destino, f"{destino}.bak-{carimbo}")
         io.open(destino, "w", encoding="utf-8", newline="\n").write(novo)
         print(f"instalado: {rel}")
+    # complementos (plugins): copiados inteiros; ligar uma vez com `hermes -p director plugins enable <nome>`
+    origem = os.path.join(AQUI, "plugins")
+    for nome in sorted(os.listdir(origem)) if os.path.isdir(origem) else []:
+        de, para = os.path.join(origem, nome), os.path.join(perfil, "plugins", nome)
+        if os.path.exists(para):
+            shutil.rmtree(para)
+        shutil.copytree(de, para, ignore=shutil.ignore_patterns("__pycache__"))
+        print(f"complemento copiado: {nome}")
     return 0
 
 
