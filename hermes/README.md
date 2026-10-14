@@ -26,7 +26,7 @@ Um teste automático e uma conversa de verdade com o Talis, no aplicativo do Her
 **Errou, e o que mudou depois:**
 - Preencheu a ferramenta de perguntas no formato errado (opções como objetos; lista escrita como texto), e a pergunta não apareceu → a skill traz o formato exato, com exemplo.
 - Ignorou parte do pedido ("do tamanho do quarto", "ter janelas") e disse que a sala não podia ter duas janelas (falso: o Director aceita) → a skill diz o que ele sabe e manda deixar o Director decidir, depois do "sim".
-- Depois de uma crítica ("por que ignorou tantas coisas?"), mudou a sala sozinho com um tamanho que ele inventou → `SOUL.md`: pergunta ou crítica não é ordem; "pode fazer" vale só para o que foi mostrado; nunca chutar medida.
+- Depois de uma crítica ("por que ignorou tantas coisas?"), mudou a sala sozinho com um tamanho que ele inventou → `SOUL.md`: pergunta ou crítica não é ordem; nunca chutar medida; e (pedido do Talis) **autorização só existe como "Sim" numa pergunta de sim ou não que traz o resumo do que vai ser feito**: texto solto como "pode fazer" no meio da conversa não autoriza nada.
 - Em modo sem tela (`chat -q`), o Hermes manda o modelo "assumir e seguir" quando ninguém responde; o operador seguiu → `SOUL.md`: sem resposta, não faz nada (testado depois: perguntou e não mexeu na cena).
 
 ## Problemas conhecidos

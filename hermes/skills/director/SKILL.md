@@ -24,7 +24,7 @@ cd "{{DIRECTOR}}" && "{{PYTHON}}" -m director
    Se `"responde": true`, siga. Se não, abra com o mesmo comando trocando `estado` por `abrir` (leva uns 30 s; pode levar minutos) e confira de novo.
 2. **O que o Director sabe fazer:** `DIRECTOR capacidades` (uma vez por conversa). É a lista oficial de operações, campos e valores padrão. Não invente campo que não está lá.
 3. **O que já está na cena:** `DIRECTOR estado sala`. Mostra os nomes das peças (`sala1`, `porta1`, `mesa1`…) e as `diferencas` entre a planta e o Unreal (vazio = tudo certo). Para ver medidas e posições, leia (só leia) `{{DIRECTOR}}/director/cenas/sala/planta.json`. **Atenção: a planta está em centímetros; a ficha é em metros.**
-4. **Pergunte antes de fazer** (sempre): conte ao Talis, em palavras simples, o que vai mudar na cena e pergunte se pode, com a ferramenta `clarify` (ver "Como perguntar ao Talis"). Se faltar informação, pergunte isso também, na mesma chamada. Só siga depois do "sim".
+4. **Pergunte o que faltar** (com opções), e depois faça a **pergunta de autorização**: resumo do que vai mudar, só "Sim" ou "Não" (ver "Pergunta de autorização"). Só siga se ele escolher "Sim" nessa pergunta. Texto solto como "pode fazer" não autoriza.
 5. **Escreva a ficha** num arquivo novo em `{{DIRECTOR}}/work/fichas/`, com nome que diga o que é (ex.: `copo_e_sala_5m.json`). Se a ferramenta de escrever arquivo der erro, escreva pelo terminal:
    ```
    cd "{{DIRECTOR}}" && cat > work/fichas/copo_e_sala_5m.json <<'FIM'
@@ -42,8 +42,8 @@ O argumento `questions` é uma **lista de verdade** (colchetes direto no JSON), 
 
 ```json
 {"questions": [
-  {"question": "Vou deixar a porta da sala aberta, como se ela ficasse sempre aberta. Nada mais muda. Posso fazer?",
-   "choices": ["Sim, pode fazer", "Sim, mas com uma mudança (eu escrevo qual)", "Não, deixe como está"]}
+  {"question": "Onde fica a janela nova? Imagine que você está na porta, olhando para dentro da sala.",
+   "choices": ["Na parede da direita", "Na parede da frente", "Na parede da esquerda"]}
 ]}
 ```
 
@@ -59,10 +59,25 @@ Duas perguntas na mesma vez (quando uma resposta não muda a outra):
 ```
 
 - Tudo em português simples, como para quem nunca usou o Unreal. Explicação vai no texto da pergunta, não nas opções.
-- **Sempre ofereça opções: 3 (no máximo 4)**, cada uma curta e diferente das outras. A primeira é a que você recomenda. Não escreva "(Recomendado)": a tela marca sozinha. A tela também acrescenta sozinha, no fim, uma linha para o Talis escrever a resposta dele se não gostar de nenhuma: não crie essa opção você mesmo.
+- **Nas perguntas de informação, sempre ofereça opções: 3 (no máximo 4)**, cada uma curta e diferente das outras. (A pergunta de autorização é diferente: só "Sim" e "Não", ver abaixo.) A primeira é a que você recomenda. Não escreva "(Recomendado)": a tela marca sozinha. A tela também acrescenta sozinha, no fim, uma linha para o Talis escrever a resposta dele se não gostar de nenhuma: não crie essa opção você mesmo.
 - Mesmo para pedir um número (tamanho, distância), dê 3 sugestões razoáveis como opções (ex.: "3 × 4 metros", "4 × 4 metros", "4 × 5 metros"); se ele quiser outro, escreve na linha livre.
-- Para a licença antes de mexer, as opções são, por exemplo: "Sim, pode fazer", "Sim, mas com uma mudança (eu escrevo qual)", "Não, deixe como está".
 - A resposta volta em `responses[0].user_response`. Se vier `"outcome"` diferente de `submitted`, ou erro, ou "not available", ele **não** respondeu: escreva a pergunta como texto normal e termine a sua vez. Nunca use o valor padrão no lugar da resposta dele.
+
+### Pergunta de autorização (antes de mudar a cena do Talis)
+É a **única** forma de autorização. Uma pergunta só, com o resumo e duas opções, exatamente `"Sim"` e `"Não"`:
+
+```json
+{"questions": [
+  {"question": "Resumo do que vou fazer na sala:\n- colocar uma janela nova na parede da direita de quem entra, no meio da parede, com 1,20 m de largura;\n- deixar a porta aberta de vez.\nO resto (tamanho da sala, mesa, prato, copo e a outra janela) não muda.\nPosso fazer exatamente isso?",
+   "choices": ["Sim", "Não"]}
+]}
+```
+
+- O resumo diz **o que muda, onde e com quais medidas**, e **o que não muda**. Sem termos técnicos, sem nome de campo; números sempre em metros.
+- Só a resposta `"Sim"` autoriza, e só aquele resumo, uma vez. A ficha tem de ser exatamente o resumo.
+- `"Não"`: não faça nada; pergunte o que ele quer diferente.
+- Resposta escrita na linha livre (qualquer outra coisa): é informação nova; refaça o resumo e pergunte de novo.
+- "Pode fazer", "ok", "sim" escritos na conversa, fora dessa pergunta, **não** autorizam: responda com a pergunta de autorização.
 
 ## A ficha
 
@@ -143,10 +158,10 @@ Personagem, corpo, animação, câmera, sequência, vídeo, foto, aparência (as
 
 **Cômodo é cômodo:** sala, quarto, cozinha, banheiro, corredor, garagem são todos `criar_sala` (o `id` é o nome que você quiser, ex.: `"id": "banheiro"`). Dois cômodos lado a lado na mesma cena são aceitos (testado sem o Unreal; no Unreal ainda não); o que falta é a passagem entre eles.
 
-O que ele **sabe**, e o Qwen já negou por engano: mais de uma janela ou porta na mesma sala (em paredes diferentes; na mesma parede só se os vãos não encostarem um no outro nem no canto — senão ele recusa sozinho). Na dúvida, mande a ficha depois do "sim" do Talis e deixe o Director decidir: se ele não puder, recusa sem mexer na cena.
+O que ele **sabe**, e o Qwen já negou por engano: mais de uma janela ou porta na mesma sala (em paredes diferentes; na mesma parede só se os vãos não encostarem um no outro nem no canto — senão ele recusa sozinho). Na dúvida, mande a ficha depois do "Sim" na pergunta de autorização e deixe o Director decidir: se ele não puder, recusa sem mexer na cena.
 
 ### Pedido misto (parte dá, parte não)
-Quando o pedido junta coisas que o Director sabe e coisas que ele não sabe: explique ao Talis, em palavras simples, o que dá e o que não dá, **proponha** fazer a parte que dá e pergunte se pode (`clarify`). Exemplo real: "porta sempre aberta + corredor com 3 portas" → "O corredor eu ainda não sei fazer. Posso deixar a porta da sala aberta?". "Porta sempre aberta" = `mudar` com `angulo: 90`.
+Quando o pedido junta coisas que o Director sabe e coisas que ele não sabe: explique ao Talis, em palavras simples, o que dá e o que não dá, **proponha** fazer a parte que dá e faça a pergunta de autorização com o resumo dessa parte. Exemplo real: "porta sempre aberta + corredor com 3 portas" → explique que o corredor ainda não dá, e pergunte "Resumo: deixar a porta da sala aberta de vez; nada mais muda. Posso fazer exatamente isso?" com "Sim" / "Não". "Porta sempre aberta" = `mudar` com `angulo: 90`.
 - Se o Talis usar uma medida que o Director não conhece ("do tamanho do quarto"), pergunte quantos metros.
 
 ### "O que você vê na cena?"
