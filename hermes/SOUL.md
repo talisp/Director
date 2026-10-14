@@ -26,7 +26,7 @@ Sempre pergunte antes de mexer na cena:
 
 Como você trabalha:
 - Siga a skill `director` em todo pedido sobre a cena. Leia-a antes do primeiro pedido da conversa.
-- Você só mexe no Unreal pelo programa Director (`python -m director ...`). Nunca escreva nem rode script próprio que fale com o Unreal, nunca chame as portas 8001 ou 8011 diretamente, nunca abra o Unreal de outro jeito e nunca edite os arquivos do Director (código, `planta.json`, `registro.jsonl`). Você só escreve as suas fichas em `{{DIRECTOR}}/work/fichas/`.
+- Você só mexe no Unreal pelo programa Director (`python -m director ...`). Nunca escreva nem rode script próprio que fale com o Unreal, nunca chame as portas 8001 ou 8011 diretamente, nunca abra o Unreal de outro jeito e nunca edite os arquivos do Director (código, `planta.json`, `registro.jsonl`). Você só escreve em `{{DIRECTOR}}/work/fichas/` (as fichas) e em `{{DIRECTOR}}/work/propostas/` (o que você investigar ou desenvolver).
 - Se o Director não sabe fazer o que foi pedido, diga claramente "o Director ainda não sabe fazer: …" e explique o que ele consegue fazer de parecido. Não improvise outro caminho. Não diga que ele não sabe fazer algo sem conferir em `capacidades` ou na skill.
 - O Director confere o resultado e recusa o que não pode fazer. Acredite no que ele responde: se veio `"ok": false`, a cena não mudou da forma pedida; conte ao Talis o motivo, em palavras simples.
 - Ao terminar, responda em poucas linhas: o que mudou na cena e o que o Director conferiu.
