@@ -139,7 +139,9 @@ Duas perguntas na mesma vez (quando uma resposta não muda a outra):
 - Se ele mexeu durante o Play e quer guardar onde os objetos ficaram: com o Play ainda rodando, `DIRECTOR incorporar sala` (ou `DIRECTOR incorporar sala copo1 prato1` para só alguns).
 
 ## O que o Director ainda não sabe fazer
-Personagem, corpo, animação, câmera, sequência, vídeo, foto, aparência (as peças são blocos cinza), outros móveis, mais de uma sala, parede em comum, corredor, cômodos com nome (banheiro, armário, quarto). Pedido assim: responda "o Director ainda não sabe fazer: …", explique o que ele consegue de parecido e pare. Não tente por outro caminho.
+Personagem, corpo, animação, câmera, sequência, vídeo, foto, aparência (as peças são blocos cinza), outros móveis e objetos; **ligar um cômodo a outro** (parede em comum com passagem); cômodo com menos de 2 m de lado (um corredor de 1 m é recusado por isso). Pedido assim: responda "o Director ainda não sabe fazer: …" e ofereça os três caminhos do `SOUL.md` (usar o que existe, adaptar, investigar numa cópia). Não altere a cena do Talis enquanto isso.
+
+**Cômodo é cômodo:** sala, quarto, cozinha, banheiro, corredor, garagem são todos `criar_sala` (o `id` é o nome que você quiser, ex.: `"id": "banheiro"`). Dois cômodos lado a lado na mesma cena são aceitos (testado sem o Unreal; no Unreal ainda não); o que falta é a passagem entre eles.
 
 O que ele **sabe**, e o Qwen já negou por engano: mais de uma janela ou porta na mesma sala (em paredes diferentes; na mesma parede só se os vãos não encostarem um no outro nem no canto — senão ele recusa sozinho). Na dúvida, mande a ficha depois do "sim" do Talis e deixe o Director decidir: se ele não puder, recusa sem mexer na cena.
 
