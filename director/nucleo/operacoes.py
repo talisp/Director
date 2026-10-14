@@ -326,11 +326,9 @@ def conferir(planta: dict) -> None:
     for oid, s in objs.items():
         if s["tipo"] != "sala":
             continue
-        for chave, nome in (("largura", "largura"), ("comprimento", "comprimento")):
-            if not 200.0 <= s[chave] <= 2000.0:
-                raise Invalida(f"{oid}: {nome} de {s[chave] / 100:g} m fora do aceito (2 a 20 m)")
-        if not 220.0 <= s["altura"] <= 500.0:
-            raise Invalida(f"{oid}: altura de {s['altura'] / 100:g} m fora do aceito (2,2 a 5 m)")
+        for chave in ("largura", "comprimento", "altura"):
+            if not s[chave] > 0.0:
+                raise Invalida(f"{oid}: {chave} tem de ser maior que zero (veio {s[chave] / 100:g} m)")
     salas = [(i, s) for i, s in objs.items() if s["tipo"] == "sala"]
     for n, (ia, a) in enumerate(salas):
         for ib, b in salas[n + 1:]:

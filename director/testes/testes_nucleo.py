@@ -90,10 +90,11 @@ class Operacoes(unittest.TestCase):
             "nome repetido": [{"operacao": "colocar", "tipo": "mesa", "id": "mesa1"}],
             "mesa em cima da mesa": [{"operacao": "colocar", "tipo": "mesa"}],
             "campo de outro tipo": [{"operacao": "mudar", "id": "mesa1", "angulo": 90}],
-            "sala pequena demais": [{"operacao": "criar_sala", "largura_m": 1, "comprimento_m": 3, "x_m": 30}],
+            "sala com medida zero": [{"operacao": "criar_sala", "largura_m": 0, "comprimento_m": 3, "x_m": 30}],
+            "sala com altura negativa": [{"operacao": "criar_sala", "largura_m": 1, "comprimento_m": 3, "altura_m": -1, "x_m": 30}],
             "remover sala com peças": [{"operacao": "remover", "id": "sala1"}],
             "segunda operação ruim desfaz a primeira": [{"operacao": "mudar", "id": "porta1", "angulo": 90},
-                                                      {"operacao": "mudar_sala", "largura_m": 99}],
+                                                      {"operacao": "mudar_sala", "largura_m": 0}],
         }
         for nome, ops in casos.items():
             copia = copy.deepcopy(base)
@@ -103,6 +104,15 @@ class Operacoes(unittest.TestCase):
         for ruim in ({}, {"operacoes": []}, {"operacoes": "x"}, {"operacoes": [1]}, {"operacoes": [{"operacao": "remover", "id": "mesa1"}], "extra": 1}):
             with self.assertRaises(OP.Invalida):
                 OP.aplicar_ficha(base, ruim)
+
+    def test_comodo_de_qualquer_tamanho(self):
+        # pedido do Talis (14/10/2026): sem limite de tamanho de cômodo; só medida maior que zero
+        base = planta_apos(1)
+        for ops in ([{"operacao": "criar_sala", "id": "corredor", "largura_m": 1, "comprimento_m": 3, "x_m": 30}],
+                    [{"operacao": "criar_sala", "id": "armario", "largura_m": 0.6, "comprimento_m": 0.5, "altura_m": 2, "x_m": 30}],
+                    [{"operacao": "criar_sala", "id": "galpao", "largura_m": 60, "comprimento_m": 40, "altura_m": 12, "x_m": 30}]):
+            p, _ = OP.aplicar_ficha(base, {"operacoes": ops})
+            self.assertIn(ops[0]["id"], p["objetos"])
 
     def test_recusa_diz_qual_peca(self):
         p, _ = OP.aplicar_ficha(planta_apos(1), {"operacoes": [{"operacao": "mudar", "id": "mesa1", "x_m": 3.2}]})

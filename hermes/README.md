@@ -34,4 +34,4 @@ Um teste automático e uma conversa de verdade com o Talis, no aplicativo do Her
 - **No aplicativo do Hermes, a ferramenta de escrever arquivo falhou** ("No shell found"); o operador escreve a ficha pelo terminal (a skill ensina).
 - **O Hermes edita a skill sozinho** depois das conversas (revisão automática; registro em `skills/.curator_ledger.jsonl` do perfil). Parte das mudanças é boa, parte é errada. O que for bom é trazido para cá e reinstalado; o que for errado é desfeito ao reinstalar.
 - **"Sempre perguntar" ainda é só instrução.** O operador já desobedeceu instrução escrita. Proposta (não feita): um complemento do Hermes que intercepta todo comando que muda a cena e pede a aprovação da pessoa antes, sem que a LLM consiga pular.
-- **Lacuna real que apareceu:** corredor (sala estreita ligada a outra por uma passagem). Hoje o Director exige sala de 2 a 20 m de lado e não tem parede em comum entre salas.
+- **Lacuna real que apareceu:** corredor (sala estreita ligada a outra por uma passagem). O limite de tamanho de cômodo (2 a 20 m) foi removido no mesmo dia, a pedido do Talis; falta a parede em comum com passagem entre dois cômodos.

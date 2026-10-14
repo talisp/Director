@@ -96,7 +96,7 @@ Duas perguntas na mesma vez (quando uma resposta não muda a outra):
 - Medidas em **metros**, ângulos em **graus**.
 - Campo que o Talis não disse fica de fora: o Director usa o padrão.
 - **Nunca invente valor e vista como ideia do Talis.** Medida, parede, nome ou ângulo que não saíram da fala dele (nem do `estado`/planta) não entram na ficha: pergunte antes com `clarify`. "Do tamanho do X" com X inexistente = número inexistente; a resposta é pergunta, não chute. Ao narrar o que fez, "escolhi ..." e não "entendi que ..." — chute se assume, não se disfarça de interpretação. Encrenca real (rev. 9–11): inventei "quarto = 3×3", encolhi a sala e descrevi o chute como algo natural do pedido. Tamanho de cômodo só mexe com valor explícito ou confirmado. E sempre cite ao Talis o número que vai usar *antes* de mandar a ficha, para dar tempo de um "não".
-- Limites da sala comprovados por teste: menor sala aceita é 2 × 2 m (2 a 20 m; altura 2,2 a 5 m). Corredor estreito e cômodos ligados por vão continuam impossíveis.
+- Cômodo de **qualquer tamanho**: largura, comprimento e altura só precisam ser maiores que zero (um corredor de 1 × 3 m e um armário de 0,6 × 0,5 m foram montados no Unreal em 14/10). Porta e janela continuam tendo de caber na parede. Ligar um cômodo a outro por uma passagem continua impossível.
 - Nomes: se você não der `id`, o Director dá (`porta1`, `mesa2`…). Para mudar ou remover, use o nome que aparece no `estado`.
 
 ### Direções da sala
@@ -154,9 +154,9 @@ Duas perguntas na mesma vez (quando uma resposta não muda a outra):
 - Se ele mexeu durante o Play e quer guardar onde os objetos ficaram: com o Play ainda rodando, `DIRECTOR incorporar sala` (ou `DIRECTOR incorporar sala copo1 prato1` para só alguns).
 
 ## O que o Director ainda não sabe fazer
-Personagem, corpo, animação, câmera, sequência, vídeo, foto, aparência (as peças são blocos cinza), outros móveis e objetos; **ligar um cômodo a outro** (parede em comum com passagem); cômodo com menos de 2 m de lado (um corredor de 1 m é recusado por isso). Pedido assim: responda "o Director ainda não sabe fazer: …" e ofereça os três caminhos do `SOUL.md` (usar o que existe, adaptar, investigar numa cópia). Não altere a cena do Talis enquanto isso.
+Personagem, corpo, animação, câmera, sequência, vídeo, foto, aparência (as peças são blocos cinza), outros móveis e objetos; **ligar um cômodo a outro** (parede em comum com passagem). Pedido assim: responda "o Director ainda não sabe fazer: …" e ofereça os três caminhos do `SOUL.md` (usar o que existe, adaptar, investigar numa cópia). Não altere a cena do Talis enquanto isso.
 
-**Cômodo é cômodo:** sala, quarto, cozinha, banheiro, corredor, garagem são todos `criar_sala` (o `id` é o nome que você quiser, ex.: `"id": "banheiro"`). Dois cômodos lado a lado na mesma cena são aceitos (testado sem o Unreal; no Unreal ainda não); o que falta é a passagem entre eles.
+**Cômodo é cômodo:** sala, quarto, cozinha, banheiro, corredor, garagem são todos `criar_sala` (o `id` é o nome que você quiser, ex.: `"id": "banheiro"`). Dois cômodos na mesma cena são aceitos (montados no Unreal em 14/10); o que falta é a passagem entre eles.
 
 O que ele **sabe**, e o Qwen já negou por engano: mais de uma janela ou porta na mesma sala (em paredes diferentes; na mesma parede só se os vãos não encostarem um no outro nem no canto — senão ele recusa sozinho). Na dúvida, mande a ficha depois do "Sim" na pergunta de autorização e deixe o Director decidir: se ele não puder, recusa sem mexer na cena.
 
