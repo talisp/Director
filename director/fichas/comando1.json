@@ -1,0 +1,9 @@
+{
+ "pedido": "Crie uma sala de 4 × 4 metros, com porta, janela e uma mesa.",
+ "operacoes": [
+  {"operacao": "criar_sala", "largura_m": 4, "comprimento_m": 4},
+  {"operacao": "colocar", "tipo": "porta"},
+  {"operacao": "colocar", "tipo": "janela"},
+  {"operacao": "colocar", "tipo": "mesa"}
+ ]
+}

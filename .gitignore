@@ -1,0 +1,9 @@
+work/
+__pycache__/
+*.pyc
+venv/
+.venv*/
+*.tmp
+# registro local de cada cena (tem caminhos da máquina); a planta é versionada
+director/cenas/*/registro.jsonl
+.ruff_cache/

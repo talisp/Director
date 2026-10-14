@@ -1,0 +1,58 @@
+{
+ "etapa": "seguranca",
+ "cena": "sala",
+ "quando": "2026-10-13 20:11:16",
+ "segundos": 0.4,
+ "ficha_invalida": {
+  "ok": true,
+  "resposta": {
+   "ok": false,
+   "motivo": "recusado",
+   "porque": "operação 1 (mudar_sala): porta1 não cabe na parede norte de sala1 (vão de 1.50 a 2.50 m numa parede de 2.2 m)",
+   "tocou_na_cena": false
+  }
+ },
+ "falha_no_meio": {
+  "ok": true,
+  "resposta": {
+   "ok": false,
+   "motivo": "falha_ao_aplicar",
+   "recuperado": true,
+   "cena_igual_a_antes": true,
+   "erro": "impossivel: RuntimeError: peça não encontrada: /Game/Director/Pecas/NaoExiste",
+   "ponto_de_restauracao": "work\\restauracao\\sala\\20261013-201116-rev8"
+  },
+  "por_salvar": []
+ },
+ "sala_ainda_funciona": {
+  "largura": {
+   "ok": true,
+   "medido_cm": 500.0,
+   "pedido_cm": 500.0
+  },
+  "comprimento": {
+   "ok": true,
+   "medido_cm": 400.0,
+   "pedido_cm": 400.0
+  },
+  "paredes_barram": {
+   "ok": true,
+   "acertos": [
+    "sala1.parede_oeste",
+    "sala1.parede_leste",
+    "sala1.parede_sul",
+    "sala1.parede_norte"
+   ]
+  },
+  "chao": {
+   "ok": true,
+   "id": "sala1.piso",
+   "z": 1.0
+  },
+  "janela1": {
+   "ok": true,
+   "no_meio_acertou": "janela1",
+   "abaixo_do_peitoril_acertou": "sala1.parede_leste"
+  }
+ }
+}

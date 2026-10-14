@@ -1,0 +1,72 @@
+{
+ "etapa": "c3",
+ "cena": "sala",
+ "quando": "2026-10-13 20:11:05",
+ "segundos": 1.7,
+ "comando": {
+  "ok": true,
+  "revisao": 7,
+  "resumo": [
+   "prato prato1 colocado",
+   "copo copo1 colocado"
+  ],
+  "acoes": [
+   [
+    "criar",
+    "prato1"
+   ],
+   [
+    "criar",
+    "copo1"
+   ]
+  ],
+  "adotados": [],
+  "levados_junto": [],
+  "estrutura_reposta": [],
+  "pecas": 11,
+  "atores_mantidos": [
+   "janela1",
+   "mesa1",
+   "porta1",
+   "sala1.nav",
+   "sala1.parede_leste",
+   "sala1.parede_norte",
+   "sala1.parede_oeste",
+   "sala1.parede_sul",
+   "sala1.piso"
+  ],
+  "navegacao_pronta": true,
+  "ponto_de_restauracao": "work\\restauracao\\sala\\20261013-201103-rev6",
+  "salvou": [
+   "/Game/Director/Cenas/L_sala"
+  ]
+ },
+ "criados": [
+  "copo1",
+  "prato1"
+ ],
+ "so_prato_e_copo_criados": {
+  "ok": true
+ },
+ "os_outros_iguais": {
+  "ok": true
+ },
+ "onde": {
+  "copo1": [
+   260.0,
+   200.0,
+   81.1
+  ],
+  "prato1": [
+   200.0,
+   200.0,
+   77.1
+  ]
+ },
+ "topo_da_mesa": [
+  230.0,
+  200.0,
+  76.0,
+  0.0
+ ]
+}

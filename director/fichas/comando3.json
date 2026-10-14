@@ -1,0 +1,7 @@
+{
+ "pedido": "Coloque um prato e um copo sobre a mesa.",
+ "operacoes": [
+  {"operacao": "colocar", "tipo": "prato"},
+  {"operacao": "colocar", "tipo": "copo"}
+ ]
+}

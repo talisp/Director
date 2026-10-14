@@ -1,0 +1,66 @@
+{
+ "etapa": "fisica",
+ "cena": "sala",
+ "quando": "2026-10-13 20:11:10",
+ "segundos": 5.6,
+ "tempo_de_jogo": [
+  0.115,
+  3.258
+ ],
+ "prato1": {
+  "ok": true,
+  "desceu_cm": 0.1,
+  "andou_cm": 0.0,
+  "fisica_ligada": true,
+  "no_editor": [
+   200.0,
+   200.0,
+   77.1
+  ],
+  "depois_de_3s": [
+   200.0,
+   200.0,
+   77.0
+  ],
+  "velocidade": 0.0
+ },
+ "copo1": {
+  "ok": true,
+  "desceu_cm": 0.1,
+  "andou_cm": 0.0,
+  "fisica_ligada": true,
+  "no_editor": [
+   260.0,
+   200.0,
+   81.1
+  ],
+  "depois_de_3s": [
+   260.0,
+   200.0,
+   81.0
+  ],
+  "velocidade": 0.0
+ },
+ "controle_copo_fora_da_borda": {
+  "ok": true,
+  "desceu_cm": 77.0,
+  "solto_em": [
+   310.0,
+   200.0,
+   83.0
+  ],
+  "parou_em": [
+   307.754,
+   202.246,
+   6.0
+  ]
+ },
+ "controle_parar_sem_incorporar": {
+  "ok": true,
+  "copo_no_editor": [
+   260.0,
+   200.0,
+   81.1
+  ]
+ }
+}

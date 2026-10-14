@@ -1,0 +1,75 @@
+{
+ "base_z": 1.0,
+ "cena": "sala",
+ "formato": 1,
+ "nivel": "/Game/Director/Cenas/L_sala",
+ "objetos": {
+  "copo1": {
+   "altura": 10.0,
+   "diametro": 8.0,
+   "rot": [
+    -0.0,
+    -0.299,
+    0.0
+   ],
+   "sobre": "mesa1",
+   "tipo": "copo",
+   "x": 260.011,
+   "y": 213.671,
+   "z": 81.0
+  },
+  "janela1": {
+   "altura": 110.0,
+   "largura": 120.0,
+   "parede": "leste",
+   "peitoril": 90.0,
+   "posicao": 200.0,
+   "sala": "sala1",
+   "tipo": "janela"
+  },
+  "mesa1": {
+   "altura": 75.0,
+   "giro": 0.0,
+   "largura": 120.0,
+   "profundidade": 80.0,
+   "sala": "sala1",
+   "tipo": "mesa",
+   "x": 230.0,
+   "y": 200.0
+  },
+  "porta1": {
+   "altura": 210.0,
+   "angulo": 0.0,
+   "largura": 100.0,
+   "parede": "norte",
+   "posicao": 200.0,
+   "sala": "sala1",
+   "tipo": "porta"
+  },
+  "prato1": {
+   "altura": 2.0,
+   "diametro": 24.0,
+   "rot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "sobre": "mesa1",
+   "tipo": "prato",
+   "x": 200.0,
+   "y": 200.0,
+   "z": 77.1
+  },
+  "sala1": {
+   "altura": 270.0,
+   "comprimento": 400.0,
+   "largura": 500.0,
+   "parede": 15.0,
+   "tipo": "sala",
+   "x": 0.0,
+   "y": 0.0,
+   "z": 1.0
+  }
+ },
+ "revisao": 8
+}

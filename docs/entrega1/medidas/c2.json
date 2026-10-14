@@ -1,0 +1,244 @@
+{
+ "etapa": "c2",
+ "cena": "sala",
+ "quando": "2026-10-13 20:11:03",
+ "segundos": 5.3,
+ "comando": {
+  "ok": true,
+  "revisao": 4,
+  "resumo": [
+   "sala sala1 com 5 x 4 m",
+   "porta porta1 mudada"
+  ],
+  "acoes": [
+   [
+    "atualizar",
+    "janela1"
+   ],
+   [
+    "atualizar",
+    "porta1"
+   ],
+   [
+    "atualizar",
+    "sala1.piso",
+    "Largura"
+   ],
+   [
+    "atualizar",
+    "sala1.parede_sul",
+    "Comprimento",
+    "VaoAltura",
+    "VaoCentro",
+    "VaoLargura"
+   ],
+   [
+    "atualizar",
+    "sala1.parede_norte",
+    "Comprimento",
+    "VaoAltura",
+    "VaoCentro",
+    "VaoLargura"
+   ],
+   [
+    "atualizar",
+    "sala1.parede_leste"
+   ],
+   [
+    "atualizar",
+    "sala1.nav"
+   ]
+  ],
+  "adotados": [
+   {
+    "id": "mesa1",
+    "campo": "lugar",
+    "de": [
+     200.0,
+     200.0,
+     0.0
+    ],
+    "para": [
+     230.0,
+     200.0,
+     0.0
+    ]
+   }
+  ],
+  "levados_junto": [],
+  "estrutura_reposta": [],
+  "pecas": 9,
+  "atores_mantidos": [
+   "janela1",
+   "mesa1",
+   "porta1",
+   "sala1.nav",
+   "sala1.parede_leste",
+   "sala1.parede_norte",
+   "sala1.parede_oeste",
+   "sala1.parede_sul",
+   "sala1.piso"
+  ],
+  "navegacao_pronta": true,
+  "ponto_de_restauracao": "work\\restauracao\\sala\\20261013-201058-rev3",
+  "salvou": [
+   "/Game/Director/Cenas/L_sala"
+  ]
+ },
+ "sala": {
+  "largura": {
+   "ok": true,
+   "medido_cm": 500.0,
+   "pedido_cm": 500.0
+  },
+  "comprimento": {
+   "ok": true,
+   "medido_cm": 400.0,
+   "pedido_cm": 400.0
+  },
+  "paredes_barram": {
+   "ok": true,
+   "acertos": [
+    "sala1.parede_oeste",
+    "sala1.parede_leste",
+    "sala1.parede_sul",
+    "sala1.parede_norte"
+   ]
+  },
+  "chao": {
+   "ok": true,
+   "id": "sala1.piso",
+   "z": 1.0
+  },
+  "janela1": {
+   "ok": true,
+   "no_meio_acertou": "janela1",
+   "abaixo_do_peitoril_acertou": "sala1.parede_leste"
+  }
+ },
+ "porta": {
+  "angulo_inicial": 0.0,
+  "fechada": {
+   "ok": true,
+   "barrada_por": "porta1",
+   "componente": "Folha"
+  },
+  "controle_parede_cheia": {
+   "ok": true,
+   "barrada_por": "sala1.parede_norte"
+  },
+  "aberta": {
+   "ok": true,
+   "ficha_ok": true,
+   "barrada_por": null
+  },
+  "navegacao_aberta": {
+   "caminho": {
+    "ok": true,
+    "existe": true,
+    "parcial": false,
+    "comprimento": 317.2,
+    "pontos": [
+     [
+      200.0,
+      497.5,
+      1.0
+     ],
+     [
+      190.0,
+      437.0,
+      1.0
+     ],
+     [
+      171.0,
+      361.0,
+      11.0
+     ],
+     [
+      114.0,
+      266.0,
+      11.0
+     ],
+     [
+      110.0,
+      200.0,
+      11.0
+     ]
+    ],
+    "esperou_s": 0.02
+   },
+   "controle_fora_da_area": {
+    "ok": true,
+    "existe": false,
+    "parcial": false
+   },
+   "de": [
+    200.0,
+    497.5,
+    1.0
+   ],
+   "ate": [
+    110.0,
+    200.0,
+    1.0
+   ]
+  },
+  "vao_antigo": {
+   "ok": true,
+   "barrada_por": "sala1.parede_sul"
+  },
+  "fechada_de_novo": {
+   "ok": true
+  },
+  "controle_navegacao_fechada": {
+   "ok": true,
+   "existe": true,
+   "parcial": true,
+   "esperou_s": 0.02
+  }
+ },
+ "mesmos_atores": {
+  "ok": true,
+  "por_peca": {
+   "sala1.piso": true,
+   "sala1.parede_sul": true,
+   "sala1.parede_norte": true,
+   "sala1.parede_leste": true,
+   "sala1.parede_oeste": true,
+   "sala1.nav": true,
+   "porta1": true,
+   "janela1": true,
+   "mesa1": true
+  }
+ },
+ "nada_criado_nem_apagado": {
+  "ok": true
+ },
+ "mesa_no_lugar_manual": {
+  "ok": true,
+  "distancia_cm": 0.0
+ },
+ "mesa_na_planta": [
+  230.0,
+  200.0
+ ],
+ "cubo_alheio_igual": {
+  "ok": true
+ },
+ "resto_da_cena_igual": {
+  "ok": true
+ },
+ "porta_onde": {
+  "parede": "norte",
+  "loc": [
+   250.0,
+   407.5,
+   1.0
+  ],
+  "rot": [
+   0.0,
+   180.0,
+   -0.0
+  ]
+ }
+}

@@ -1,0 +1,60 @@
+{
+ "etapa": "manual",
+ "cena": "sala",
+ "quando": "2026-10-13 20:10:58",
+ "segundos": 0.2,
+ "mesa_antes": [
+  200.0,
+  200.0,
+  1.0
+ ],
+ "mesa_depois": [
+  230.0,
+  200.0,
+  1.0
+ ],
+ "cubo": [
+  {
+   "classe": "/Script/Engine.StaticMeshActor",
+   "caminho": "/Game/Director/Cenas/L_sala.L_sala:PersistentLevel.StaticMeshActor_1",
+   "rotulo": "FORA_DO_DIRECTOR",
+   "loc": [
+    330.0,
+    330.0,
+    26.0
+   ],
+   "rot": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "escala": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  }
+ ],
+ "estado": {
+  "adotados": [
+   {
+    "id": "mesa1",
+    "campo": "lugar",
+    "de": [
+     200.0,
+     200.0,
+     0.0
+    ],
+    "para": [
+     230.0,
+     200.0,
+     0.0
+    ]
+   }
+  ],
+  "estrutura_divergente": [],
+  "faltando": [],
+  "sobrando": [],
+  "levados_junto": []
+ }
+}

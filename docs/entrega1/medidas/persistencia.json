@@ -1,0 +1,92 @@
+{
+ "etapa": "persistencia",
+ "cena": "sala",
+ "quando": "2026-10-13 20:11:35",
+ "segundos": 18.8,
+ "por_salvar_antes_de_fechar": [],
+ "fechar": {
+  "ok": true,
+  "ja_fechado": false,
+  "segundos": 4.7
+ },
+ "abrir": {
+  "ok": true,
+  "ja_aberto": false,
+  "pid": 28104,
+  "segundos": 10.1
+ },
+ "level_ao_abrir": "/Game/Director/Cenas/L_sala",
+ "inventario_igual": {
+  "ok": true,
+  "por_peca": {
+   "sala1.piso": true,
+   "sala1.parede_sul": true,
+   "sala1.parede_norte": true,
+   "sala1.parede_leste": true,
+   "sala1.parede_oeste": true,
+   "sala1.nav": true,
+   "porta1": true,
+   "janela1": true,
+   "mesa1": true,
+   "prato1": true,
+   "copo1": true
+  }
+ },
+ "n_pecas": [
+  11,
+  11
+ ],
+ "resto_da_cena_igual": {
+  "ok": true
+ },
+ "planta_igual_ao_unreal": {
+  "ok": true
+ },
+ "diferencas_planta_x_unreal": [],
+ "conciliacao": {
+  "adotados": [],
+  "estrutura_divergente": [],
+  "faltando": [],
+  "sobrando": []
+ },
+ "sala": {
+  "largura": {
+   "ok": true,
+   "medido_cm": 500.0,
+   "pedido_cm": 500.0
+  },
+  "comprimento": {
+   "ok": true,
+   "medido_cm": 400.0,
+   "pedido_cm": 400.0
+  },
+  "paredes_barram": {
+   "ok": true,
+   "acertos": [
+    "sala1.parede_oeste",
+    "sala1.parede_leste",
+    "sala1.parede_sul",
+    "sala1.parede_norte"
+   ]
+  },
+  "chao": {
+   "ok": true,
+   "id": "sala1.piso",
+   "z": 1.0
+  },
+  "janela1": {
+   "ok": true,
+   "no_meio_acertou": "janela1",
+   "abaixo_do_peitoril_acertou": "sala1.parede_leste"
+  }
+ },
+ "porta_fechada_barra": {
+  "ok": true
+ },
+ "malha_de_navegacao": {
+  "construindo": false,
+  "malhas": [
+   "RecastNavMesh-Default"
+  ]
+ }
+}

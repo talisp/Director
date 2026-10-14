@@ -1,0 +1,99 @@
+{
+ "etapa": "incorporar",
+ "cena": "sala",
+ "quando": "2026-10-13 20:11:16",
+ "segundos": 5.7,
+ "antes": [
+  260.0,
+  200.0,
+  81.1
+ ],
+ "parou_no_play": {
+  "loc": [
+   260.011,
+   213.671,
+   81.0
+  ],
+  "rot": [
+   -0.0,
+   -0.299,
+   0.0
+  ],
+  "vel": 0.0,
+  "fisica": true
+ },
+ "resultado": {
+  "ok": true,
+  "revisao": 8,
+  "resumo": [
+   "copo1 incorporado em [260.0, 213.7, 81.0]"
+  ],
+  "acoes": [
+   [
+    "atualizar",
+    "copo1"
+   ]
+  ],
+  "adotados": [],
+  "levados_junto": [],
+  "estrutura_reposta": [],
+  "pecas": 11,
+  "atores_mantidos": [
+   "copo1",
+   "janela1",
+   "mesa1",
+   "porta1",
+   "prato1",
+   "sala1.nav",
+   "sala1.parede_leste",
+   "sala1.parede_norte",
+   "sala1.parede_oeste",
+   "sala1.parede_sul",
+   "sala1.piso"
+  ],
+  "navegacao_pronta": true,
+  "ponto_de_restauracao": "work\\restauracao\\sala\\20261013-201114-rev7",
+  "salvou": [
+   "/Game/Director/Cenas/L_sala"
+  ],
+  "lido_no_play": {
+   "copo1": {
+    "loc": [
+     260.011,
+     213.671,
+     81.0
+    ],
+    "rot": [
+     -0.0,
+     -0.299,
+     0.0
+    ],
+    "vel": 0.0,
+    "fisica": true
+   }
+  }
+ },
+ "no_editor_depois": [
+  260.011,
+  213.671,
+  81.0
+ ],
+ "andou_cm": 13.671,
+ "o_copo_saiu_do_lugar": {
+  "ok": true
+ },
+ "gravado": {
+  "ok": true,
+  "distancia_cm": 0.0
+ },
+ "na_planta": [
+  260.011,
+  213.671,
+  81.0
+ ],
+ "sobre": "mesa1",
+ "em_play_depois": false,
+ "nada_por_salvar": {
+  "ok": true
+ }
+}

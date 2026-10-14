@@ -1,0 +1,7 @@
+{
+ "pedido": "Aumente a sala para 5 × 4 metros e mude a porta para a parede oposta.",
+ "operacoes": [
+  {"operacao": "mudar_sala", "largura_m": 5, "comprimento_m": 4},
+  {"operacao": "mudar", "id": "porta1", "parede": "oposta"}
+ ]
+}
