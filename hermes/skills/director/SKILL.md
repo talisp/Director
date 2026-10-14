@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Como montar e mudar a cena no laboratório do Unreal pelo programa Director (fichas JSON). Ler antes de qualquer pedido sobre a sala, as paredes, a porta, a janela, a mesa, o prato ou o copo."
-version: 0.2.0
+version: 0.2.1
 author: Talis / Claude Code
 license: MIT
 platforms: [windows]
@@ -76,6 +76,9 @@ Antes de mandar, escreva o resumo na sua mensagem, por exemplo:
 - O resumo diz **o que muda, onde e com quais medidas**, e **o que não muda**. Sem termos técnicos, sem nome de campo; números sempre em metros. A ficha tem de ser exatamente o resumo.
 - "Pode fazer", "ok", "sim" escritos na conversa não são autorização e não são necessários: quem decide é o cartão.
 
+## Regras permanentes do Talis
+- **Portas todas iguais** (14/10/2026): ao mudar a largura ou a altura de uma porta, mude todas as portas da cena para o mesmo tamanho, salvo se ele pedir uma porta diferente.
+
 ## A ficha
 
 ```json
@@ -93,7 +96,9 @@ Antes de mandar, escreva o resumo na sua mensagem, por exemplo:
 - Medidas em **metros**, ângulos em **graus**.
 - Campo que o Talis não disse fica de fora: o Director usa o padrão.
 - **Nunca invente valor e vista como ideia do Talis.** Medida, parede, nome ou ângulo que não saíram da fala dele (nem do `estado`/planta) não entram na ficha: pergunte antes com `clarify`. "Do tamanho do X" com X inexistente = número inexistente; a resposta é pergunta, não chute. Ao narrar o que fez, "escolhi ..." e não "entendi que ..." — chute se assume, não se disfarça de interpretação. Encrenca real (rev. 9–11): inventei "quarto = 3×3", encolhi a sala e descrevi o chute como algo natural do pedido. Tamanho de cômodo só mexe com valor explícito ou confirmado. E sempre cite ao Talis o número que vai usar *antes* de mandar a ficha, para dar tempo de um "não".
-- Cômodo de **qualquer tamanho**: largura, comprimento e altura só precisam ser maiores que zero (um corredor de 1 × 3 m e um armário de 0,6 × 0,5 m foram montados no Unreal em 14/10). Porta e janela continuam tendo de caber na parede. Ligar um cômodo a outro por uma passagem continua impossível.
+- Cômodo de **qualquer tamanho**: largura, comprimento e altura só precisam ser maiores que zero (um corredor de 1 × 3 m e um armário de 0,6 × 0,5 m foram montados no Unreal em 14/10). Porta e janela continuam tendo de caber na parede.
+- **Encostar um cômodo em outro** (desde 14/10, pedido do Talis): deixe **0,15 m** (uma parede) entre o lado de dentro de um e o do outro. A parede fica **em comum** (uma só, de 15 cm), e **uma porta nela é a passagem** de um cômodo para o outro: não ponha uma segunda porta do outro lado. Exemplo: sala com o canto em (0, 0) e 4 m de comprimento; corredor encostado na parede do fundo (norte) = `"y_m": 4.15`; para a porta da sala (centro a 2,0 m do canto oeste) cair no meio de um corredor de 1,2 m, `"x_m": 1.4` (2,0 − 0,6). Se o Director recusar com "daria de cara com a parede", a porta ficou fora do corredor: mude a posição dela ou do corredor.
+- Um cômodo já criado não muda de lugar (`mudar_sala` só muda medidas). Para levar um cômodo para outro lugar: `remover` as peças dele, `remover` o cômodo e `criar_sala` de novo no lugar novo, tudo na mesma ficha.
 - Nomes: se você não der `id`, o Director dá (`porta1`, `mesa2`…). Para mudar ou remover, use o nome que aparece no `estado`.
 
 ### Direções da sala
@@ -151,14 +156,14 @@ Antes de mandar, escreva o resumo na sua mensagem, por exemplo:
 - Se ele mexeu durante o Play e quer guardar onde os objetos ficaram: com o Play ainda rodando, `DIRECTOR incorporar sala` (ou `DIRECTOR incorporar sala copo1 prato1` para só alguns).
 
 ## O que o Director ainda não sabe fazer
-Personagem, corpo, animação, câmera, sequência, vídeo, foto, aparência (as peças são blocos cinza), outros móveis e objetos; **ligar um cômodo a outro** (parede em comum com passagem). Pedido assim: responda "o Director ainda não sabe fazer: …" e ofereça os três caminhos do `SOUL.md` (usar o que existe, adaptar, investigar numa cópia). Não altere a cena do Talis enquanto isso.
+Personagem, corpo, animação, câmera, sequência, vídeo, foto, aparência (as peças são blocos cinza), outros móveis e objetos; abertura sem porta (passagem livre: hoje a passagem é uma porta, que pode ficar aberta com `angulo: 90`). Pedido assim: responda "o Director ainda não sabe fazer: …" e ofereça os três caminhos do `SOUL.md` (usar o que existe, adaptar, investigar numa cópia). Não altere a cena do Talis enquanto isso.
 
-**Cômodo é cômodo:** sala, quarto, cozinha, banheiro, corredor, garagem são todos `criar_sala` (o `id` é o nome que você quiser, ex.: `"id": "banheiro"`). Dois cômodos na mesma cena são aceitos (montados no Unreal em 14/10); o que falta é a passagem entre eles.
+**Cômodo é cômodo:** sala, quarto, cozinha, banheiro, corredor, garagem são todos `criar_sala` (o `id` é o nome que você quiser, ex.: `"id": "banheiro"`). Dois cômodos na mesma cena são aceitos (montados no Unreal em 14/10), e encostados dividem a parede (veja "Encostar um cômodo em outro").
 
 O que ele **sabe**, e o Qwen já negou por engano: mais de uma janela ou porta na mesma sala (em paredes diferentes; na mesma parede só se os vãos não encostarem um no outro nem no canto — senão ele recusa sozinho). Na dúvida, escreva o resumo, mande a ficha (o Talis aprova no cartão) e deixe o Director decidir: se ele não puder, recusa sem mexer na cena.
 
 ### Pedido misto (parte dá, parte não)
-Quando o pedido junta coisas que o Director sabe e coisas que ele não sabe: explique ao Talis, em palavras simples, o que dá e o que não dá, **proponha** fazer a parte que dá e pergunte se ele quer (com opções); se ele quiser, escreva o resumo e mande (ele aprova no cartão). Exemplo real: "porta sempre aberta + corredor com 3 portas" → explique que o corredor ainda não dá e ofereça deixar a porta da sala aberta. "Porta sempre aberta" = `mudar` com `angulo: 90`.
+Quando o pedido junta coisas que o Director sabe e coisas que ele não sabe: explique ao Talis, em palavras simples, o que dá e o que não dá, **proponha** fazer a parte que dá e pergunte se ele quer (com opções); se ele quiser, escreva o resumo e mande (ele aprova no cartão). Exemplo: "um boneco andando pelo corredor" → explique que o boneco ainda não dá e ofereça montar o corredor. "Porta sempre aberta" = `mudar` com `angulo: 90`.
 - Se o Talis usar uma medida que o Director não conhece ("do tamanho do quarto"), pergunte quantos metros.
 
 ### "O que você vê na cena?"

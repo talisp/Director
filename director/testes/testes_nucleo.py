@@ -114,6 +114,85 @@ class Operacoes(unittest.TestCase):
             p, _ = OP.aplicar_ficha(base, {"operacoes": ops})
             self.assertIn(ops[0]["id"], p["objetos"])
 
+    def test_parede_em_comum(self):
+        # pedido do Talis (14/10/2026, "Corrija"): cômodos encostados dividem UMA parede de 15 cm, não duas (30 cm)
+        sala = [{"operacao": "criar_sala", "id": "sala1", "largura_m": 5, "comprimento_m": 4},
+                {"operacao": "colocar", "tipo": "porta", "id": "porta1", "parede": "norte", "posicao_m": 2.0, "largura_m": 0.9}]
+        corredor = {"operacao": "criar_sala", "id": "corredor", "largura_m": 1.2, "comprimento_m": 3, "x_m": 1.4, "y_m": 4.15}
+        p, _ = OP.aplicar_ficha(PL.nova("t"), {"operacoes": sala + [corredor]})
+        alvo = D.derivar(p)
+        paredes = {k: v for k, v in alvo.items() if v["tipo"] == "parede"}
+        self.assertNotIn("corredor.parede_sul", paredes)  # a parede do corredor é a da sala
+        norte = paredes["sala1.parede_norte"]
+        self.assertEqual((norte["params"]["Comprimento"], norte["params"]["VaoLargura"]), (530.0, 90.0))
+        self.assertAlmostEqual(norte["loc"][0] + norte["params"]["VaoCentro"], 200.0)  # a porta é a passagem
+        self.assertAlmostEqual(norte["loc"][1], 407.5)
+        # a porta também pode ser posta do lado do corredor: corta a mesma parede
+        p2, _ = OP.aplicar_ficha(PL.nova("t"), {"operacoes": sala[:1] + [corredor, {
+            "operacao": "colocar", "tipo": "porta", "sala": "corredor", "parede": "sul", "posicao_m": 0.6, "largura_m": 0.9}]})
+        norte2 = D.derivar(p2)["sala1.parede_norte"]
+        self.assertAlmostEqual(norte2["loc"][0] + norte2["params"]["VaoCentro"], 200.0)
+        self.assertNotIn("corredor.parede_sul", D.derivar(p2))
+        # duas portas no mesmo lugar da parede em comum: uma só basta
+        with self.assertRaises(OP.Invalida) as c:
+            OP.aplicar_ficha(p, {"operacoes": [{"operacao": "colocar", "tipo": "porta", "sala": "corredor", "parede": "sul", "posicao_m": 0.6, "largura_m": 0.9}]})
+        self.assertIn("é uma só", str(c.exception))
+
+    def test_encostar_pelos_quatro_lados(self):
+        base, _ = OP.aplicar_ficha(PL.nova("t"), {"operacoes": [{"operacao": "criar_sala", "id": "sala1", "largura_m": 5, "comprimento_m": 4}]})
+        vizinhos = {"norte": (1.0, 4.15, "sul"), "sul": (1.0, -3.15, "norte"), "leste": (5.15, 1.0, "oeste"), "oeste": (-2.15, 1.0, "leste")}
+        for lado, (x, y, do_vizinho) in vizinhos.items():
+            p, _ = OP.aplicar_ficha(base, {"operacoes": [
+                {"operacao": "criar_sala", "id": "viz", "largura_m": 2, "comprimento_m": 3, "x_m": x, "y_m": y},
+                {"operacao": "colocar", "tipo": "porta", "sala": "viz", "parede": do_vizinho, "largura_m": 0.8}]})
+            alvo = D.derivar(p)
+            paredes = [v for v in alvo.values() if v["tipo"] == "parede"]
+            # nenhuma parede ocupa o lugar de outra: a parede em comum saiu uma vez só
+            faixas = []
+            for w in paredes:
+                c, e = w["params"]["Comprimento"], w["params"]["Espessura"] / 2
+                x0, y0 = w["loc"][0], w["loc"][1]
+                faixas.append((x0, y0 - e, x0 + c, y0 + e) if w["rot"][1] == 0.0 else (x0 - e, y0, x0 + e, y0 + c))
+            for i, a in enumerate(faixas):
+                for b in faixas[i + 1:]:
+                    self.assertFalse(OP._sobrepoe(a, b), (lado, a, b))
+            self.assertNotIn(f"viz.parede_{do_vizinho}", alvo, lado)
+            cortada = [w for w in paredes if w["params"]["VaoLargura"] == 80.0]
+            self.assertEqual(len(cortada), 1, lado)  # a porta do vizinho corta a parede em comum (que é da sala1)
+
+    def test_encostar_errado_e_recusado(self):
+        base, _ = OP.aplicar_ficha(PL.nova("t"), {"operacoes": [{"operacao": "criar_sala", "id": "sala1", "largura_m": 5, "comprimento_m": 4}]})
+
+        def corredor(y, x=1.4):
+            return {"operacoes": [{"operacao": "criar_sala", "id": "corredor", "largura_m": 1.2, "comprimento_m": 3, "x_m": x, "y_m": y}]}
+        for y, trecho in ((4.1, "uma em cima da outra"), (4.0, "uma em cima da outra"), (4.2, "meio uma dentro da outra")):
+            with self.assertRaises(OP.Invalida, msg=y) as c:
+                OP.aplicar_ficha(base, corredor(y))
+            self.assertIn(trecho, str(c.exception))
+            self.assertIn("0.15 m", str(c.exception))
+        # 30 cm ou mais: cada uma com a sua parede, como antes
+        p, _ = OP.aplicar_ficha(base, corredor(4.3))
+        self.assertIn("corredor.parede_sul", D.derivar(p))
+        # porta na parede em comum que passa do canto do corredor: daria de cara com a parede dele
+        with self.assertRaises(OP.Invalida) as c:
+            OP.aplicar_ficha(base, {"operacoes": corredor(4.15)["operacoes"] + [
+                {"operacao": "colocar", "tipo": "porta", "sala": "sala1", "parede": "norte", "posicao_m": 1.4, "largura_m": 0.9}]})
+        self.assertIn("daria de cara com a parede oeste de corredor", str(c.exception))
+        # parede dupla (30 cm) com uma porta de cada lado, alinhadas: passagem aceita (a cena do Talis de 14/10)
+        OP.aplicar_ficha(base, {"operacoes": corredor(4.3)["operacoes"] + [
+            {"operacao": "colocar", "tipo": "porta", "sala": "sala1", "parede": "norte", "posicao_m": 2.0, "largura_m": 0.9},
+            {"operacao": "colocar", "tipo": "porta", "sala": "corredor", "parede": "sul", "posicao_m": 0.6, "largura_m": 0.9}]})
+
+    def test_parede_em_comum_de_alturas_diferentes(self):
+        p, _ = OP.aplicar_ficha(PL.nova("t"), {"operacoes": [
+            {"operacao": "criar_sala", "id": "sala1", "largura_m": 5, "comprimento_m": 4},
+            {"operacao": "criar_sala", "id": "salao", "largura_m": 2, "comprimento_m": 3, "x_m": 1.0, "y_m": 4.15, "altura_m": 3.5}]})
+        norte = sorted((v["loc"][0], v["params"]["Altura"], k) for k, v in D.derivar(p).items() if v["tipo"] == "parede"
+                       and v["rot"][1] == 0.0 and abs(v["loc"][1] - 407.5) < 0.01)
+        # a sala de 2,7 m, o trecho em comum com a altura do salão (3,5 m) e a sala de novo
+        self.assertEqual([(round(x, 6), h) for x, h, _ in norte], [(-15.0, 270.0), (85.0, 350.0), (315.0, 270.0)])
+        self.assertEqual(len({k for _, _, k in norte}), 3)
+
     def test_recusa_diz_qual_peca(self):
         p, _ = OP.aplicar_ficha(planta_apos(1), {"operacoes": [{"operacao": "mudar", "id": "mesa1", "x_m": 3.2}]})
         with self.assertRaises(OP.Invalida) as c:
@@ -228,6 +307,28 @@ class Executor(unittest.TestCase):
         self.assertEqual(self.ed.memoria, self.ed.disco)
         self.assertEqual(PL.carregar(self.raiz, "teste")["revisao"], 3)
         self.assertEqual([x["evento"] for x in self.registro()], ["inicio", "fim"] * 3)
+
+    def test_parede_dupla_vira_parede_em_comum(self):
+        # a cena do Talis de 14/10: corredor a 30 cm da sala, com uma porta de cada lado; depois, a correção com as
+        # operações que existem (tira a porta do corredor e o corredor; cria o corredor encostado, a 15 cm)
+        r1 = self.fazer({"operacoes": [
+            {"operacao": "criar_sala", "id": "sala1", "largura_m": 5, "comprimento_m": 4},
+            {"operacao": "colocar", "tipo": "porta", "id": "porta1", "sala": "sala1", "parede": "norte", "posicao_m": 2.0, "largura_m": 0.9},
+            {"operacao": "criar_sala", "id": "corredor", "largura_m": 1.2, "comprimento_m": 3, "x_m": 1.4, "y_m": 4.3},
+            {"operacao": "colocar", "tipo": "porta", "id": "porta2", "sala": "corredor", "parede": "sul", "posicao_m": 0.6, "largura_m": 0.9}]})
+        self.assertTrue(r1["ok"], r1)
+        self.assertIn("corredor.parede_sul", self.ed.memoria)
+        r2 = self.fazer({"operacoes": [
+            {"operacao": "remover", "id": "porta2"}, {"operacao": "remover", "id": "corredor"},
+            {"operacao": "criar_sala", "id": "corredor", "largura_m": 1.2, "comprimento_m": 3, "x_m": 1.4, "y_m": 4.15}]})
+        self.assertTrue(r2["ok"], r2)
+        self.assertNotIn("corredor.parede_sul", self.ed.memoria)  # a parede dupla saiu do Unreal
+        self.assertNotIn("porta2", self.ed.memoria)
+        self.assertIn("corredor.parede_norte", self.ed.memoria)
+        self.assertEqual(self.ed.memoria, self.ed.disco)
+        alvo = D.derivar(PL.carregar(self.raiz, "teste"))
+        self.assertEqual(sorted(k for k in alvo if k.startswith("corredor.parede")),
+                         ["corredor.parede_leste", "corredor.parede_norte", "corredor.parede_oeste"])
 
     def test_ficha_invalida_nao_toca_na_cena(self):
         self.fazer(ficha(1))

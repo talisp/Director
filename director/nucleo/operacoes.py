@@ -39,7 +39,10 @@ NUM, TXT = "numero", "texto"
 # campo -> (tipo, obrigatório, explicação). É isto que o agente lê em `capacidades`.
 OPERACOES: dict = {
     "criar_sala": {
-        "descricao": "Cria uma sala retangular (piso, quatro paredes e área onde um personagem pode andar).",
+        "descricao": "Cria uma sala retangular (piso, quatro paredes e área onde um personagem pode andar). Cômodo é sala: "
+                     "corredor, quarto, banheiro, armário. Para encostar numa sala que já existe, deixe 0,15 m (uma "
+                     "parede) entre o lado de dentro de uma e o da outra: a parede fica em comum, e uma porta nela "
+                     "é a passagem de um cômodo para o outro.",
         "campos": {"id": (TXT, False, "nome da sala; se faltar, o núcleo dá um (sala1, sala2...)"),
                    "largura_m": (NUM, True, "medida interna no eixo leste-oeste, em metros"),
                    "comprimento_m": (NUM, True, "medida interna no eixo sul-norte, em metros"),
@@ -151,6 +154,89 @@ def _unico(planta: dict, tipos: tuple, pedido, o_que: str) -> str:
 def lado_cm(sala: dict, parede: str) -> float:
     """Comprimento interno da parede."""
     return sala["largura"] if parede in ("sul", "norte") else sala["comprimento"]
+
+
+# ------------------------------------------------------------------------------------------------------- paredes no chão
+
+EPS = 0.01  # cm: medidas que diferem menos que isto são a mesma
+
+
+def faixa_da_parede(s: dict, lado: str) -> tuple:
+    """Retângulo (x0, y0, x1, y1) que a parede ocupa no chão. As paredes sul e norte cobrem os cantos."""
+    t, x, y, L, C = s["parede"], s["x"], s["y"], s["largura"], s["comprimento"]
+    return {"sul": (x - t, y - t, x + L + t, y), "norte": (x - t, y + C, x + L + t, y + C + t),
+            "oeste": (x - t, y, x, y + C), "leste": (x + L, y, x + L + t, y + C)}[lado]
+
+
+def _linha(s: dict, lado: str) -> tuple:
+    """(chave da faixa, início, fim). Paredes com a mesma chave ocupam a mesma faixa do chão: são a mesma parede.
+    Início e fim são no mundo, ao longo da parede (x nas paredes sul e norte, y nas leste e oeste)."""
+    x0, y0, x1, y1 = faixa_da_parede(s, lado)
+    if lado in ("sul", "norte"):
+        return ("x", round(y0, 2), round(y1, 2)), x0, x1
+    return ("y", round(x0, 2), round(x1, 2)), y0, y1
+
+
+def vao_no_mundo(planta: dict, o: dict) -> tuple:
+    """(chave da faixa, início, fim) do vão de uma porta ou janela, no mundo."""
+    s = planta["objetos"][o["sala"]]
+    chave, _, _ = _linha(s, o["parede"])
+    centro = (s["x"] if o["parede"] in ("sul", "norte") else s["y"]) + o["posicao"]
+    return chave, centro - o["largura"] / 2, centro + o["largura"] / 2
+
+
+def trechos_de_parede(planta: dict) -> list:
+    """As paredes que vão para o Unreal. Paredes de salas diferentes na mesma faixa (salas encostadas a uma parede de
+    distância) viram uma parede só, a parede em comum; uma porta nela é a passagem de uma sala para a outra.
+    Cada trecho: {sala, lado, chave, ini, fim, altura, vaos: [id]}. O trecho é da primeira sala (em
+    ordem alfabética) que tem parede nele; onde as salas têm alturas diferentes, a parede tem a da mais alta."""
+    objs = planta["objetos"]
+    sids = sorted(i for i, o in objs.items() if o["tipo"] == "sala")
+    em_pe = [(sid, faixa_da_parede(objs[sid], l)) for sid in sids for l in ("leste", "oeste")]
+    linhas = {}
+    for sid in sids:
+        for lado in LADOS:
+            chave, a, b = _linha(objs[sid], lado)
+            if lado in ("sul", "norte"):
+                # o canto que a parede sul ou norte cobre sai se a parede leste ou oeste de outra sala já passa por ali
+                t, (_, y0, _, y1) = objs[sid]["parede"], faixa_da_parede(objs[sid], lado)
+                for outra, (fx0, fy0, fx1, fy1) in em_pe:
+                    if outra != sid and fy0 <= y0 + EPS and y1 <= fy1 + EPS:
+                        if fx0 <= a + EPS and a + t <= fx1 + EPS:
+                            a += t
+                        if fx0 <= b - t + EPS and b <= fx1 + EPS:
+                            b -= t
+            linhas.setdefault(chave, []).append((sid, lado, a, b))
+    trechos = []
+    for chave, membros in linhas.items():
+        pontos = []
+        for p in sorted(p for m in membros for p in (m[2], m[3])):
+            if not pontos or p - pontos[-1] > EPS:
+                pontos.append(p)
+        atual = None
+        for a, b in zip(pontos, pontos[1:]):
+            cobrem = [m for m in membros if m[2] <= a + EPS and m[3] >= b - EPS]
+            if not cobrem:
+                atual = None
+                continue
+            altura = max(objs[m[0]]["altura"] for m in cobrem)
+            if atual and abs(atual["altura"] - altura) < EPS and abs(atual["fim"] - a) < EPS:
+                atual["fim"] = b
+                continue
+            atual = {"sala": cobrem[0][0], "lado": cobrem[0][1], "chave": chave, "ini": a, "fim": b, "altura": altura, "vaos": []}
+            trechos.append(atual)
+    for oid in sorted(i for i, o in objs.items() if o["tipo"] in VAOS):
+        chave, ini, fim = vao_no_mundo(planta, objs[oid])
+        for tr in trechos:
+            if tr["chave"] == chave and tr["ini"] <= ini + EPS and fim <= tr["fim"] + EPS:
+                tr["vaos"].append(oid)
+                break
+    return sorted(trechos, key=lambda tr: (tr["sala"], LADOS.index(tr["lado"]), tr["ini"]))
+
+
+def _sobrepoe(r1: tuple, r2: tuple) -> bool:
+    """Os dois retângulos (x0, y0, x1, y1) têm área em comum (encostar não conta)?"""
+    return r1[0] < r2[2] - EPS and r2[0] < r1[2] - EPS and r1[1] < r2[3] - EPS and r2[1] < r1[3] - EPS
 
 
 # ------------------------------------------------------------------------------------------------------- as operações
@@ -320,8 +406,10 @@ _FUNCOES = {"criar_sala": _criar_sala, "mudar_sala": _mudar_sala, "colocar": _co
 
 # ------------------------------------------------------------------------------------------------------- conferir a planta
 
-def conferir(planta: dict) -> None:
-    """Confere a planta inteira. Qualquer coisa que não fecha vira Invalida, com o nome da peça."""
+def conferir(planta: dict, final: bool = True) -> None:
+    """Confere a planta inteira. Qualquer coisa que não fecha vira Invalida, com o nome da peça.
+    `final=False` (entre uma operação e outra da mesma ficha) deixa para o fim o que só fecha com a ficha inteira:
+    a porta de um lado da parede dupla espera a do outro lado."""
     objs = planta["objetos"]
     for oid, s in objs.items():
         if s["tipo"] != "sala":
@@ -329,13 +417,25 @@ def conferir(planta: dict) -> None:
         for chave in ("largura", "comprimento", "altura"):
             if not s[chave] > 0.0:
                 raise Invalida(f"{oid}: {chave} tem de ser maior que zero (veio {s[chave] / 100:g} m)")
-    salas = [(i, s) for i, s in objs.items() if s["tipo"] == "sala"]
+    salas = sorted((i, s) for i, s in objs.items() if s["tipo"] == "sala")
     for n, (ia, a) in enumerate(salas):
         for ib, b in salas[n + 1:]:
-            t = a["parede"] + b["parede"]
-            if (a["x"] - t < b["x"] + b["largura"] and b["x"] - t < a["x"] + a["largura"]
-                    and a["y"] - t < b["y"] + b["comprimento"] and b["y"] - t < a["y"] + a["comprimento"]):
-                raise Invalida(f"as salas {ia} e {ib} ficariam uma em cima da outra")
+            dentro_a = (a["x"], a["y"], a["x"] + a["largura"], a["y"] + a["comprimento"])
+            dentro_b = (b["x"], b["y"], b["x"] + b["largura"], b["y"] + b["comprimento"])
+            dica = (f"para encostar, deixe {b['parede'] / 100:g} m entre o lado de dentro de uma e o da outra "
+                    "(a parede fica em comum)")
+            if _sobrepoe(dentro_a, dentro_b) or any(_sobrepoe(dentro_a, faixa_da_parede(b, l)) or
+                                                   _sobrepoe(dentro_b, faixa_da_parede(a, l)) for l in LADOS):
+                raise Invalida(f"as salas {ia} e {ib} ficariam uma em cima da outra; {dica}")
+            for la in LADOS:
+                for lb in LADOS:
+                    ka, kb = _linha(a, la)[0], _linha(b, lb)[0]
+                    if ka[0] == kb[0] and ka != kb and _sobrepoe(faixa_da_parede(a, la), faixa_da_parede(b, lb)):
+                        raise Invalida(f"a parede {la} de {ia} e a parede {lb} de {ib} ficariam meio uma dentro da outra; "
+                                       f"{dica}, ou {(a['parede'] + b['parede']) / 100:g} m ou mais para cada uma ter a sua")
+    trechos = trechos_de_parede(planta)
+    no_trecho = {v: tr for tr in trechos for v in tr["vaos"]}
+    todas = [(i, l, faixa_da_parede(s, l), _linha(s, l)[0]) for i, s in salas for l in LADOS]
     for oid, o in objs.items():
         if o["tipo"] not in VAOS:
             continue
@@ -352,10 +452,28 @@ def conferir(planta: dict) -> None:
             raise Invalida(f"{oid} não cabe na altura da parede de {o['sala']} ({s['altura'] / 100:g} m)")
         if o["tipo"] == "porta" and not -1e-6 <= o["angulo"] <= 120.0:
             raise Invalida(f"{oid}: ângulo de {o['angulo']:g} fora do aceito (0 a 120)")
+        chave, mi, mf = vao_no_mundo(planta, o)
         for outro_id, v in objs.items():
-            if outro_id < oid and v["tipo"] in VAOS and v["sala"] == o["sala"] and v["parede"] == o["parede"]:
-                if ini < v["posicao"] + v["largura"] / 2 + FOLGA_ENTRE_VAOS and v["posicao"] - v["largura"] / 2 - FOLGA_ENTRE_VAOS < fim:
-                    raise Invalida(f"{oid} e {outro_id} ficariam um em cima do outro na parede {o['parede']} de {o['sala']}")
+            if outro_id < oid and v["tipo"] in VAOS:
+                ch2, vi, vf = vao_no_mundo(planta, v)
+                if ch2 == chave and mi < vf + FOLGA_ENTRE_VAOS and vi - FOLGA_ENTRE_VAOS < mf:
+                    if v["sala"] == o["sala"]:
+                        raise Invalida(f"{oid} e {outro_id} ficariam um em cima do outro na parede {o['parede']} de {o['sala']}")
+                    raise Invalida(f"{oid} e {outro_id} ficariam um em cima do outro: a parede entre {o['sala']} e "
+                                   f"{v['sala']} é uma só, e um vão nela já passa de um cômodo para o outro")
+        if oid not in no_trecho:
+            raise Invalida(f"{oid} ficaria no encontro de duas paredes de alturas diferentes; mude a posição")
+        # o vão atravessa a parede: nela e logo depois dela (1 cm de cada lado) não pode haver outra parede, como a
+        # ponta da parede de uma sala vizinha
+        recorte = (mi, chave[1] - 1.0, mf, chave[2] + 1.0) if chave[0] == "x" else (chave[1] - 1.0, mi, chave[2] + 1.0, mf)
+        for sid, lado, faixa, k in (todas if final else ()):
+            if k != chave and _sobrepoe(recorte, faixa):
+                # parede dupla (salas a duas paredes de distância) com um vão alinhado do outro lado: passagem
+                vazado = k[0] == chave[0] and any(
+                    objs[v]["sala"] == sid and objs[v]["parede"] == lado and vao_no_mundo(planta, objs[v])[1] <= mi + EPS
+                    and mf <= vao_no_mundo(planta, objs[v])[2] + EPS for v in objs if objs[v]["tipo"] in VAOS)
+                if not vazado:
+                    raise Invalida(f"{oid} daria de cara com a parede {lado} de {sid}; mude a posição")
     caixas = {}
     for oid, o in objs.items():
         if o["tipo"] not in MOVEIS:
@@ -398,7 +516,11 @@ def aplicar_ficha(planta: dict, ficha: dict) -> tuple:
         try:
             dados = _conferir_campos(op)
             resumo.append(_FUNCOES[op["operacao"]](nova, dados))
-            conferir(nova)
+            conferir(nova, final=False)
         except Invalida as e:
             raise Invalida(f"operação {n} ({op.get('operacao')}): {e}") from None
+    try:
+        conferir(nova)
+    except Invalida as e:
+        raise Invalida(f"com a ficha inteira: {e}") from None
     return nova, resumo
