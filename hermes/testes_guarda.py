@@ -23,6 +23,20 @@ class Perguntas(unittest.TestCase):
         novos = G.consertar_perguntas({"questions": texto})
         self.assertEqual(novos, {"questions": [{"question": "Por onde começamos?", "choices": ["A", "B", "C"]}]})
 
+    def test_lista_como_texto_com_chave_sobrando(self):
+        # o erro real do aplicativo (14/10/2026, 18:50 e 18:56): a lista como texto, com o "}" do objeto de fora no fim
+        certas = [{"question": "Quantas portas ficam com 90 cm?", "choices": ["As duas", "Só a nova", "Nenhuma"]},
+                  {"question": "Onde eu faço isso?", "choices": ["Ensaio", "Sala"]}]
+        texto = json.dumps(certas, ensure_ascii=False) + "}"
+        self.assertEqual(G.consertar_perguntas({"questions": texto}), {"questions": certas})
+        # e do jeito que o Hermes deixa quando não consegue ler: o texto embrulhado numa lista
+        self.assertEqual(G.consertar_perguntas({"questions": [texto]}), {"questions": certas})
+        # a lista sem o "]" final (14/10/2026, cena ensaio)
+        self.assertEqual(G.consertar_perguntas({"questions": json.dumps(certas[:1], ensure_ascii=False)[:-1]}),
+                         {"questions": certas[:1]})
+        # o objeto de fora inteiro como texto
+        self.assertEqual(G.consertar_perguntas({"questions": json.dumps({"questions": certas})}), {"questions": certas})
+
     def test_opcoes_como_objetos_viram_texto(self):
         args = {"questions": [{"question": "Q?", "choices": [{"label": "Sim", "description": "x"}, {"label": "Não"}]}]}
         self.assertEqual(G.consertar_perguntas(args)["questions"][0]["choices"], ["Sim", "Não"])

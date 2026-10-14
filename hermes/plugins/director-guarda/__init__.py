@@ -19,6 +19,18 @@ from typing import Any, Optional
 # ------------------------------------------------------------------------------------------- perguntas (clarify)
 
 
+def _ler_json(texto: str):
+    """Lê o JSON do começo do texto e ignora o que sobra depois. Erros vistos no modelo: a lista com o `}` do
+    objeto de fora no fim (`[{...}]}`) e a lista sem o `]` final (`[{...}`). ValueError se não há JSON."""
+    t = texto.strip()
+    for tentativa in (t, t + "]", t + "}]"):
+        try:
+            return json.JSONDecoder().raw_decode(tentativa)[0]
+        except ValueError:
+            pass
+    raise ValueError("não é JSON")
+
+
 def consertar_perguntas(args: Any) -> Optional[dict]:
     """Devolve os argumentos consertados da `clarify`, ou None se já estão certos (ou não dá para consertar)."""
     if not isinstance(args, dict):
@@ -27,28 +39,38 @@ def consertar_perguntas(args: Any) -> Optional[dict]:
     mudou = False
     if isinstance(q, str):
         try:
-            q = json.loads(q)
+            q = _ler_json(q)
         except ValueError:
             return None
         mudou = True
     if isinstance(q, dict):
-        q, mudou = [q], True
+        q, mudou = (q["questions"] if isinstance(q.get("questions"), list) else [q]), True
     if not isinstance(q, list):
         return None
-    novas = []
+    itens = []
     for item in q:
         if isinstance(item, str):
+            # o Hermes embrulha numa lista o texto que não conseguiu ler: o item é a lista inteira escrita como texto
             try:
-                item, mudou = json.loads(item), True
+                item, mudou = _ler_json(item), True
             except ValueError:
                 item, mudou = {"question": item}, True
+        if isinstance(item, list):
+            itens.extend(item)
+            mudou = True
+        else:
+            itens.append(item)
+    novas = []
+    for item in itens:
+        if isinstance(item, str):
+            item, mudou = {"question": item}, True
         if not isinstance(item, dict):
             return None
         item = dict(item)
         ops = item.get("choices")
         if isinstance(ops, str):
             try:
-                ops, mudou = json.loads(ops), True
+                ops, mudou = _ler_json(ops), True
             except ValueError:
                 ops = None
         if isinstance(ops, list):
