@@ -18,6 +18,7 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
+    "planta2d": {"uso":"planta2d CENA SALA", "faz":"Filtro offline de contencao, areas livres e regioes de passagem; sem Unreal."},
     "api": {"uso":"api atualizar [PEDIDO.json] | api TERMO", "faz":"Exporta referencia instalada e consulta offline em trechos curtos."},
     "biblioteca": {"uso":"biblioteca indexar PEDIDO.json | biblioteca TERMO", "faz":"Inspeciona e consulta arquivos locais sem Unreal; nao decide banco permanente."},
     "navegacao": {"uso":"navegacao [PEDIDO.json]", "faz":"Diagnostica, ajusta com escopo e backup, restaura; pronta nao prova chegada."},
@@ -69,6 +70,12 @@ def main(argv: list) -> None:
     if argv and any(a in ('--help','-h') for a in argv):
         nome=argv[0] if argv[0] not in ('--help','-h') else None
         r=_ajuda(nome);_sair(r,0 if r['ok'] else 2)
+    if argv and argv[0]=='planta2d':
+        from . import espaco2d
+        try:
+            if len(argv)!=3:raise ValueError('uso: planta2d CENA SALA')
+            r=espaco2d.cli(argv[1:]);_sair(r,0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e)},2)
     if argv and argv[0]=='biblioteca':
         from . import biblioteca
         try:

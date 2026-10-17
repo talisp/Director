@@ -310,3 +310,42 @@ persistido e erro ao pedir Play com restauracao do controle CPU (simulados).
 Todos os scripts temporarios novos foram preservados na pasta oficial; manifesto
 lista a versao atual e as execucoes pelo editor, distinguindo helpers de cliente.
 As versoes do ensaio antigo tambem continuam em work/sol_20261017, sem exclusao.
+
+## Aproveitamento da #29 como referencia para #12/#25
+
+As novas #29, #30 e #31 foram lidas por solicitacao posterior do Talis. Somente
+#29 forneceu codigo/metodo aproveitado neste lote; nao foi assumida implementacao
+integral das tres. #30 (ASCII com comparacao Qwen) e #31 (notas/recuo por rodadas)
+continuam fora deste lote. Nao executamos uma nova conversa Hermes.
+
+Adaptados reachability.py e clearance_zones.py do SceneSmith, commit
+67cc408fd38334b4a926efef45e284302ed5055b, MIT (Nicholas Pfaff, 2026), com aviso
+integral em THIRD_PARTY_NOTICES.md. Shapely 2.2.0, release 07/10/2026, instalado no
+ambiente opcional do OR-Tools; nucleo permanece biblioteca padrao. Comparada a
+alternativa Clipper2/Pyclipr: Shapely ja fornece buffer/union/difference e coincide
+com o algoritmo fonte, sem precisarmos implementar recorte ou outro pathfinder.
+Fonte atual: https://shapely.readthedocs.io/en/stable/reference/shapely.buffer.html
+https://github.com/shapely/shapely/releases/tag/2.2.0 . Issues de precisao/GEOS
+reforcam a necessidade de nao equiparar buffer aproximado a colisao do motor.
+
+`planta2d CENA SALA` roda sem ponte, medindo contencao de pegadas, area livre de
+porta (80 cm), janela (50 cm, respeitando peitoril/altura), regioes e bloqueadores
+individuais por retirada. Planejador reserva essas areas e filtra o resultado:
+nao devolve objetos como proposta aprovada quando o filtro reprova. Nao busca
+outra distribuicao automaticamente depois de reprovar; devolve diagnostico para
+nova tentativa, sem prometer ausencia de outra solucao.
+
+Testes: guarda-roupa na janela invade 40 cm e reprova; movel abaixo do peitoril
+nao viola janela; porta invadida 60 cm reprova; cama transversal gera 2 regioes e
+e identificada como bloqueio. Caso negativo passa apos reduzir a largura.
+Fixture do Sol, com os cinco envelopes medidos e porta, passou offline: 1 regiao,
+proporcao 1, area livre para centro da capsula 14.266,817 cm2; tempo observado
+1,599 ms, nao benchmark estatistico. Fixture de navegacao regional tambem tem
+uma regiao em 2D, embora o boneco norte-sul falhe com a malha padrao: separar
+espaco livre de conectividade NavMesh e necessario.
+
+Limites: comando da planta nao enxerga atores externos; o teste Sol usa fixture
+explicita dos envelopes medidos, nao uma planta vazia tratada como prova. Uma
+regiao conexa nao prova ligacao a porta ou a cada ponto de uso. Buffer circular
+aproximado; nao testa fisica, giro de folha ou NavMesh. A regra de recusar janela
+em parede compartilhada da #29 NAO foi incorporada nem marcada concluida.

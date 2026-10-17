@@ -104,3 +104,12 @@ reescalonamento. Banco/RAG permanente ainda nao decidido.
 `play_start`/`play_stop` devolvem `controle_cpu.aplicado`, `atual`, `anterior` e
 `restaurado`. Falha desse controle nao significa que Play falhou. O valor e
 restaurado em memoria, sem gravar preferencias. Consumo CPU nao foi aferido.
+
+`python -m director planta2d CENA SALA` e o filtro offline anterior ao Unreal:
+pegadas, areas diante de portas (80 cm) e janelas (50 cm), regioes e bloqueadores.
+Usa Shapely no ambiente opcional do planejamento. Movel abaixo do peitoril nao
+bloqueia a janela. So considera objetos registrados: proxies fora da planta
+exigem dados adicionais, e verificacao no motor. `planejar` aplica esse filtro e
+pode retornar `filtro2d_reprovou`, sem proposta aprovada. Uma regiao livre nao
+prova chegada desde a porta; mantenha `verificar` com boneco. A regra de janela
+somente em parede externa nao faz parte desta implementacao parcial da #29.

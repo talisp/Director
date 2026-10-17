@@ -48,12 +48,20 @@ def resolver(pedido):
         for bit,expr in zip(bits,exprs):model.add(expr).only_enforce_if([bit]+([cond] if cond is not None else []))
         c=model.add_bool_or(bits)
         if cond is not None:c.only_enforce_if(cond)
-    for i,(_,x,y,w,h,r,u) in enumerate(dados):
+    for i,(obj,x,y,w,h,r,u) in enumerate(dados):
         for j,(_,xx,yy,ww,hh,rr,uu) in enumerate(dados):
             if i==j:continue
             separar((x,y-u,w,h+u),(xx,yy,ww,hh),r.Not())
             separar((x,y,w+u,h),(xx,yy,ww,hh),r)
         for b in reservas:separar((x,y,w,h),b)
+        for a in pedido.get('aberturas',[]):
+            z0=a.get('peitoril',0) if a['tipo']=='janela' else 0
+            if obj['dimensoes_cm'][2]<=z0:continue
+            d=80 if a['tipo']=='porta' else 50
+            lo=math.floor(a['posicao']-a['largura']/2);hi=math.ceil(a['posicao']+a['largura']/2)
+            b={'sul':(lo,0,hi-lo,d),'norte':(lo,H-d,hi-lo,d),
+                'oeste':(0,lo,d,hi-lo),'leste':(W-d,lo,d,hi-lo)}[a['parede']]
+            separar((x,y,w,h),b)
     solver=cp_model.CpSolver();solver.parameters.max_time_in_seconds=float(pedido.get('segundos',5));solver.parameters.num_search_workers=1
     status=solver.solve(model)
     if status not in (cp_model.OPTIMAL,cp_model.FEASIBLE):
@@ -64,10 +72,22 @@ def resolver(pedido):
         use=[xx+ww/2,yy-u/2] if not rot else [xx+ww+u/2,yy+hh/2]
         items.append({'id':o['id'],'x_m':(xx+ww/2)/100,'y_m':(yy+hh/2)/100,'giro':90 if rot else 0,
                       'dimensoes_cm':o['dimensoes_cm'],'uso_frente_cm':u,'ponto_uso_cm':use})
-    return {'ok':True,'estado':solver.status_name(status),'solver':'OR-Tools '+ortools.__version__,
+    resultado={'ok':True,'estado':solver.status_name(status),'solver':'OR-Tools '+ortools.__version__,
         'dimensoes_cm':[solver.value(W),solver.value(H)],'area_m2':solver.value(area)/10000,'objetos':items,
         'otimo_no_modelo':status==cp_model.OPTIMAL,'nao_verificado':['circulacao e geometria real exigem verificar',
         'otimo apenas para retangulos, orientacoes e areas de uso modeladas; nao e minimo global arquitetonico']}
+    from .espaco2d import avaliar
+    obstaculos=list(pedido.get('obstaculos',[]))
+    for o in items:
+        w,d,h=o['dimensoes_cm']
+        obstaculos.append({'id':o['id'],'x':o['x_m']*100,'y':o['y_m']*100,'giro':o['giro'],
+            'largura':w,'profundidade':d,'altura':h})
+    check=avaliar({'dimensoes_cm':resultado['dimensoes_cm'],'objetos':obstaculos,'aberturas':pedido.get('aberturas',[])})
+    resultado['verificacao2d']=check
+    if not check['aprovado']:
+        resultado.update({'ok':False,'motivo':'filtro2d_reprovou','otimo_no_modelo':False})
+        resultado.pop('objetos')
+    return resultado
 
 
 def compartilhadas(planta):
@@ -90,6 +110,11 @@ def planejar(cena,pedido,editor):
         if med is None:return {'ok':False,'motivo':'medidas internas nao confirmadas'}
         q['dimensoes_cm']=[med['largura'],med['comprimento']]
         s=p['objetos'][sid]
+        from .espaco2d import na_planta
+        geometria=na_planta(p,sid)
+        ids={x['id'] for x in q['objetos']}
+        q['obstaculos']=[o for o in geometria['objetos'] if o['id'] not in ids]
+        q['aberturas']=geometria['aberturas']
         reservas=list(q.get('reservas',[]))
         for oid,o in p['objetos'].items():
             if o.get('sala')!=sid:continue

@@ -69,3 +69,8 @@ Exemplo `biblioteca.json`:
 FBX exige `blender: CAMINHO_DO_EXECUTAVEL`. Ambiente opcional `.venv-biblioteca`
 com requirements-biblioteca.txt. So indexa arquivos locais; nao e downloader.
 Nao altera o editor nem importa modelos. Nao decide SQL/RAG permanente.
+
+Filtro adicional, sem abrir a ponte: `python -m director planta2d cena quarto`.
+Depende de Shapely no mesmo ambiente opcional do solver. Usa apenas a planta;
+objetos externos nao entram. `planejar` reserva portas e janelas e submete o
+candidato ao filtro; uma reprovacao nao prova que inexiste outra distribuicao.
