@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m director *)",
+      "Bash(python -m director.lab *)",
+      "Bash(python -m director.dev *)",
+      "Bash(python -m unittest director.testes.*)",
+      "PowerShell(python -m director *)",
+      "PowerShell(python -m director.lab *)",
+      "PowerShell(python -m director.dev *)",
+      "PowerShell(python -m unittest director.testes.*)"
+    ]
+  }
+}

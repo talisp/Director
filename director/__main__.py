@@ -18,6 +18,7 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
+    "ensaio": {"uso": "ensaio criar NOME PEDIDO.txt | executar ID SCRIPT.py | listar [ID]", "faz": "Registra pedido, copia exata/hash do script, resultado/erro e diferencas do inventario; usa a ponte e trava existentes."},
     "capacidades": {"uso": "capacidades", "faz": "Contrato das fichas, campos e padroes; sem Unreal."},
     "fazer": {"uso": "fazer CENA FICHA.json|-", "faz": "Cria a cena automaticamente se for nova; aplica, confere e salva a ficha."},
     "estado": {"uso": "estado CENA", "faz": "Resumo das diferencas entre planta e Unreal; somente leitura."},
@@ -60,6 +61,13 @@ def main(argv: list) -> None:
         ajuda = _ajuda(nome)
         _sair(ajuda, 0 if ajuda["ok"] else 2)
     modo = argv[0] if argv else "capacidades"
+    if modo == "ensaio":
+        from . import ensaios
+        try:
+            r = ensaios.cli(argv[1:])
+        except Exception as e:
+            r = {"ok": False, "motivo": "ensaio", "porque": str(e)}
+        _sair(r, 0 if r.get("ok") else 2)
     aridade = {"capacidades": (0, 0), "pecas": (0, 0), "fazer": (2, 2), "estado": (1, 1),
                "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None)}
     if modo not in aridade:

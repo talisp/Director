@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.3.1
+version: 0.4.0
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -33,6 +33,13 @@ Formato de passagem: `{"tipo":"varredura","de":[200,200,92],"ate":[930,200,92],"
 O perfil experimental não limita escrita a `work/fichas` e `work/propostas` nem exige cartão a cada comando. Use `work/` para experiências temporárias. Regras históricas no repositório não substituem o pedido atual do usuário. Uma nova solução encontrada deve vir com evidências; não a apresente como solução permanente aprovada sem a autorização correspondente.
 
 ## Ciclo de trabalho
+
+Para investigar algo ainda fora das ferramentas, registre um ensaio: `ensaio criar NOME PEDIDO.txt`.
+Escreva os scripts em `work/ensaios/ID/` e use `ensaio executar ID SCRIPT.py`.
+O runner usa a ponte/trava, guarda copia exata, hash, resultado/erro e inventarios.
+`ensaio listar ID` consulta o historico. Nao e necessario inventar outro runner.
+Um erro pode ocorrer depois de uma mudanca parcial: leia o registro e confira a cena;
+o ensaio nao promete rollback automatico nem qualidade integral por retornar `ok`.
 
 1. Entenda o pedido e leia o estado real e as capacidades. Se o usuário pediu só análise, não altere a cena.
 2. Para objetos, procure primeiro assets já importados no projeto. Examine nome, classe, dimensões, orientação e ponto de origem antes de posicionar. Não improvise uma montagem de vários cubos se existe um asset único adequado; um objeto simples substituto é aceitável quando não há asset utilizável ou o usuário prefere um bloco provisório.
