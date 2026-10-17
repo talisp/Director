@@ -349,3 +349,12 @@ explicita dos envelopes medidos, nao uma planta vazia tratada como prova. Uma
 regiao conexa nao prova ligacao a porta ou a cada ponto de uso. Buffer circular
 aproximado; nao testa fisica, giro de folha ou NavMesh. A regra de recusar janela
 em parede compartilhada da #29 NAO foi incorporada nem marcada concluida.
+
+Hipotese adicional #10 apos leitura da #29: codigo instalado de
+NavModifierVolume.cpp confirma PostEditChangeProperty sem caso NavMeshResolution,
+e SetAreaClass chama UpdateActorData. Testada atualizacao nativa depois de definir
+HIGH, usando area Default neutra. Nao resolveu norte-sul (150 cm do destino),
+embora leste-oeste chegasse a 7,3 cm. A hipotese nao basta para explicar a falha.
+Configuracao restaurada e modificador de teste removido; nao declarar correcao
+regional. Cena final limpa reaberta apos o teste. Mantido registro da sondagem,
+sem insistir na mesma hipotese sem evidencia nova.

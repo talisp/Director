@@ -968,6 +968,9 @@ def nav_config(acao='diagnosticar',celula_cm=5.0,altura_cm=2.0,regiao=None,escop
             a.set_actor_scale3d(_vec([v/100 for v in ext]))
             a.set_editor_property('area_class',None)
             a.set_editor_property('nav_mesh_resolution',U.NavigationDataResolution.HIGH)
+            # PostEditChangeProperty nao atualiza dados ao mudar NavMeshResolution
+            # em 5.8. SetAreaClass chama UpdateActorData depois do perfil definido.
+            a.set_area_class(U.NavArea_Default)
             anterior['criados'].append(a.get_path_name())
     nav=U.NavigationSystemV1.get_navigation_system(_mundo_editor())
     for a in _eas().get_all_level_actors():
