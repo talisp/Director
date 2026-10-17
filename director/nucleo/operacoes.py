@@ -515,7 +515,7 @@ def conferir(planta: dict, final: bool = True) -> None:
         mx = (abs(o["largura"] * math.cos(g)) + abs(o["profundidade"] * math.sin(g))) / 2
         my = (abs(o["largura"] * math.sin(g)) + abs(o["profundidade"] * math.cos(g))) / 2
         folga = 0 if o["tipo"]=="asset" else FOLGA_MOVEL
-        if (o["x"] - mx < s["x"] + folga - 1e-6 or o["x"] + mx > s["x"] + s["largura"] - folga + 1e-6
+        if final and (o["x"] - mx < s["x"] + folga - 1e-6 or o["x"] + mx > s["x"] + s["largura"] - folga + 1e-6
                 or o["y"] - my < s["y"] + folga - 1e-6 or o["y"] + my > s["y"] + s["comprimento"] - folga + 1e-6):
             raise Invalida(f"{oid} ficaria fora de {o['sala']} (ou encostada na parede)")
         if o["tipo"]=="asset":

@@ -8,6 +8,11 @@ from . import config as C,relatorio
 from .nucleo import planta as PL,operacoes as OP
 
 
+# Raio do planejamento: o da NavMesh do laboratorio (35 cm) + 1, nao o da capsula (34): ao vivo, um ponto a 34 cm
+# de um movel ficava fora da malha e o boneco parava 15 cm antes.
+RAIO_CM=36
+
+
 def _pegadas(itens,pedido):
     obstaculos=list(pedido.get('obstaculos',[]))
     for o in itens:
@@ -120,7 +125,7 @@ def resolver(pedido,filtro=True):
             if a['tipo']=='porta':
                 # Primeira tentativa: livre o quadrado (2 x raio) logo apos a ponta da folha aberta, por onde o
                 # boneco contorna a folha. Se nao der, a busca segue sem essa pista (so com o filtro 2D).
-                L=math.ceil(a['largura']);R=int(pedido.get('raio_cm',34))
+                L=math.ceil(a['largura']);R=int(pedido.get('raio_cm',RAIO_CM))
                 i0,f0=math.floor(a['posicao']-a['largura']/2),math.ceil(a['posicao']+a['largura']/2)
                 qd={'oeste':(L,f0-R,2*R,2*R),'leste':(W-L-2*R,i0-R,2*R,2*R),
                     'sul':(i0-R,L,2*R,2*R),'norte':(f0-R,H-L-2*R,2*R,2*R)}[a['parede']]
@@ -152,10 +157,10 @@ def resolver(pedido,filtro=True):
             xx,yy,ww,hh=[solver.value(v) for v in (x,y,w,h)];k=[solver.value(b) for b in r].index(1)
             j=(k+2)%4 if o.get('na_frente_de') else k
             # Ponto onde o boneco fica: meio da area de uso, mas a pelo menos raio+2 cm do movel (a capsula cabe ali).
-            e=max(u/2,int(pedido.get('raio_cm',34))+2)
+            e=max(u/2,int(pedido.get('raio_cm',RAIO_CM))+2)
             use=[[xx+ww/2,yy-e],[xx+ww+e,yy+hh/2],[xx+ww/2,yy+hh+e],[xx-e,yy+hh/2]][j]
             # Alcance: o centro da capsula chega a ate raio+20 cm da frente, mesmo com area de uso rasa.
-            a=max(u,int(pedido.get('raio_cm',34))+20)
+            a=max(u,int(pedido.get('raio_cm',RAIO_CM))+20)
             caixa=[[xx,yy-a,xx+ww,yy],[xx+ww,yy,xx+ww+a,yy+hh],[xx,yy+hh,xx+ww,yy+hh+a],[xx-a,yy,xx,yy+hh]][j]
             items.append({'id':o['id'],'x_m':(xx+ww/2)/100,'y_m':(yy+hh/2)/100,'giro':90*k,
                           'dimensoes_cm':o['dimensoes_cm'],'uso_frente_cm':u,'ponto_uso_cm':use,'zona_uso_cm':caixa,
@@ -170,7 +175,7 @@ def resolver(pedido,filtro=True):
         from .espaco2d import avaliar
         # A cadeira e obstaculo; quem usa a mesa chega por tras da cadeira, entao a mesa nao e alvo proprio.
         com_cadeira={i['na_frente_de'] for i in items if i.get('na_frente_de')}
-        check=avaliar({'dimensoes_cm':dims,'objetos':_pegadas(items,pedido),'aberturas':pedido.get('aberturas',[]),
+        check=avaliar({'dimensoes_cm':dims,'raio_cm':int(pedido.get('raio_cm',RAIO_CM)),'objetos':_pegadas(items,pedido),'aberturas':pedido.get('aberturas',[]),
                        'alvos':[{'id':i['id'],'caixa':i['zona_uso_cm']} for i in items if i['uso_frente_cm']>0 and i['id'] not in com_cadeira]})
         resultado['verificacao2d']=check
         if check['aprovado']:

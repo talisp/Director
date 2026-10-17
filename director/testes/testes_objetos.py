@@ -111,3 +111,13 @@ class Rearrumar(unittest.TestCase):
             o=PL.carregar(tmp,'teste')['objetos'];self.assertEqual((o['a']['y'],o['b']['y']),(320,80))
             # no fim, um em cima do outro continua recusado
             self.assertFalse(ok({'operacoes':[{'operacao':'mudar','id':'a','y_m':.8}]})['ok'])
+
+
+class EncolherERearrumar(unittest.TestCase):
+    def test_encolher_a_sala_e_mover_o_movel_na_mesma_ficha(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ed=EditorFalso();ok=lambda f:X.executar('teste',f,ed,tmp,pausa=lambda _:None)
+            ok(ficha(1));ok(_reg('a',_asset(350,350,1,60,60,50)))
+            r=ok({'operacoes':[{'operacao':'mudar_sala','id':'sala1','largura_m':3,'comprimento_m':3},{'operacao':'mudar','id':'a','x_m':2.7,'y_m':2.7}]})
+            self.assertTrue(r['ok'],r)
+            self.assertFalse(ok({'operacoes':[{'operacao':'mudar_sala','id':'sala1','largura_m':2.5}]})['ok'])  # no fim, fora: recusa
