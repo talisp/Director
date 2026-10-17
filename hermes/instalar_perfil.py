@@ -55,6 +55,9 @@ def main(argv: list) -> int:
             shutil.rmtree(para)
         shutil.copytree(de, para, ignore=shutil.ignore_patterns("__pycache__"))
         print(f"complemento copiado: {nome}")
+    # O `hermes chat` e o aplicativo entregam ao gateway compartilhado, que guarda skill e plugin na memoria
+    # (17/10: a guarda nova so funcionou depois disto).
+    print("reinicie o gateway para valer: hermes gateway restart")
     return 0
 
 
