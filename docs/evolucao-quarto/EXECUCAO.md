@@ -358,3 +358,8 @@ embora leste-oeste chegasse a 7,3 cm. A hipotese nao basta para explicar a falha
 Configuracao restaurada e modificador de teste removido; nao declarar correcao
 regional. Cena final limpa reaberta apos o teste. Mantido registro da sondagem,
 sem insistir na mesma hipotese sem evidencia nova.
+
+Ultima verificacao: 70 testes Director com ambiente opcional passam; no Python
+comum 64 passam e 6 opcionais sao pulados. Mais 4 testes Hermes passam. Ensaio
+regional com celula 1 cm tambem falhou norte-sul, apesar de divisor de 19, com
+3,197 s ate pronta; restaurado. Entrega resumida por issue: ENTREGA.md.

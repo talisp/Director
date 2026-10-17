@@ -24,7 +24,7 @@ def inspecionar(arquivo,blender=None):
         'triangulos':sum(len(cena.geometry[cena.graph[n][1]].faces) for n in cena.graph.nodes_geometry),
         'materiais':len({id(x) for x in materiais if x is not None}),
         'unidades':'glTF metros convertidos para cm, XYZ de saida com Z para cima; conferir escala artistica',
-        'backend':'trimesh '+trimesh.__version__,'dependencias':'carregadas apenas do disco; GLB da amostra tem recursos embutidos'}
+        'backend':'trimesh '+trimesh.__version__,'dependencias':'leitura local pelo loader; completude de dependencias nao certificada'}
 
 
 def indexar(pedido):
