@@ -20,3 +20,14 @@ class CpuPlay(unittest.TestCase):
             self.assertTrue(f(True)['aplicado']);self.assertFalse(cfg.v)
             self.assertTrue(f(False)['restaurado']);self.assertEqual(cfg.v,old)
         self.assertFalse(self.funcao(Cfg(None))(True)['aplicado'])
+
+    def test_falha_ao_iniciar_play_restaura_controle(self):
+        src=Path('director/editor/director_tools/ops.py').read_text(encoding='utf-8')
+        f=next(n for n in ast.parse(src).body if isinstance(n,ast.FunctionDef) and n.name=='play_start')
+        f.decorator_list=[];mudancas=[]
+        class Editor:
+            def editor_play_simulate(self):raise RuntimeError('Play indisponivel')
+        env={'_mundo_jogo':lambda:None,'_freio_de_fundo':lambda v:mudancas.append(v),'_les':lambda:Editor()}
+        exec(compile(ast.Module(body=[f],type_ignores=[]),'<play_start>','exec'),env)
+        with self.assertRaises(RuntimeError):env['play_start']()
+        self.assertEqual(mudancas,[True,False])

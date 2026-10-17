@@ -15,3 +15,12 @@ class Planejamento(unittest.TestCase):
         q={'minimo_cm':[80,80],'maximo_cm':[250,250],'objetos':[{'id':'a','dimensoes_cm':[100,60,80],'uso_frente_cm':70}], 'reservas':[[0.5,0.5,10.2,10.2]],'segundos':1}
         r=resolver(q);self.assertTrue(r['ok']);self.assertTrue(r['otimo_no_modelo'])
         self.assertLess(r['area_m2'],6.25)
+
+class Paredes(unittest.TestCase):
+    def test_compartilhamento_planejado_e_ausencia(self):
+        from director.planejamento import compartilhadas
+        a={'tipo':'sala','x':0,'y':0,'largura':400,'comprimento':400,'parede':15}
+        b={**a,'x':415,'largura':200}
+        d={'objetos':{'a':a,'b':b}}
+        self.assertEqual(compartilhadas(d)[0]['comprimento_planejado_cm'],400)
+        b['x']=500;self.assertEqual(compartilhadas(d),[])

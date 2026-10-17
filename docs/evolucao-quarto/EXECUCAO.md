@@ -261,3 +261,52 @@ Play medido: anterior=true -> atual=false com aplicado=true; stop atual=true e
 restaurado=true. Sem SaveConfig; mudanca de sessao. Falha eventual retorna
 aplicado=false e erro especifico sem mascarar resultado do Play. Testes cobrem
 valores anteriores true/false e propriedade indisponivel; nao medem consumo CPU.
+
+## Validacao integrada e entrega
+
+Na copia independente `auditoria_quartos` da revisao 17 (nao no level original):
+#25 reprovou cama 24 cm e escrivaninha 15 cm para fora da parede leste, com raios
+confirmando ambos. Quarto Sol aprovado com cinco corpos fisicos estaveis e quatro
+caminhos completos; boneco a 7,3 / 7,6 / 7,1 / 7,5 cm dos alvos (tolerancia 10).
+Inventario antes/depois: zero criados, removidos ou alterados. A varredura agora
+segue segmentos do caminho nativo: uma linha reta bloqueada nao reprova um
+trajeto valido com curva. Caso negativo de segmento bloqueado tambem coberto.
+Foto opcional gerada e inspecionada: recorte pequeno, sem prova visual de medidas;
+as provas de contencao e circulacao sao as consultas do motor. Nao testado sentar,
+abrir guarda-roupa ou deitar. A associacao dos proxies antigos aos quartos segue
+inferida (eram objetos fora da planta); objetos novos podem ser registrados.
+
+Teste final humano preparado em `hermes_quarto_final`, rev14, sem quarto criado.
+Busca cadeira retornou primeiro Cadeira_mesa1 (DynamicMeshActor), depois asset do
+projeto, depois chairDesk offline. Estado planta/editor sem diferencas. SHA256 do
+snapshot confere; mapa e planta originais `sala` mantiveram os hashes do inicio
+desta validacao. Pedido literal e instrucoes estao na pasta de ensaio final.
+
+A skill fonte foi atualizada no repositorio. Nao foi reinstalada no perfil externo
+nem iniciada nova conversa Hermes/Codex/Claude: nao comprovar #22 nem carregamento
+da skill nova com esta sessao. Nenhuma configuracao global foi alterada.
+Comentario original de reproducao #28 anexado a pedido do prompt:
+https://github.com/talisp/Director/issues/28#issuecomment-6237793572 .
+Sem push, PR, merge ou fechamento de issue. Branches locais sao empilhados: a
+validacao integrada depende das etapas anteriores. Separacao de PRs devera
+preservar essa dependencia e excluir as cenas locais de ensaio e mudancas
+preexistentes. Issues adicionadas depois foram ignoradas conforme solicitado.
+
+Status honesto: #22 pendente de sessoes novas; #10 pendente do refinamento
+regional e benchmark CPU/memoria/FPS; #12 ainda e proposta retangular e nao uma
+prova arquitetonica completa. #27 e somente seis modelos offline; nao e acervo
+integral nem banco definitivo. Os demais resultados devem ser lidos com os limites
+acima; testes falsos nao substituem os ensaios registrados no Unreal.
+
+Exemplos dos comandos novos: COMANDOS.md. Evidencias extensas ficam em work,
+fora do Git; o manifesto de scripts registra tambem helpers do cliente que nao
+rodaram pelo executor Python do editor, sem inventar duracao retroativa.
+
+Validacao final automatizada: 66 testes Director passaram no ambiente com solver;
+no Python comum, 64 passaram e dois do solver opcional foram pulados. Quatro
+testes do complemento Hermes passaram. Compilacao Python e diff --check sem erros.
+Os testes de falha incluem erro depois de iniciar ajuste de navegacao com backup
+persistido e erro ao pedir Play com restauracao do controle CPU (simulados).
+Todos os scripts temporarios novos foram preservados na pasta oficial; manifesto
+lista a versao atual e as execucoes pelo editor, distinguindo helpers de cliente.
+As versoes do ensaio antigo tambem continuam em work/sol_20261017, sem exclusao.

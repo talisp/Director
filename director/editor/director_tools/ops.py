@@ -389,7 +389,7 @@ def catalog_snapshot():
         atores.append(d)
     assets=[]
     for a in U.AssetRegistryHelpers.get_asset_registry().get_assets_by_path('/Game',recursive=True):
-        assets.append({'nome':str(a.asset_name),'caminho':str(a.package_name),'classe':str(a.asset_class_path)})
+        assets.append({'nome':str(a.asset_name),'caminho':str(a.package_name),'classe':str(a.asset_class_path.asset_name)})
     return {'level':_level(),'atores':atores,'assets':assets,'motor':U.SystemLibrary.get_engine_version()}
 
 
@@ -550,6 +550,7 @@ def object_model(asset: str = "", ator: str = "", partes: list = None):
                 mesh=U.load_asset(p.get('asset','/Engine/BasicShapes/Cube'))
                 m=_modelo_mesh(mesh)
                 size=p['tamanho_cm'];offset=p['centro_cm']
+                if len(size)!=3 or len(offset)!=3 or any(not math.isfinite(float(v)) for v in size+offset) or min(size)<=0:raise ValueError('parte requer tamanho positivo e centro finito em tres eixos')
                 escala=[float(size[j])/m['tamanho'][j] for j in range(3)]
                 loc=[float(offset[j])-m['centro'][j]*escala[j] for j in range(3)]
                 a=_eas().spawn_actor_from_class(U.StaticMeshActor,_vec(loc),U.Rotator())
@@ -574,6 +575,7 @@ def object_model(asset: str = "", ator: str = "", partes: list = None):
         if not cs:
             dinamicas=a.get_components_by_class(U.DynamicMeshComponent)
             if len(dinamicas)!=1: raise ValueError('ator precisa de malha estatica ou uma malha dinamica')
+            if abs(a.get_actor_rotation().pitch)>.01 or abs(a.get_actor_rotation().roll)>.01:raise ValueError('malha dinamica inclinada requer transformacao incorporada')
             c=dinamicas[0]
             import uuid
             caminho=PASTA+'/Objetos/SM_Dinamico_'+uuid.uuid4().hex[:12]
@@ -717,10 +719,14 @@ def play_start(simulate: bool = True, full_speed: bool = True):
     if _mundo_jogo() is not None:
         raise RuntimeError("ja_em_play")
     freio = _freio_de_fundo(True) if full_speed else None
-    if simulate:
-        _les().editor_play_simulate()
-    else:
-        _les().editor_request_begin_play()
+    try:
+        if simulate:
+            _les().editor_play_simulate()
+        else:
+            _les().editor_request_begin_play()
+    except Exception:
+        if full_speed:_freio_de_fundo(False)
+        raise
     return {"modo": "simulate" if simulate else "pie", "controle_cpu":freio,
             "economia_de_cpu_ligada":freio.get('atual') if freio else None}
 

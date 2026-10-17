@@ -154,8 +154,16 @@ def verificar(cena, pedido, editor, raiz=None):
         r=consultas.medir(cena,{"consultas":qs},editor,raiz)
         path=r["medidas"][1]
         pts=path.get("pontos",[])
+        passagem=r['medidas'][0]
+        linha_direta=passagem
+        if path.get('completo') and len(pts)>1:
+            segmentos=[{'tipo':'varredura','de':[a[0],a[1],a[2]+meia+2],
+                'ate':[b[0],b[1],b[2]+meia+2],'raio':raio,'meia_altura':meia}
+                for a,b in zip(pts,pts[1:])]
+            medidas=consultas.medir(cena,{'consultas':segmentos},editor,raiz)['medidas']
+            passagem={'livre':all(m.get('livre') for m in medidas),'segmentos':medidas,'metodo':'capsula ao longo do caminho nativo'}
         chegou_ao_destino=bool(pts) and math.dist(pts[-1][:2],ate[:2])<=rota.get("tolerancia_cm",10)
-        circulacao.append({"nome":rota.get("nome"),"passagem":r["medidas"][0],"caminho":path,
+        circulacao.append({"nome":rota.get("nome"),"passagem":passagem,"linha_direta":linha_direta,"caminho":path,
             "destino_na_malha":chegou_ao_destino,"personagem":"nao_executado"})
     rotas_ok=all(r["passagem"].get("livre") and r["caminho"].get("completo") and r["destino_na_malha"] for r in circulacao)
     resposta={"ok":True,"aprovado":not problemas and not pares and bool(rows) and rotas_ok,
@@ -171,6 +179,8 @@ def verificar(cena, pedido, editor, raiz=None):
     if pedido.get("simular"):
         teste=testar_play(editor,pedido.get("rotas",[]),[r["ator"] for r in rows],segundos=pedido.get("segundos",3))
         resposta["play"]=teste
+        for rota,teste_rota in zip(resposta['circulacao'],teste['rotas']):
+            rota['personagem']={'executado':True,'chegou':teste_rota['chegou'],'distancia_cm':teste_rota['final']['distancia_chao']}
         resposta["aprovado"] &= all(r["chegou"] for r in teste["rotas"]) and all(r["estavel"] and r["fisica"] for r in teste["fisica"])
         resposta["nao_verificado"][1]="estabilidade medida em Play; apoio ainda requer raio de piso"
     if pedido.get("baseline"):

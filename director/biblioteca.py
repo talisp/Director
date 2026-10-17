@@ -20,7 +20,7 @@ def inspecionar(arquivo,blender=None):
     if cena.bounds is None:raise ValueError('modelo sem geometria')
     ext=cena.extents;cent=cena.bounds.mean(axis=0)
     materiais=[getattr(g.visual,'material',None) for g in cena.geometry.values()]
-    return {'dimensoes_cm':[float(ext[i])*100 for i in (0,2,1)],'centro_cm':[float(cent[i])*100 for i in (0,2,1)],
+    return {'dimensoes_cm':[float(ext[i])*100 for i in (0,2,1)],'centro_cm':[float(cent[0])*100,-float(cent[2])*100,float(cent[1])*100],
         'triangulos':sum(len(cena.geometry[cena.graph[n][1]].faces) for n in cena.graph.nodes_geometry),
         'materiais':len({id(x) for x in materiais if x is not None}),
         'unidades':'glTF metros convertidos para cm, XYZ de saida com Z para cima; conferir escala artistica',

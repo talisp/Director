@@ -11,7 +11,7 @@ from .nucleo import planta as PL
 SINONIMOS={
  'cadeira':['chair','seat','stool','assento','banco'],
  'cama':['bed','singlebed','bedsingle','solteiro'],
- 'criado_mudo':['nightstand','bedside','cabinetbed','cabeceira'],
+ 'criado_mudo':['nightstand','bedside','cabinetbed','cabinet bed','cabeceira'],
  'guarda_roupa':['wardrobe','closet','armario','cabinet','guardaroupa'],
  'escrivaninha':['desk','estudos','study'],
  'mesa':['table'],'sofa':['couch','armchair','poltrona','sofa'],
@@ -74,7 +74,7 @@ def consultar(dados,pedido):
         dims=a.get('dimensoes_cm')
         if pedido.get('maximo_cm'):
             if not dims or any(d>lim for d,lim in zip(dims,pedido['maximo_cm'])):continue
-        resultados.append((a['origem']!='cena',-score,a['nome'],a))
+        resultados.append(({'cena':0,'projeto':1,'offline':2}.get(a['origem'],3),-score,a['nome'],a))
     resultados.sort(key=lambda x:x[:3]);lim=min(int(pedido.get('limite',8)),50)
     return {'ok':True,'resultados':[x[3] for x in resultados[:lim]],'total':len(resultados),'limitado':len(resultados)>lim,
         'pesquisado':{'cena':dados.get('level'),'origens':sorted({a['origem'] for a in dados['itens']})},
