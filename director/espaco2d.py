@@ -51,12 +51,30 @@ def avaliar(pedido):
             b=inter.bounds;eixo=1 if a['parede'] in ('sul','norte') else 0
             violacoes.append({'objeto':o['id'],'abertura':a['id'],'tipo':'area_livre_'+a['tipo'],
                 'invasao_cm':round(b[eixo+2]-b[eixo],3),'area_cm2':round(inter.area,3)})
-    return {'ok':True,'aprovado':not violacoes and n==1,'raio_cm':raio,'regioes':n,
+    # Acesso: da porta tem de dar para chegar a cada area de uso pedida. Bolsao sem alvo nao reprova.
+    alvos=list(pedido.get('alvos',[]))
+    portas=[a for a in pedido.get('aberturas',[]) if a['tipo']=='porta']
+    acessos=[]
+    def regiao_de(caixa):
+        alvo=box(*caixa);toca=[i for i,r in enumerate(areas) if r.intersects(alvo) and r.intersection(alvo).area>1]
+        return toca
+    if alvos and portas:
+        entrada=set()
+        for a in portas:entrada.update(regiao_de(zona(a,W,H).bounds))
+        for t in alvos:
+            toca=regiao_de(t['caixa'])
+            acessos.append({'id':t['id'],'alcancado':bool(entrada.intersection(toca))})
+        aprovado=not violacoes and bool(entrada) and all(a['alcancado'] for a in acessos)
+        criterio='porta alcanca cada area de uso; bolsoes sem alvo nao reprovam'
+    else:
+        aprovado=not violacoes and n==1
+        criterio='uma unica regiao livre (sem alvos ou sem porta informados)'
+    return {'ok':True,'aprovado':aprovado,'criterio':criterio,'acessos':acessos,'raio_cm':raio,'regioes':n,
         'proporcao_maior_regiao':round(max((p.area for p in areas),default=0)/sum((p.area for p in areas),0),6) if areas else 0,
         'area_livre_cm2':round(walk.area,3),'bloqueadores_individuais':bloqueios,'violacoes':violacoes,
         'segundos':round(time.monotonic()-t0,6),'backend':'Shapely '+shapely.__version__,
         'nao_verificado':['somente pegadas e intervalos de altura informados; atores fora da planta nao sao incluidos',
-            'uma regiao conexa nao prova acesso desde a porta nem a cada ponto de uso',
+            'acesso medido so ate as areas de uso informadas; sem alvos, uma regiao conexa nao prova acesso desde a porta',
             'buffer circular aproximado, sem interacao de porta, fisica ou NavMesh; requer verificar no motor']}
 
 

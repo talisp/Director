@@ -31,3 +31,20 @@ class Espaco2d(unittest.TestCase):
         r=avaliar(q)
         self.assertTrue(r['aprovado'],r);self.assertEqual(r['regioes'],1)
         self.assertEqual(r['proporcao_maior_regiao'],1)
+
+
+@unittest.skipUnless(importlib.util.find_spec('shapely'),'Shapely opcional')
+class Acesso(unittest.TestCase):
+    def objeto(self,oid,x,y,w,d,h=180):return {'id':oid,'x':x,'y':y,'largura':w,'profundidade':d,'altura':h}
+    PORTA=[{'id':'p','tipo':'porta','parede':'oeste','posicao':200,'largura':90,'altura':210}]
+    def test_bolsao_sem_alvo_nao_reprova_e_alvo_no_bolsao_reprova(self):
+        # Parede interna de armarios de x=250 ate o leste: o canto nordeste vira bolsao.
+        objs=[self.objeto('g1',300,300,40,200),self.objeto('g2',350,210,100,40)]
+        q={'dimensoes_cm':[400,400],'objetos':objs,'aberturas':self.PORTA,'alvos':[{'id':'g2','caixa':[300,130,400,190]}]}
+        r=avaliar(q);self.assertGreater(r['regioes'],1);self.assertTrue(r['aprovado'],r)
+        q['alvos'].append({'id':'canto','caixa':[330,330,400,400]})
+        r=avaliar(q);self.assertFalse(r['aprovado'])
+        self.assertEqual([a['id'] for a in r['acessos'] if not a['alcancado']],['canto'])
+    def test_sem_porta_mantem_regra_antiga(self):
+        q={'dimensoes_cm':[400,400],'objetos':[self.objeto('cama',200,200,340,90)],'alvos':[{'id':'x','caixa':[0,0,50,50]}]}
+        self.assertFalse(avaliar(q)['aprovado'])

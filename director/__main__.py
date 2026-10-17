@@ -119,6 +119,15 @@ def main(argv: list) -> None:
         entrada = _ler_json(argv[2]) if modo in ("fazer", "medir", "verificar", "objeto", "planejar") else None
     except (ValueError, OSError) as e:
         _sair({"ok": False, "motivo": "entrada_invalida", "porque": str(e), "tocou_na_cena": False}, 2)
+    if modo == "planejar" and isinstance(entrada, dict) and (not entrada.get("sala") or any(
+            k in entrada for k in ("dimensoes_cm", "minimo_cm", "maximo_cm"))):
+        # Tamanho hipotetico: so a planta e o solver, sem abrir a ponte nem tocar na cena.
+        from . import planejamento, veredito
+        try:
+            res = planejamento.planejar(argv[1], entrada, None)
+        except Exception as e:
+            res = {"ok": False, "motivo": "erro", "porque": f"{type(e).__name__}: {e}"}
+        _sair(veredito.com_veredito(modo, res), 0 if res.get("ok") else 2)
     from . import ponte  # só aqui: `capacidades` roda sem o Unreal
     pontos = os.path.join(C.WORK, "restauracao")
     try:
@@ -159,9 +168,16 @@ def main(argv: list) -> None:
                 res = executor.executar(argv[1], entrada, p, C.CENAS, C.LAB_DIR, pontos)
             else:
                 res = executor.incorporar(argv[1], p, C.CENAS, C.LAB_DIR, pontos, ids=set(argv[2:]) or None)
+            if modo in ("planejar", "verificar"):
+                from . import veredito
+                res = veredito.com_veredito(modo, res)
             _sair(res, 0 if res.get("ok", True) else 2)
     except Exception as e:  # erro estruturado para o agente, sem confundir com sucesso ou com cena intacta
-        _sair({"ok": False, "motivo": "erro", "porque": f"{type(e).__name__}: {e}"}, 2)
+        res = {"ok": False, "motivo": "erro", "porque": f"{type(e).__name__}: {e}"}
+        if modo in ("planejar", "verificar"):
+            from . import veredito
+            res = veredito.com_veredito(modo, res)
+        _sair(res, 2)
 
 
 if __name__ == "__main__":
