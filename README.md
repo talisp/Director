@@ -1,12 +1,18 @@
 # Director
 
-**Builds and edits functional 3D scenes in Unreal Engine from small structured requests, so that a small or local LLM only has to fill in parameters.**
+**Builds and edits functional 3D scenes in Unreal Engine through conversation, with a small or local LLM planning, composing operations, inspecting the result and investigating alternatives.**
 
 The LLM (or a person) writes a *ficha*: a short JSON with an operation and a few fields ("create a 4 × 4 m room", "move the door to the opposite wall"). A deterministic core, with no LLM inside, validates it, plans the smallest change, asks Unreal to do it with Unreal's own automation, measures the result and saves. If anything fails, the scene goes back to what it was.
 
 > **Director is the successor of [unreal-local-director](https://github.com/talisp/unreal-local-director), now called "Antigo Director" (Old Director), which is discontinued.** An explanation of why will come later.
 
 ## Status: early, first delivery only
+
+**17 Oct 2026 — agent interface:** `python -m director --help` lists the commands without connecting to Unreal. `observar CENA [ID ...]` separates the desired plan from measured actor bounds, `medir CENA CONSULTAS.json` exposes native collision/navigation queries, and `assets TERMO ...` searches assets already in `/Game`. Creating a new scene is automatic through `fazer`. JSON output is compact ASCII to avoid corrupted accents in Windows terminal transports.
+
+Navigation readiness now checks the engine's loading/build lock as well as build activity. It is reported separately from connectivity: only a complete path query validates a specific route. No changes to the construction representation or rollback mechanism are required by this increment.
+
+Verified on 17 Oct: 49 core/interface tests and 4 Hermes guard tests passed. Native queries measured a 150 cm corridor, a clear capsule sweep, a blocking wall and a complete route after rebuilding navigation. Reopening that scene could leave navigation without a usable route until a native rebuild; a separate north–south doorway case still returned a partial path. These navigation issues are not claimed fixed. The original lab scene was restored and its actor inventory preserved. The new interface has not yet been benchmarked in a fresh end-to-end Qwen run.
 
 Measured on 13 Oct 2026, Unreal Engine 5.8.3, in a separate lab project ([numbers](docs/entrega1/README.md)):
 
@@ -23,9 +29,9 @@ Also measured: the door blocks when closed and frees the way when open; an Unrea
 **Changes on 14 Oct 2026** (after the first contact with the local LLM):
 - **Rooms of any size** (fixes [#1](https://github.com/talisp/Director/issues/1)): the 2–20 m limit was removed; a room only needs sizes above zero (a 1 × 3 m corridor and a 0.6 × 0.5 m closet were built in Unreal).
 - **Rooms side by side share one wall** (fixes [#2](https://github.com/talisp/Director/issues/2)): placed 0.15 m apart (one wall), two rooms get a single 15 cm wall instead of two, and a door in it is the passage from one room to the other. A door or window that would open against another wall is refused. Tested without Unreal (53 tests; existing scenes unchanged); **not yet built in Unreal**.
-- **Approval card in Hermes** (fixes [#3](https://github.com/talisp/Director/issues/3)): a Hermes plugin (`hermes/plugins/director-guarda/`) stops every command that could change Unreal and shows the person what the ficha will do; it only runs if the person approves. The LLM can only write files in `work/fichas/` and `work/propostas/`.
+- **Historical approval policy** ([#3](https://github.com/talisp/Director/issues/3), superseded on 16 Oct): the experimental Hermes profile now executes authorized tasks without a card per command. `director-guarda` only repairs malformed clarification arguments; the former directory restriction was removed.
 - **Questions reach the person** (fixes [#5](https://github.com/talisp/Director/issues/5)): the same plugin repairs the question list when the model sends it as text (with a stray `}` or a missing `]`); the 15 questions recorded in real conversations pass Hermes' own validation.
-- Operator rules: planning is not doing; a question or criticism is not an order; authorization is the approval card, never loose text.
+- Operator rules: discussion alone does not authorize scene changes; an execution request authorizes its necessary operations. Experiments are allowed in the lab, with evidence before adopting new permanent solutions.
 
 **Not there yet:** a measured LLM filling the fichas reliably; characters with a body and animation; real-looking parts (everything is cubes and cylinders); Smart Objects; sequences, camera and video; an opening without a door between rooms.
 

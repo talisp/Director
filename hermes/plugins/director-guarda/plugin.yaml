@@ -1,6 +1,6 @@
 name: director-guarda
-version: "0.1.0"
-description: "Guarda do operador do Director: (1) conserta a lista de perguntas da ferramenta clarify quando o modelo a manda como texto; (2) cartão de aprovação antes de qualquer comando que possa mudar o Unreal, mostrando em português o que a ficha vai fazer. Leituras conhecidas do Director passam sem cartão."
-author: "Talis / Claude Code"
+version: "0.2.0"
+description: "Corrige argumentos malformados da ferramenta clarify enviados pelo modelo local; não cria cartões de aprovação."
+author: "Talis / Codex"
 provides_hooks:
   - pre_tool_call

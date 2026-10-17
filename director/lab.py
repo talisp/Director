@@ -174,4 +174,11 @@ def fechar(prazo_s: float = 120.0, descartar: bool = False) -> dict:
 if __name__ == "__main__":
     modo = sys.argv[1] if len(sys.argv) > 1 else "estado"
     acoes = {"criar": criar, "abrir": abrir, "fechar": fechar, "estado": estado, "fechar-descartando": lambda: fechar(descartar=True)}
-    print(json.dumps(acoes[modo](), ensure_ascii=False, indent=1))
+    if modo in ("--help", "-h", "ajuda"):
+        print(json.dumps({"uso": "python -m director.lab COMANDO", "comandos": list(acoes),
+                          "nota": "estado consulta; abrir inicia o laboratorio existente; criar prepara um projeto se ausente"}))
+    elif modo not in acoes:
+        print(json.dumps({"ok": False, "motivo": "uso_invalido", "comandos": list(acoes)}))
+        raise SystemExit(2)
+    else:
+        print(json.dumps(acoes[modo](), ensure_ascii=True, separators=(",", ":")))

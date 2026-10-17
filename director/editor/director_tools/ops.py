@@ -297,13 +297,20 @@ def _pontos(ator) -> dict:
 
 
 @op
-def inventory(variaveis: dict):
+def inventory(variaveis: dict, detalhes: bool = False):
     """Inventário do level aberto: os atores do Director (com identificador, tipo, classe, posição, parâmetros e
     pontos de uso) e, à parte, todos os outros atores (para conferir que não foram tocados)."""
     controlados, fora = {}, []
     for a in _eas().get_all_level_actors():
         oid, tipo = _etiquetas(a)
         d = _descrever(a)
+        if detalhes:
+            centro, extensao = a.get_actor_bounds(False, include_from_child_actors=True)
+            d["caixa"] = {"centro": _v(centro), "meia_extensao": _v(extensao)}
+            d["componentes"] = [
+                {"nome": str(c.get_name()), "classe": str(c.get_class().get_name()),
+                 "colisao": str(c.get_collision_enabled().name), "fisica": bool(c.is_simulating_physics())}
+                for c in a.get_components_by_class(U.PrimitiveComponent)]
         if not oid:
             if not d["classe"].split(".")[-1].startswith(IGNORAR):
                 fora.append(d)
@@ -318,6 +325,26 @@ def inventory(variaveis: dict):
         controlados[oid] = d
     return {"level": _level(), "controlados": controlados, "fora": sorted(fora, key=lambda x: x["caminho"]),
             "por_salvar": _sujos()}
+
+
+@op
+def assets_find(termos: list, limite: int = 20):
+    """Procura metadados em /Game, sem carregar assets nem consultar a biblioteca externa do Fab."""
+    if not isinstance(termos, list) or not termos or not all(isinstance(t, str) and t.strip() for t in termos):
+        raise ValueError("termos deve ser uma lista de textos nao vazios")
+    if isinstance(limite, bool) or not isinstance(limite, int) or not 1 <= limite <= 100:
+        raise ValueError("limite deve ser inteiro entre 1 e 100; refine a busca se houver mais resultados")
+    termos = [t.casefold().strip() for t in termos]
+    encontrados = []
+    for a in U.AssetRegistryHelpers.get_asset_registry().get_assets_by_path("/Game", recursive=True):
+        nome, pacote = str(a.asset_name), str(a.package_name)
+        if any(t in (nome + " " + pacote).casefold() for t in termos):
+            classe = a.asset_class_path
+            encontrados.append({"nome": nome, "pacote": pacote,
+                                 "classe": str(classe.package_name) + "." + str(classe.asset_name)})
+    encontrados.sort(key=lambda a: a["pacote"])
+    return {"assets": encontrados[:limite], "total": len(encontrados), "limitado": len(encontrados) > limite,
+            "escopo": "/Game; nomes e caminhos, nao busca semantica nem biblioteca do Fab"}
 
 
 def _uma(a: dict, idx: dict) -> str:
@@ -436,9 +463,13 @@ def measure(consultas: list, mundo: str = "editor"):
                               "comprimento": round(float(p.get_path_length()), 1), "pontos": pts})
         elif t == "nav":
             nav = U.NavigationSystemV1.get_navigation_system(w)
-            malhas = [str(a.get_actor_label()) for a in _eas().get_all_level_actors()
-                      if a.get_class().get_name().startswith("RecastNavMesh")] if mundo != "jogo" else []
-            saida.append({"construindo": bool(nav.is_navigation_being_built(w)) if nav else None, "malhas": malhas})
+            atores = U.GameplayStatics.get_all_actors_of_class(w, U.Actor) if mundo == "jogo" else _eas().get_all_level_actors()
+            malhas = [str(a.get_actor_label()) for a in atores if a.get_class().get_name().startswith("RecastNavMesh")]
+            ocupado = bool(U.NavigationSystemV1.is_navigation_being_built_or_locked(w)) if nav else None
+            saida.append({"disponivel": nav is not None, "construindo": bool(nav.is_navigation_being_built(w)) if nav else None,
+                          "construindo_ou_bloqueada": ocupado, "malhas": malhas,
+                          "pronta": nav is not None and bool(malhas) and ocupado is False,
+                          "conectividade_verificada": False})
         else:
             raise RuntimeError(f"consulta desconhecida: {t}")
     return {"medidas": saida}

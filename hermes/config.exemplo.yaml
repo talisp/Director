@@ -1,7 +1,6 @@
 # Exemplo do config.yaml do perfil "director" do Hermes (o que roda nesta máquina, sem segredos).
 # A chave do servidor do modelo fica só no .env do perfil (HERMES_CUSTOM_QWEN_L40S_API_KEY).
-# O operador mexe no Unreal só pelo Director: sem servidores MCP; ferramentas ligadas só
-# terminal, file, skills, todo e clarify (as outras são desligadas com `hermes -p director tools disable ...`).
+# Perfil experimental do Director. O projeto cinematográfico continua fora do escopo.
 model:
   default: qwen3.8-flash-next-q8_0
   provider: qwen-l40s
@@ -36,4 +35,13 @@ telemetry:
     send: false
 mcp_servers: {}
 platform_toolsets:
-  cli: [clarify, file, skills, terminal, todo]
+  cli: [clarify, file, skills, terminal, todo, tts, web, browser, code_execution, vision]
+approvals:
+  mode: "off"
+tts:
+  provider: openai
+  openai:
+    base_url: http://localhost:8880/v1
+    api_key: not-needed
+    model: kokoro
+    voice: pf_dora

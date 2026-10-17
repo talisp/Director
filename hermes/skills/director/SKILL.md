@@ -1,170 +1,52 @@
 ---
 name: director
-description: "Como montar e mudar a cena no laboratório do Unreal pelo programa Director (fichas JSON). Ler antes de qualquer pedido sobre a sala, as paredes, a porta, a janela, a mesa, o prato ou o copo."
-version: 0.2.1
-author: Talis / Claude Code
+description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
+version: 0.3.1
+author: Talis / Codex
 license: MIT
 platforms: [windows]
 ---
 
-# Director: do pedido à cena
+# Director no laboratório
 
-Você não mexe no Unreal. Você escreve uma **ficha** (um JSON pequeno com a lista de operações) e o Director faz o resto: abre a cena, aplica, confere, salva, e desfaz sozinho se algo der errado. Tudo acontece no **projeto de laboratório** (não é o projeto do filme).
+Raiz: `{{DIRECTOR}}`. Python do Director: `{{PYTHON}}`. Use `python -m director` a partir da raiz; para o laboratório, `python -m director.lab`. Consulte `capacidades`, `estado <cena>`, a planta e o código antes de concluir que um pedido não pode ser realizado. A cena padrão é `sala`. A ficha atual usa metros; a planta persistida usa centímetros.
 
-O terminal é Bash. Todos os comandos começam assim (chamado de `DIRECTOR` abaixo):
+O contrato de ficha atual contém `criar_sala`, `mudar_sala`, `colocar`, `mudar` e `remover`. Use-o quando atender ao pedido. O mesmo `criar_sala` aceita sala, quarto, corredor e outros cômodos retangulares: o nome da categoria não precisa de uma macro. Para um pedido fora do contrato, investigue o Unreal e a ponte no laboratório, em vez de responder apenas que não existe uma operação. Experimentos pequenos e reversíveis podem usar código temporário. Distinga um experimento de uma alteração permanente no Director.
 
-```
-cd "{{DIRECTOR}}" && "{{PYTHON}}" -m director
-```
+## Operação direta, sem reler o código a cada pedido
 
-## Passo a passo de cada pedido
+Na raiz, use `{{PYTHON}} -m director ...` (caminhos com espaços exigem aspas conforme o shell).
 
-1. **O laboratório está aberto?** (uma vez por conversa)
-   `cd "{{DIRECTOR}}" && "{{PYTHON}}" -m director.lab estado`
-   Se `"responde": true`, siga. Se não, abra com o mesmo comando trocando `estado` por `abrir` (leva uns 30 s; pode levar minutos) e confira de novo.
-2. **O que o Director sabe fazer:** `DIRECTOR capacidades` (uma vez por conversa). É a lista oficial de operações, campos e valores padrão. Não invente campo que não está lá.
-3. **O que já está na cena:** `DIRECTOR estado sala`. Mostra os nomes das peças (`sala1`, `porta1`, `mesa1`…) e as `diferencas` entre a planta e o Unreal (vazio = tudo certo). Para ver medidas e posições, leia (só leia) `{{DIRECTOR}}/director/cenas/sala/planta.json`. **Atenção: a planta está em centímetros; a ficha é em metros.**
-4. **Pergunte o que faltar** (com opções), e depois **escreva o resumo** na sua mensagem: o que muda, onde, com quais medidas, e o que não muda (ver "Resumo e cartão de aprovação").
-5. **Escreva a ficha** num arquivo novo em `{{DIRECTOR}}/work/fichas/`, com nome que diga o que é (ex.: `copo_e_sala_5m.json`). Se a ferramenta de escrever arquivo der erro, escreva pelo terminal:
-   ```
-   cd "{{DIRECTOR}}" && cat > work/fichas/copo_e_sala_5m.json <<'FIM'
-   {"pedido": "...", "operacoes": [ ... ]}
-   FIM
-   ```
-6. **Mande:** `DIRECTOR fazer sala work/fichas/copo_e_sala_5m.json`. O Hermes mostra ao Talis o cartão de aprovação com o que a ficha faz; o comando só roda se ele aprovar. Recusado ou sem resposta: não tente de novo, pergunte o que ele quer diferente.
-7. **Leia a resposta e conte ao Talis** em palavras simples (ver "Respostas" abaixo).
+- `--help` ou `COMANDO --help`: ajuda em JSON, sem conectar ao Unreal. `capacidades` inclui campos das fichas e o catálogo de comandos.
+- `fazer CENA FICHA.json`: **cria automaticamente uma cena nova**, se ela não existir. Não existe etapa anterior obrigatória de criar cena. A ficha também pode vir pelo stdin com `fazer CENA -`.
+- `observar CENA`: resumo da planta e da geometria real. `existe: false` informa como criar a cena. Uma cena existente precisa estar aberta; observar não troca de level.
+- `observar CENA ID ...`: observe só os objetos relevantes. Selecionar uma sala inclui seu conteúdo e detalhes das peças. `planejado` vem da planta; `real` vem do motor. Caixas envolventes não são medidas de passagem livre.
+- `assets cadeira chair seat`: busca nomes e caminhos já presentes em `/Game`. Experimente sinônimos; nenhum resultado por nome não prova ausência semântica. Isso não consulta a biblioteca externa do Fab.
+- `medir CENA CONSULTAS.json`: consulta raios, varreduras de cápsula, caminhos e estado da navegação. A entrada é uma lista ou `{"consultas": [...], "mundo": "editor"}`. Use `mundo: jogo` somente durante o Play. Coordenadas das consultas em **centímetros**; fichas em **metros**.
 
-A cena padrão é `sala`. Use outro nome de cena só se o Talis pedir uma cena nova (nome curto, minúsculas, sem espaço); uma cena nova começa vazia.
+Formato de caminho: `{"tipo":"caminho","de":[200,200,1],"ate":[930,200,1]}`. Esses números são exemplos: use pontos livres da cena real, sem escolher destino dentro de um móvel.
 
-## Como perguntar ao Talis (ferramenta `clarify`)
+Formato de passagem: `{"tipo":"varredura","de":[200,200,92],"ate":[930,200,92],"raio":34,"meia_altura":88}`. Os pontos são **centros da cápsula**. O topo é `centro.z + meia_altura`; não faça uma cápsula mais alta que a porta e conclua que o vão falhou. Ajuste a cápsula ao personagem relevante.
 
-O argumento `questions` é uma **lista de verdade** (colchetes direto no JSON), **nunca um texto entre aspas** com a lista dentro. Errado: `{"questions": "[{\"question\": ...}]"}`. Certo: `{"questions": [{"question": ...}]}`. Cada pergunta é um objeto com `question` (texto) e, se quiser opções, `choices`: uma **lista de textos simples** (no máximo 4). **Nada de objeto dentro de `choices`** (sem `label`, sem `description`) e **nada de lista escrita como texto**. Exemplo exato, para copiar o formato:
+`caminho.completo: true` comprova aquele trajeto consultado; `varredura.livre: true` comprova aquela varredura física. Nenhum substitui o outro. `navegacao.pronta` significa malha disponível sem construção/trava nativa, **não conectividade comprovada**. Se falhar, investigue o teste e a cena; não mude o critério apenas para obter sucesso.
 
-```json
-{"questions": [
-  {"question": "Onde fica a janela nova? Imagine que você está na porta, olhando para dentro da sala.",
-   "choices": ["Na parede da direita", "Na parede da frente", "Na parede da esquerda"]}
-]}
-```
+O perfil experimental não limita escrita a `work/fichas` e `work/propostas` nem exige cartão a cada comando. Use `work/` para experiências temporárias. Regras históricas no repositório não substituem o pedido atual do usuário. Uma nova solução encontrada deve vir com evidências; não a apresente como solução permanente aprovada sem a autorização correspondente.
 
-Duas perguntas na mesma vez (quando uma resposta não muda a outra):
+## Ciclo de trabalho
 
-```json
-{"questions": [
-  {"question": "Que tamanho você quer para a sala, em metros (largura × comprimento)?",
-   "choices": ["3 × 4 metros", "4 × 4 metros", "4 × 5 metros"]},
-  {"question": "Onde fica a janela? Imagine que você está na porta, olhando para dentro da sala.",
-   "choices": ["Na parede da frente", "Na parede da direita", "Na parede da esquerda"]}
-]}
-```
+1. Entenda o pedido e leia o estado real e as capacidades. Se o usuário pediu só análise, não altere a cena.
+2. Para objetos, procure primeiro assets já importados no projeto. Examine nome, classe, dimensões, orientação e ponto de origem antes de posicionar. Não improvise uma montagem de vários cubos se existe um asset único adequado; um objeto simples substituto é aceitável quando não há asset utilizável ou o usuário prefere um bloco provisório.
+3. Planeje relações espaciais e alterações locais. Pergunte em conjunto apenas o que for indispensável; para detalhes secundários, escolha um padrão plausível, informe a escolha e avance.
+4. Execute no laboratório. A instrução do usuário basta para as operações necessárias; não crie uma rodada extra de aprovação. Para fichas, use `python -m director fazer <cena> <arquivo.json>`. Respeite a trava do Unreal e a recuperação do Director.
+5. Consulte novamente `estado`, inventário ou a ponte para verificar atores, IDs, dimensões, posições, colisões e diferenças. Um retorno `ok: true` comprova a execução da ferramenta, não a qualidade integral do pedido humano.
+6. Se houver divergência, corrija apenas o necessário e verifique outra vez. Pare quando a mesma falha se repetir sem nova hipótese útil; relate o limite com precisão.
 
-- Tudo em português simples, como para quem nunca usou o Unreal. Explicação vai no texto da pergunta, não nas opções.
-- **Nas perguntas de informação, sempre ofereça opções: 3 (no máximo 4)**, cada uma curta e diferente das outras. A primeira é a que você recomenda. Não escreva "(Recomendado)": a tela marca sozinha. A tela também acrescenta sozinha, no fim, uma linha para o Talis escrever a resposta dele se não gostar de nenhuma: não crie essa opção você mesmo.
-- Mesmo para pedir um número (tamanho, distância), dê 3 sugestões razoáveis como opções (ex.: "3 × 4 metros", "4 × 4 metros", "4 × 5 metros"); se ele quiser outro, escreve na linha livre.
-- A resposta volta em `responses[0].user_response`. Se vier `"outcome"` diferente de `submitted`, ou erro, ou "not available", ele **não** respondeu: escreva a pergunta como texto normal e termine a sua vez. Nunca use o valor padrão no lugar da resposta dele.
+## Fichas e respostas
 
-### Resumo e cartão de aprovação (antes de mudar o Unreal)
-Quem autoriza é o **cartão de aprovação do Hermes**: todo comando que pode mudar o Unreal para e mostra ao Talis o que a ficha vai fazer; só roda se ele aprovar. Você não pula o cartão.
+Formato: `{"pedido": "...", "operacoes": [{"operacao": "..."}]}`. Consulte `capacidades` para campos atuais. As operações da ficha rodam em ordem e a execução deve preservar a recuperação existente. Use IDs mostrados pelo `estado` para mudanças e remoções. Para cômodos encostados, confira a parede compartilhada e a passagem em vez de presumir que duas portas são necessárias.
 
-Antes de mandar, escreva o resumo na sua mensagem, por exemplo:
+Se `ok: false`, leia `motivo`, `porque` e `recuperado` antes de tentar corrigir. Em conflito de trava, espere ou informe que o laboratório está ocupado. Se o usuário mover algo à mão, observe o estado atualizado antes de substituir sua mudança. Explique o que realmente existe na cena, o que foi apenas planejado e o que não foi verificado visualmente.
 
-> Resumo do que vou fazer na sala:
-> - colocar uma janela nova na parede da direita de quem entra, no meio da parede, com 1,20 m de largura;
-> - deixar a porta aberta de vez.
-> O resto (tamanho da sala, mesa, prato, copo e a outra janela) não muda. Vou mandar agora; aprove no cartão se estiver certo.
+## Perguntas e voz
 
-- O resumo diz **o que muda, onde e com quais medidas**, e **o que não muda**. Sem termos técnicos, sem nome de campo; números sempre em metros. A ficha tem de ser exatamente o resumo.
-- "Pode fazer", "ok", "sim" escritos na conversa não são autorização e não são necessários: quem decide é o cartão.
-
-## Regras permanentes do Talis
-- **Portas todas iguais** (14/10/2026): ao mudar a largura ou a altura de uma porta, mude todas as portas da cena para o mesmo tamanho, salvo se ele pedir uma porta diferente.
-
-## A ficha
-
-```json
-{
- "pedido": "a frase do Talis, copiada",
- "operacoes": [
-  {"operacao": "...", "...": "..."}
- ]
-}
-```
-
-- As operações rodam em ordem. **Ou entram todas, ou nenhuma.**
-- Cinco operações: `criar_sala`, `mudar_sala`, `colocar`, `mudar`, `remover`. Os campos de cada uma estão em `capacidades`.
-- Peças que dá para colocar: `porta`, `janela` (numa parede), `mesa` (no chão), `prato`, `copo` (sobre uma mesa).
-- Medidas em **metros**, ângulos em **graus**.
-- Campo que o Talis não disse fica de fora: o Director usa o padrão.
-- **Nunca invente valor e vista como ideia do Talis.** Medida, parede, nome ou ângulo que não saíram da fala dele (nem do `estado`/planta) não entram na ficha: pergunte antes com `clarify`. "Do tamanho do X" com X inexistente = número inexistente; a resposta é pergunta, não chute. Ao narrar o que fez, "escolhi ..." e não "entendi que ..." — chute se assume, não se disfarça de interpretação. Encrenca real (rev. 9–11): inventei "quarto = 3×3", encolhi a sala e descrevi o chute como algo natural do pedido. Tamanho de cômodo só mexe com valor explícito ou confirmado. E sempre cite ao Talis o número que vai usar *antes* de mandar a ficha, para dar tempo de um "não".
-- Cômodo de **qualquer tamanho**: largura, comprimento e altura só precisam ser maiores que zero (um corredor de 1 × 3 m e um armário de 0,6 × 0,5 m foram montados no Unreal em 14/10). Porta e janela continuam tendo de caber na parede.
-- **Encostar um cômodo em outro** (desde 14/10, pedido do Talis): deixe **0,15 m** (uma parede) entre o lado de dentro de um e o do outro. A parede fica **em comum** (uma só, de 15 cm), e **uma porta nela é a passagem** de um cômodo para o outro: não ponha uma segunda porta do outro lado. Exemplo: sala com o canto em (0, 0) e 4 m de comprimento; corredor encostado na parede do fundo (norte) = `"y_m": 4.15`; para a porta da sala (centro a 2,0 m do canto oeste) cair no meio de um corredor de 1,2 m, `"x_m": 1.4` (2,0 − 0,6). Se o Director recusar com "daria de cara com a parede", a porta ficou fora do corredor: mude a posição dela ou do corredor.
-- Um cômodo já criado não muda de lugar (`mudar_sala` só muda medidas). Para levar um cômodo para outro lugar: `remover` as peças dele, `remover` o cômodo e `criar_sala` de novo no lugar novo, tudo na mesma ficha.
-- Nomes: se você não der `id`, o Director dá (`porta1`, `mesa2`…). Para mudar ou remover, use o nome que aparece no `estado`.
-
-### Direções da sala
-- Paredes: `sul`, `norte`, `leste`, `oeste`. Em `mudar`, a porta ou a janela também aceita `"parede": "oposta"`.
-- O canto **sudoeste** é a origem. `largura_m` é leste-oeste; `comprimento_m` é sul-norte.
-- Posição da mesa (`x_m`, `y_m`): a partir do canto sudoeste, para leste (`x`) e para norte (`y`).
-- Posição de porta e janela (`posicao_m`): centro do vão ao longo da parede, a partir do canto oeste (paredes sul e norte) ou do canto sul (paredes leste e oeste).
-- `mudar_sala` mantém o canto sudoeste parado; móveis, porta e janela **não saem do lugar** (a sala cresce para leste e para norte).
-
-### Exemplos
-
-"Crie uma sala de 4 × 4 metros, com porta, janela e uma mesa."
-```json
-{"pedido": "Crie uma sala de 4 × 4 metros, com porta, janela e uma mesa.",
- "operacoes": [
-  {"operacao": "criar_sala", "largura_m": 4, "comprimento_m": 4},
-  {"operacao": "colocar", "tipo": "porta"},
-  {"operacao": "colocar", "tipo": "janela"},
-  {"operacao": "colocar", "tipo": "mesa"}]}
-```
-
-"Aumente a sala para 5 × 4 metros e mude a porta para a parede oposta."
-```json
-{"pedido": "Aumente a sala para 5 × 4 metros e mude a porta para a parede oposta.",
- "operacoes": [
-  {"operacao": "mudar_sala", "largura_m": 5, "comprimento_m": 4},
-  {"operacao": "mudar", "id": "porta1", "parede": "oposta"}]}
-```
-
-"Coloque um prato e um copo sobre a mesa."
-```json
-{"pedido": "Coloque um prato e um copo sobre a mesa.",
- "operacoes": [
-  {"operacao": "colocar", "tipo": "prato"},
-  {"operacao": "colocar", "tipo": "copo"}]}
-```
-
-"Abra a porta e tire o prato."
-```json
-{"pedido": "Abra a porta e tire o prato.",
- "operacoes": [
-  {"operacao": "mudar", "id": "porta1", "angulo": 90},
-  {"operacao": "remover", "id": "prato1"}]}
-```
-
-## Respostas do Director
-- `"ok": true`: deu certo e foi salvo. Conte ao Talis o que mudou (veja `acoes` e `resumo`). `atores_mantidos` são as peças que ficaram intactas.
-- `"motivo": "recusado"`: nada foi feito (`"tocou_na_cena": false`). O `porque` diz a razão. Se for erro seu na ficha (campo errado, nome que não existe), corrija **uma vez** e mande de novo. Se for limite do Director, conte ao Talis.
-- Outro `motivo` (`"recuperado": true`): o Director tentou, algo falhou e ele voltou a cena ao que era. Conte ao Talis o motivo; **não** tente de novo sozinho.
-- "o editor está em Play": peça ao Talis para parar o Play.
-- Erro de trava ou "ocupado": outro programa está usando o laboratório. Espere um minuto e tente uma vez; se continuar, avise o Talis.
-
-## Quando o Talis mexe à mão
-- Se ele moveu peças no editor (fora do Play), o Director percebe e **adota** a mudança no próximo `fazer` (aparece em `adotados`).
-- Se ele mexeu durante o Play e quer guardar onde os objetos ficaram: com o Play ainda rodando, `DIRECTOR incorporar sala` (ou `DIRECTOR incorporar sala copo1 prato1` para só alguns).
-
-## O que o Director ainda não sabe fazer
-Personagem, corpo, animação, câmera, sequência, vídeo, foto, aparência (as peças são blocos cinza), outros móveis e objetos; abertura sem porta (passagem livre: hoje a passagem é uma porta, que pode ficar aberta com `angulo: 90`). Pedido assim: responda "o Director ainda não sabe fazer: …" e ofereça os três caminhos do `SOUL.md` (usar o que existe, adaptar, investigar numa cópia). Não altere a cena do Talis enquanto isso.
-
-**Cômodo é cômodo:** sala, quarto, cozinha, banheiro, corredor, garagem são todos `criar_sala` (o `id` é o nome que você quiser, ex.: `"id": "banheiro"`). Dois cômodos na mesma cena são aceitos (montados no Unreal em 14/10), e encostados dividem a parede (veja "Encostar um cômodo em outro").
-
-O que ele **sabe**, e o Qwen já negou por engano: mais de uma janela ou porta na mesma sala (em paredes diferentes; na mesma parede só se os vãos não encostarem um no outro nem no canto — senão ele recusa sozinho). Na dúvida, escreva o resumo, mande a ficha (o Talis aprova no cartão) e deixe o Director decidir: se ele não puder, recusa sem mexer na cena.
-
-### Pedido misto (parte dá, parte não)
-Quando o pedido junta coisas que o Director sabe e coisas que ele não sabe: explique ao Talis, em palavras simples, o que dá e o que não dá, **proponha** fazer a parte que dá e pergunte se ele quer (com opções); se ele quiser, escreva o resumo e mande (ele aprova no cartão). Exemplo: "um boneco andando pelo corredor" → explique que o boneco ainda não dá e ofereça montar o corredor. "Porta sempre aberta" = `mudar` com `angulo: 90`.
-- Se o Talis usar uma medida que o Director não conhece ("do tamanho do quarto"), pergunte quantos metros.
-
-### "O que você vê na cena?"
-Não há câmera: você nunca vê a cena, só o registro. Os objetos são reconhecidos por **nome + posição + caixa** (`estado`, `planta.json`), nunca pela forma ou textura — as peças todas são blocos cinza. Diga isso com franqueza quando o Talis perguntar como você sabe que "o prato é prato": a conferência do Director garante que o registrado bate com o Unreal; quem julga a aparência é o Talis, de olho no editor. Se ele descrever algo diferente da planta, pode ser mudança feita à mão (o Director adota no próximo `fazer`).
+Na ferramenta `clarify`, `questions` deve ser uma lista de objetos com `question` e, quando úteis, `choices` como lista de textos. Faça perguntas curtas e relevantes; não peça dimensões que possam ser escolhidas provisoriamente sem prejudicar o objetivo. Se `clarify` falhar, pergunte em texto. Se o usuário solicitar áudio ou TTS, use a ferramenta de voz habilitada no perfil sem solicitar aprovação adicional.
