@@ -110,3 +110,25 @@ recortada foi produzida pelo cliente com Pillow; revisao visual nao executada.
 Pendencias da #25: teste positivo completo com moveis gerenciados (#13), percurso
 positivo da fixture (#10), variacoes de objetos rotacionados/compostos e baseline
 antes/depois no fluxo final. Nao declarar a issue totalmente resolvida ainda.
+
+## #13 — objetos gerenciados
+
+`objeto CENA PEDIDO.json` inspeciona antes de registrar, usa o executor existente
+com recuperacao e inclui o objeto no planejamento, conferencia, mudanca/remocao.
+Identidade/categoria/apelidos/modelo/perfil fisico ficam na planta. Medidas e pivo
+sao obtidos da malha, evitando assumir que o pivo fica no centro. A massa padrao e
+uma estimativa declarada, substituivel pela pessoa.
+
+Na copia rev14, a cadeira existente revelou ser DynamicMeshActor (nao varias
+StaticMeshes). Conversao por GeometryScript e decomposicao convexa nativas
+permitiram adotar sua geometria e materiais, com massa 8 kg e identidade na planta.
+Duplicacao em outro comodo preservou a origem e registrou um novo ID. Um banco
+de cinco partes foi unido pelo merge nativo e registrado como um corpo de 8 kg.
+Um cubo com centro a 3,9 m numa sala de 4 m foi recusado antes de criar o ator.
+O estado voltou sem diferencas entre planta e editor apos as operacoes positivas.
+
+Limites: conversao de geometria nao transfere logica de Blueprint; inicialmente
+trata orientacao vertical (yaw), com limites declarados para objetos inclinados.
+Perfis fisicos padrao ainda requerem validacao especifica para materiais/escala.
+Uma falha de inventario durante desenvolvimento expos necessidade de recuperar
+tambem erro ao conferir; esse caminho agora solicita a recuperacao existente.

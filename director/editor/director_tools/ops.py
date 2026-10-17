@@ -342,6 +342,11 @@ def inventory(variaveis: dict, detalhes: bool = False):
         for nome in variaveis.get(tipo, []):
             d["params"][nome] = round(float(a.get_editor_property(nome)), 3)
         d["pontos"] = _pontos(a)
+        if tipo == "asset":
+            c=a.get_components_by_class(U.StaticMeshComponent)[0]
+            d["objeto"]={"asset":c.static_mesh.get_path_name().rsplit('.',1)[0],"simular":bool(c.is_simulating_physics()),
+                "massa_kg":round(float(c.get_mass()),3),"amortecimento_linear":float(c.get_linear_damping()),
+                "amortecimento_angular":float(c.get_angular_damping()),"subir":c.get_editor_property("can_character_step_up_on")==U.CanBeCharacterBase.ECB_YES}
         controlados[oid] = d
     return {"level": _level(), "controlados": controlados, "fora": sorted(fora, key=lambda x: x["caminho"]),
             "por_salvar": _sujos()}
@@ -416,7 +421,17 @@ def _uma(a: dict, idx: dict) -> str:
             raise RuntimeError(f"já existe: {oid}")
         classe = a["classe"]
         loc, rot = _vec(a["loc"]), _rot(a["rot"])
-        if classe.startswith("/Script/"):
+        origem=a.get("objeto",{}).get("adotar") or a.get("objeto",{}).get("duplicar")
+        if origem:
+            fonte=next((v for v in _eas().get_all_level_actors() if v.get_path_name()==origem),None)
+            if fonte is None: raise ValueError("ator de origem nao encontrado")
+            if a["objeto"].get("converter"):
+                ator=_eas().spawn_actor_from_class(U.StaticMeshActor,loc,rot)
+                if a["objeto"].get("adotar"): _eas().destroy_actor(fonte)
+            else:
+                ator=fonte if a["objeto"].get("adotar") else _eas().duplicate_actor(fonte)
+            ator.set_actor_location_and_rotation(loc,rot,False,True)
+        elif classe.startswith("/Script/"):
             cls = U.load_class(None, classe)
             if cls is None:
                 raise RuntimeError(f"classe desconhecida: {classe}")
@@ -445,11 +460,115 @@ def _uma(a: dict, idx: dict) -> str:
         ator.set_actor_scale3d(_vec(a["escala"]))
     for nome, v in (a.get("params") or {}).items():
         ator.set_editor_property(nome, float(v))  # mudar a variável faz o Unreal rodar o Construction Script de novo
+    if a.get("objeto"):
+        d=a["objeto"]
+        comps=ator.get_components_by_class(U.StaticMeshComponent)
+        if len(comps)!=1: raise ValueError("objeto precisa de um corpo de malha; use composicao para unir pecas")
+        c=comps[0]
+        mesh=U.load_asset(d["asset"])
+        if mesh is None: raise ValueError("malha do objeto nao encontrada")
+        if c.static_mesh!=mesh: c.set_static_mesh(mesh)
+        c.set_mobility(U.ComponentMobility.MOVABLE)
+        c.set_collision_profile_name("PhysicsActor")
+        c.set_collision_enabled(U.CollisionEnabled.QUERY_AND_PHYSICS)
+        c.set_mass_override_in_kg('',float(d["massa_kg"]),True)
+        c.set_linear_damping(float(d["amortecimento_linear"]))
+        c.set_angular_damping(float(d["amortecimento_angular"]))
+        c.set_editor_property('can_character_step_up_on',U.CanBeCharacterBase.ECB_YES if d['subir'] else U.CanBeCharacterBase.ECB_NO)
+        c.set_simulate_physics(bool(d['simular']))
     if a.get("tipo") == "nav":
         nav = U.NavigationSystemV1.get_navigation_system(_mundo_editor())
         if nav is not None:
             nav.on_navigation_bounds_updated(ator)
     return "criado" if acao == "criar" else "atualizado"
+
+
+def _modelo_mesh(mesh):
+    b=mesh.get_bounds()
+    return {"asset":mesh.get_path_name().rsplit('.',1)[0],"tamanho":[float(b.box_extent.x)*2,float(b.box_extent.y)*2,float(b.box_extent.z)*2],
+            "centro":_v(b.origin),"min_z":float(b.origin.z-b.box_extent.z)}
+
+
+def _modelo_composto_existente(a, cs):
+    temporarios=[];unido=None
+    try:
+        for c in cs:
+            if c.static_mesh is None: continue
+            b=_eas().spawn_actor_from_class(U.StaticMeshActor,c.get_world_location(),c.get_world_rotation())
+            temporarios.append(b);b.static_mesh_component.set_static_mesh(c.static_mesh)
+            b.set_actor_scale3d(c.get_world_scale())
+            for i in range(c.get_num_materials()): b.static_mesh_component.set_material(i,c.get_material(i))
+        settings=U.MeshMergingSettings();settings.set_editor_property('merge_physics_data',True)
+        settings.set_editor_property('generate_light_map_uv',False)
+        options=U.MergeStaticMeshActorsOptions()
+        import uuid
+        for k,v in {'base_package_name':PASTA+'/Objetos/SM_Adotado_'+uuid.uuid4().hex[:12],
+                    'destroy_source_actors':False,'spawn_merged_actor':True,'mesh_merging_settings':settings}.items():options.set_editor_property(k,v)
+        unido=U.get_editor_subsystem(U.StaticMeshEditorSubsystem).merge_static_mesh_actors(temporarios,options)
+        if unido is None: raise RuntimeError('nao uniu componentes do objeto existente')
+        mesh=unido.static_mesh_component.static_mesh;U.EditorAssetLibrary.save_loaded_asset(mesh)
+        proxy=_descrever(a)
+        proxy.update(classe='/Script/Engine.StaticMeshActor',loc=_v(unido.get_actor_location()),rot=[0,0,0],escala=[1,1,1])
+        return {'modelo':_modelo_mesh(mesh),'ator':proxy,'converter':True,'limite':'componentes convertidos em malha unica; comportamento de Blueprint nao e transferido'}
+    finally:
+        if unido is not None:_eas().destroy_actor(unido)
+        for b in temporarios:_eas().destroy_actor(b)
+
+
+@op
+def object_model(asset: str = "", ator: str = "", partes: list = None):
+    """Inspeciona um asset/ator ou compoe partes usando merge nativo e colisao composta."""
+    if partes:
+        code=json.dumps(partes,sort_keys=True)
+        caminho=PASTA+'/Objetos/SM_'+hashlib.sha256(code.encode()).hexdigest()[:16]
+        if U.EditorAssetLibrary.does_asset_exist(caminho): return {"modelo":_modelo_mesh(U.load_asset(caminho)),"reutilizado":True}
+        temporarios=[];unido=None
+        try:
+            for i,p in enumerate(partes):
+                mesh=U.load_asset(p.get('asset','/Engine/BasicShapes/Cube'))
+                m=_modelo_mesh(mesh)
+                size=p['tamanho_cm'];offset=p['centro_cm']
+                escala=[float(size[j])/m['tamanho'][j] for j in range(3)]
+                loc=[float(offset[j])-m['centro'][j]*escala[j] for j in range(3)]
+                a=_eas().spawn_actor_from_class(U.StaticMeshActor,_vec(loc),U.Rotator())
+                temporarios.append(a);a.set_actor_label('DirectorComposicaoTmp')
+                a.static_mesh_component.set_static_mesh(mesh);a.set_actor_scale3d(_vec(escala))
+            settings=U.MeshMergingSettings();settings.set_editor_property('merge_physics_data',True)
+            settings.set_editor_property('generate_light_map_uv',False)
+            options=U.MergeStaticMeshActorsOptions()
+            for k,v in {'base_package_name':caminho,'destroy_source_actors':False,'spawn_merged_actor':True,'mesh_merging_settings':settings}.items(): options.set_editor_property(k,v)
+            unido=U.get_editor_subsystem(U.StaticMeshEditorSubsystem).merge_static_mesh_actors(temporarios,options)
+            if unido is None: raise RuntimeError('merge nativo nao criou objeto')
+            mesh=unido.static_mesh_component.static_mesh
+            U.EditorAssetLibrary.save_loaded_asset(mesh)
+            return {'modelo':_modelo_mesh(mesh),'reutilizado':False}
+        finally:
+            if unido is not None: _eas().destroy_actor(unido)
+            for a in temporarios: _eas().destroy_actor(a)
+    if ator:
+        encontrados=[a for a in _eas().get_all_level_actors() if a.get_path_name()==ator or a.get_actor_label()==ator]
+        if len(encontrados)!=1: raise ValueError('ator inexistente ou rotulo ambiguo; informe caminho completo')
+        a=encontrados[0];cs=a.get_components_by_class(U.StaticMeshComponent)
+        if not cs:
+            dinamicas=a.get_components_by_class(U.DynamicMeshComponent)
+            if len(dinamicas)!=1: raise ValueError('ator precisa de malha estatica ou uma malha dinamica')
+            c=dinamicas[0]
+            import uuid
+            caminho=PASTA+'/Objetos/SM_Dinamico_'+uuid.uuid4().hex[:12]
+            mesh,outcome=U.GeometryScript_NewAssetUtils.create_new_static_mesh_asset_from_mesh(c.get_dynamic_mesh(),caminho,U.GeometryScriptCreateNewStaticMeshAssetOptions())
+            if mesh is None: raise RuntimeError('conversao GeometryScript falhou: '+str(outcome))
+            for i in range(c.get_num_materials()):mesh.set_material(i,c.get_material(i))
+            sms=U.get_editor_subsystem(U.StaticMeshEditorSubsystem)
+            if not sms.set_convex_decomposition_collisions(mesh,16,32,100000): raise RuntimeError('nao gerou colisao convexa do objeto')
+            U.EditorAssetLibrary.save_loaded_asset(mesh)
+            proxy=_descrever(a);proxy['classe']='/Script/Engine.StaticMeshActor'
+            return {'modelo':_modelo_mesh(mesh),'ator':proxy,'converter':True,'limite':'geometria dinamica convertida por GeometryScript; comportamento de Blueprint nao e transferido'}
+        if len(cs)!=1 or a.get_editor_property('root_component')!=cs[0]: return _modelo_composto_existente(a,cs)
+        if abs(a.get_actor_rotation().pitch)>.01 or abs(a.get_actor_rotation().roll)>.01: raise ValueError('objeto inclinado requer modelo com transformacao incorporada')
+        return {'modelo':_modelo_mesh(cs[0].static_mesh),'ator':_descrever(a)}
+    mesh=U.load_asset(asset)
+    if not isinstance(mesh,U.StaticMesh): raise ValueError('asset precisa ser StaticMesh')
+    return {'modelo':_modelo_mesh(mesh)}
 
 
 @op

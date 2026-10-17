@@ -15,6 +15,18 @@ O contrato de ficha atual contém `criar_sala`, `mudar_sala`, `colocar`, `mudar`
 
 ## Operação direta, sem reler o código a cada pedido
 
+`objeto CENA PEDIDO.json` adota, duplica, coloca asset ou compoe pecas, ja registrando
+o resultado na planta. Exemplo: `{"acao":"adotar","id":"cadeira","ator":"Cadeira_mesa1","sala":"sala1","categoria":"cadeira"}`.
+Para duplicar, use `acao:duplicar`, `ator` de origem, novo `id`, `sala`, `x_m` e `y_m` relativos ao comodo.
+Para colocar asset use `acao:colocar` e `asset:/Game/...`; dimensoes sao medidas do asset, com ajustes opcionais
+`largura_m`, `profundidade_m`, `altura_m`, `giro`. Para compor, `partes` recebe centros/tamanhos em cm:
+`{"centro_cm":[0,0,45],"tamanho_cm":[40,40,5]}`; o merge e a colisao composta sao nativos do Unreal.
+Perfis de massa sao estimativas ajustaveis por `massa_kg` (nao medidas do material real); informe a categoria.
+Outros campos: `simular`, `subir`, `amortecimento_linear` e `amortecimento_angular`.
+Malha dinamica pode virar StaticMesh pela GeometryScript nativa; comportamento de Blueprint nao e transferido.
+Use `mudar`/`remover` pelo ID para objetos registrados; mover o comodo nao autoriza apagar seu conteudo.
+Depois use `verificar` para confirmar geometria, apoio e fisica. Recusa da planta nao comprova falta de asset.
+
 Na raiz, use `{{PYTHON}} -m director ...` (caminhos com espaços exigem aspas conforme o shell).
 
 - `--help` ou `COMANDO --help`: ajuda em JSON, sem conectar ao Unreal. `capacidades` inclui campos das fichas e o catálogo de comandos.

@@ -55,10 +55,21 @@ def diferencas(alvo: dict, controlados: dict) -> list:
         errados = _params_diferentes(p["params"], r.get("params", {}))
         if errados:
             difs.append({"id": pid, "o_que": "params", "alvo": errados, "real": {k: r.get("params", {}).get(k) for k in errados}})
+        if _objeto_difere(p,r): difs.append({"id":pid,"o_que":"objeto","alvo":p.get("objeto"),"real":r.get("objeto")})
     for pid in controlados:
         if pid not in alvo:
             difs.append({"id": pid, "o_que": "sobra"})
     return difs
+
+
+def _objeto_difere(p,r):
+    for k,v in p.get("objeto",{}).items():
+        if k in ("adotar","duplicar","converter"): continue
+        atual=r.get("objeto",{}).get(k)
+        if isinstance(v,(int,float)) and not isinstance(v,bool):
+            if atual is None or abs(v-atual)>.02: return True
+        elif v!=atual: return True
+    return False
 
 
 def planejar(alvo: dict, controlados: dict) -> list:
@@ -71,12 +82,12 @@ def planejar(alvo: dict, controlados: dict) -> list:
         r = controlados.get(pid)
         if r is None:
             criar.append({"acao": "criar", "id": pid, "tipo": p["tipo"], "classe": p["classe"], "loc": p["loc"], "rot": p["rot"],
-                          "escala": p["escala"], "params": p["params"]})
+                          "escala": p["escala"], "params": p["params"], **({"objeto":p["objeto"]} if "objeto" in p else {})})
             continue
         if r["classe"] != p["classe"]:  # recriação controlada: o identificador é o mesmo, o ator é outro
             remover.append({"acao": "remover", "id": pid})
             criar.append({"acao": "criar", "id": pid, "tipo": p["tipo"], "classe": p["classe"], "loc": p["loc"], "rot": p["rot"],
-                          "escala": p["escala"], "params": p["params"], "recriada": True})
+                          "escala": p["escala"], "params": p["params"], "recriada": True, **({"objeto":p["objeto"]} if "objeto" in p else {})})
             continue
         a = {"acao": "atualizar", "id": pid, "tipo": p["tipo"]}
         if _loc_difere(p["loc"], r["loc"]) or _rot_difere(p["rot"], r["rot"]):
@@ -86,6 +97,7 @@ def planejar(alvo: dict, controlados: dict) -> list:
         errados = _params_diferentes(p["params"], r.get("params", {}))
         if errados:
             a["params"] = errados
+        if _objeto_difere(p,r): a["objeto"]=p["objeto"]
         if len(a) > 3:
             atualizar.append(a)
     return remover + atualizar + criar
@@ -109,7 +121,14 @@ def conciliar(planta: dict, controlados: dict) -> tuple:
         tipo = o["tipo"] if o else None
         mudou_lugar = _loc_difere(p["loc"], r["loc"]) or _rot_difere(p["rot"], r["rot"])
         errados = _params_diferentes(p["params"], r.get("params", {}))
-        if tipo in MOVEIS:
+        if tipo == "asset":
+            if mudou_lugar or _escala_difere(p["escala"],r["escala"]):
+                import math
+                m=o["modelo"];es=r["escala"];g=math.radians(r["rot"][1]);cx=m["centro"][0]*es[0];cy=m["centro"][1]*es[1]
+                o.update(x=r["loc"][0]+cx*math.cos(g)-cy*math.sin(g),y=r["loc"][1]+cx*math.sin(g)+cy*math.cos(g),z=r["loc"][2]+m["min_z"]*es[2],giro=r["rot"][1])
+                for j,k in enumerate(("largura","profundidade","altura")): o[k]=m["tamanho"][j]*es[j]
+                rel["adotados"].append({"id":pid,"campo":"transformacao_asset"})
+        elif tipo in MOVEIS:
             antes = dict(o)
             if mudou_lugar:
                 o["x"], o["y"], o["giro"] = r["loc"][0], r["loc"][1], r["rot"][1]

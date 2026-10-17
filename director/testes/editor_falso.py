@@ -62,6 +62,10 @@ class EditorFalso:
                     if k in a:
                         m[k] = [float(v) for v in a[k]]
                 m["params"].update({k: float(v) for k, v in (a.get("params") or {}).items()})
+                if "objeto" in a:
+                    m["objeto"]={k:v for k,v in a["objeto"].items() if k not in ("adotar","duplicar","converter")}
+                    origem=a["objeto"].get("adotar")
+                    if origem:self.fora=[o for o in self.fora if o['caminho']!=origem]
                 if a["id"] == self.errar_em:
                     m["loc"] = [m["loc"][0] + 3.0, m["loc"][1], m["loc"][2]]
             feitos.append([a["id"], a["acao"]])
