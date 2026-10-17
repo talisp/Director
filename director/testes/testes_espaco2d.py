@@ -48,3 +48,22 @@ class Acesso(unittest.TestCase):
     def test_sem_porta_mantem_regra_antiga(self):
         q={'dimensoes_cm':[400,400],'objetos':[self.objeto('cama',200,200,340,90)],'alvos':[{'id':'x','caixa':[0,0,50,50]}]}
         self.assertFalse(avaliar(q)['aprovado'])
+
+
+@unittest.skipUnless(importlib.util.find_spec('shapely'),'Shapely opcional')
+class FolhaDaPorta(unittest.TestCase):
+    """17/10 ao vivo: a folha aberta (90 cm para dentro) fechava a passagem entre a porta e a cama."""
+    def test_folha_aberta_fecha_passagem_estreita(self):
+        from director.espaco2d import folha
+        porta={'id':'p','tipo':'porta','parede':'oeste','posicao':100,'largura':90,'altura':210,'angulo':90}
+        f=folha(porta,260,350).bounds
+        self.assertAlmostEqual(f[0],0);self.assertAlmostEqual(f[2],90);self.assertAlmostEqual((f[1]+f[3])/2,145)
+        cama={'id':'cama','x':195,'y':245,'largura':100,'profundidade':200,'altura':80}
+        q={'dimensoes_cm':[300,350],'objetos':[cama],'aberturas':[porta],'alvos':[{'id':'canto','caixa':[5,250,90,345]}]}
+        self.assertFalse(avaliar(q)['aprovado'])           # folha ate x 90, cama de 145 a 245 e de 245 a 300: 55 cm
+        cama['x']=245;self.assertTrue(avaliar(q)['aprovado'])  # folha ate 90, cama a partir de 195: 105 cm passa
+    def test_dobradica_de_cada_parede(self):
+        from director.espaco2d import folha
+        for parede,(x,y) in (('sul',(55,0)),('leste',(260,55)),('norte',(145,350)),('oeste',(0,145))):
+            b=folha({'parede':parede,'posicao':100,'largura':90,'angulo':90},260,350).bounds
+            self.assertTrue(b[0]-1e-6<=x<=b[2]+1e-6 and b[1]-1e-6<=y<=b[3]+1e-6,(parede,b))

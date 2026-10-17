@@ -77,6 +77,7 @@ def resolver(pedido,filtro=True):
         yis.append(model.new_interval_var(y,rh,ye,o['id']+'_iy'))
         dados.append((o,x,y,rw,rh,ori,uso));zonas_lado.append(zona)
     model.add_no_overlap_2d(xis,yis)
+    contornar=model.new_bool_var('contornar_folha')
     def separar(a,b,cond=None):
         bits=[model.new_bool_var('separa') for _ in range(4)]
         exprs=[a[0]+a[2]<=b[0],b[0]+b[2]<=a[0],a[1]+a[3]<=b[1],b[1]+b[3]<=a[1]]
@@ -116,20 +117,35 @@ def resolver(pedido,filtro=True):
             b={'sul':(lo,0,hi-lo,d),'norte':(lo,H-d,hi-lo,d),
                 'oeste':(0,lo,d,hi-lo),'leste':(W-d,lo,d,hi-lo)}[a['parede']]
             separar((x,y,w,h),b)
+            if a['tipo']=='porta':
+                # Primeira tentativa: livre o quadrado (2 x raio) logo apos a ponta da folha aberta, por onde o
+                # boneco contorna a folha. Se nao der, a busca segue sem essa pista (so com o filtro 2D).
+                L=math.ceil(a['largura']);R=int(pedido.get('raio_cm',34))
+                i0,f0=math.floor(a['posicao']-a['largura']/2),math.ceil(a['posicao']+a['largura']/2)
+                qd={'oeste':(L,f0-R,2*R,2*R),'leste':(W-L-2*R,i0-R,2*R,2*R),
+                    'sul':(i0-R,L,2*R,2*R),'norte':(f0-R,H-L-2*R,2*R,2*R)}[a['parede']]
+                separar((x,y,w,h),qd,contornar)
     for a in pedido.get('aberturas',[]):
         # A abertura tem de caber na parede do tamanho testado.
         model.add((W if a['parede'] in ('sul','norte') else H)>=math.ceil(a['posicao']+a['largura']/2))
     versao='OR-Tools '+ortools.__version__
     limite=float(pedido.get('segundos',5));inicio=time.monotonic()
-    maximo_tentativas=int(pedido.get('tentativas',40)) if filtro else 1
+    maximo_tentativas=int(pedido.get('tentativas',300)) if filtro else 1
     passo=int(pedido.get('passo_cm',25))
     historico=[];solver=None;status=None
     por_tamanho=int(pedido.get("tentativas_por_tamanho",6));por_area={}
+    pista=any(a['tipo']=='porta' for a in pedido.get('aberturas',[]))
+    if pista:model.add_assumptions([contornar])
     for tentativa in range(1,maximo_tentativas+1):
         resta=limite-(time.monotonic()-inicio)
         if resta<=.05:break
         solver=cp_model.CpSolver();solver.parameters.max_time_in_seconds=resta;solver.parameters.num_search_workers=1
+        if tentativa>1:
+            # Variedade: cada nova tentativa busca com outra semente, em vez de arrastar um movel 25 cm.
+            solver.parameters.random_seed=tentativa;solver.parameters.randomize_search=True
         status=solver.solve(model)
+        if status==cp_model.INFEASIBLE and pista:
+            model.clear_assumptions();pista=False;continue
         if status not in (cp_model.OPTIMAL,cp_model.FEASIBLE):break
         items=[]
         for o,x,y,w,h,r,u in dados:
@@ -162,7 +178,11 @@ def resolver(pedido,filtro=True):
             'bloqueadores_individuais':check['bloqueadores_individuais'],'violacoes':check['violacoes']})
         # Corte: a proxima arrumacao muda o tamanho, ou algum objeto gira ou anda pelo menos `passo` cm.
         bits=[]
+        # Corte dirigido: mexe em quem ficou sem acesso ou separa a circulacao; sem pista, em qualquer um.
+        culpados={a['id'] for a in check.get('acessos',[]) if not a['alcancado']}|set(check.get('bloqueadores_individuais',[]))
+        culpados|={i['na_frente_de'] for i in items if i['id'] in culpados and i.get('na_frente_de')}
         for o,x,y,w,h,r,u in dados:
+            if culpados and o['id'] not in culpados:continue
             x0,y0=solver.value(x),solver.value(y)
             for expr in (x<=x0-passo,x>=x0+passo,y<=y0-passo,y>=y0+passo):
                 b=model.new_bool_var('corte');model.add(expr).only_enforce_if(b);bits.append(b)
@@ -183,7 +203,7 @@ def resolver(pedido,filtro=True):
             'detalhe':f"{len(historico)} arrumacoes foram reprovadas pelo filtro 2D (circulacao); "
                       f"a ultima deixou {ultimo['regioes']} regioes livres separadas"+
                       (f"; o que mais separa: {', '.join(ultimo['bloqueadores_individuais'])}" if ultimo['bloqueadores_individuais'] else '')+
-                      ('; nao ha outra arrumacao diferente nesses limites' if esgotou else '; o prazo ou o limite de tentativas acabou antes de esgotar as opcoes')})
+                      ('; o solver nao achou outra arrumacao que mexa nos moveis com problema (a busca e dirigida, nao prova que nao existe)' if esgotou else '; o prazo ou o limite de tentativas acabou antes de esgotar as opcoes')})
     elif estado=='INFEASIBLE':
         sozinhos=_diagnosticar(pedido) if pedido.get('diagnostico',True) else []
         falha.update({'motivo':'impossivel_no_modelo','nao_cabem_sozinhos':sozinhos,

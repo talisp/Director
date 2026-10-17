@@ -21,6 +21,18 @@ def zona(a,W,H):
         'oeste':(0,pos-w/2,d,pos+w/2),'leste':(W-d,pos-w/2,W,pos+w/2)}[a['parede']])
 
 
+def folha(a,W,H):
+    """Folha da porta aberta, como derivar.py a monta: dobradica na ponta do fim (norte/oeste) ou do inicio
+    (sul/leste) do vao, abrindo para dentro. Angulo 0 (fechada) conta como 90: para passar, ela abre."""
+    from shapely.geometry import LineString
+    ini,fim=a['posicao']-a['largura']/2,a['posicao']+a['largura']/2
+    (hx,hy),(d0x,d0y),(nx,ny)={'oeste':((0,fim),(0,-1),(1,0)),'leste':((W,ini),(0,1),(-1,0)),
+        'sul':((ini,0),(1,0),(0,1)),'norte':((fim,H),(-1,0),(0,-1))}[a['parede']]
+    t=math.radians(a.get('angulo') or 90)
+    dx,dy=d0x*math.cos(t)+nx*math.sin(t),d0y*math.cos(t)+ny*math.sin(t)
+    return LineString([(hx,hy),(hx+dx*a['largura'],hy+dy*a['largura'])]).buffer(2,cap_style='flat')
+
+
 def avaliar(pedido):
     from shapely.geometry import box
     from shapely.ops import unary_union
@@ -30,6 +42,8 @@ def avaliar(pedido):
     piso=box(0,0,W,H);interno=piso.buffer(-raio)
     objetos=pedido.get('objetos',[]);polys=[(o,_poligono(o)) for o in objetos]
     inflados=[p.buffer(raio,quad_segs=32) for _,p in polys]
+    # A folha aberta de cada porta tambem ocupa o chao (vista ao vivo em 17/10 bloqueando o quarto).
+    inflados+=[folha(a,W,H).buffer(raio,quad_segs=32) for a in pedido.get('aberturas',[]) if a['tipo']=='porta']
     def regioes(g):
         if g.is_empty:return []
         if g.geom_type=='Polygon':return [g] if g.area>1e-6 else []
@@ -75,7 +89,7 @@ def avaliar(pedido):
         'segundos':round(time.monotonic()-t0,6),'backend':'Shapely '+shapely.__version__,
         'nao_verificado':['somente pegadas e intervalos de altura informados; atores fora da planta nao sao incluidos',
             'acesso medido so ate as areas de uso informadas; sem alvos, uma regiao conexa nao prova acesso desde a porta',
-            'buffer circular aproximado, sem interacao de porta, fisica ou NavMesh; requer verificar no motor']}
+            'buffer circular aproximado; folha da porta aberta a 90 graus (ou no angulo da planta); sem fisica nem NavMesh; requer verificar no motor']}
 
 
 def na_planta(planta,sid,extras=None):

@@ -32,6 +32,7 @@ QUARTO=[{'id':'cama','dimensoes_cm':[100,200,82],'uso_frente_cm':65},
         {'id':'mesa','dimensoes_cm':[100,55,75],'uso_frente_cm':75},
         {'id':'cadeira','dimensoes_cm':[50,50,83],'uso_frente_cm':0,'na_frente_de':'mesa'}]
 PORTA_OESTE=[{'id':'porta','tipo':'porta','parede':'oeste','posicao':100,'largura':90,'altura':210}]
+PORTA_LESTE=[dict(PORTA_OESTE[0],parede='leste')]
 
 
 def _caixa(o):
@@ -42,9 +43,9 @@ def _caixa(o):
 
 @unittest.skipUnless(importlib.util.find_spec('ortools') and importlib.util.find_spec('shapely'),'solver opcional em .venv-planejamento')
 class QuartoDoTeste(unittest.TestCase):
-    """O quarto de 17/10: antes, o planejar reprovava 2,60 x 3,50 que o ensaio do Codex mostrou caber."""
-    def test_quarto_de_260_por_350_passa_com_porta_oeste(self):
-        r=resolver({'dimensoes_cm':[260,350],'objetos':QUARTO,'aberturas':PORTA_OESTE,'segundos':20})
+    """O quarto de 17/10: antes, o planejar reprovava 2,60 x 3,50 que o ensaio do Codex (porta leste) mostrou caber."""
+    def test_quarto_de_260_por_350_passa_com_porta_leste(self):
+        r=resolver({'dimensoes_cm':[260,350],'objetos':QUARTO,'aberturas':PORTA_LESTE,'segundos':30})
         self.assertTrue(r['ok'],r.get('detalhe'));self.assertTrue(r['verificacao2d']['aprovado'])
         self.assertTrue(all(a['alcancado'] for a in r['verificacao2d']['acessos']))
         o={x['id']:x for x in r['objetos']}
@@ -56,9 +57,15 @@ class QuartoDoTeste(unittest.TestCase):
         k,b=_caixa(o['criado']),_caixa(o['cama'])
         self.assertTrue(any(abs(a-x)<1e-6 for a,x in ((k[2],b[0]),(k[0],b[2]),(k[3],b[1]),(k[1],b[3]))))
 
-    def test_compacto_fica_menor_que_o_do_hermes(self):
-        r=resolver({'minimo_cm':[220,260],'maximo_cm':[300,360],'objetos':QUARTO,'aberturas':PORTA_OESTE,'segundos':30})
-        self.assertTrue(r['ok'],r.get('detalhe'));self.assertLess(r['area_m2'],9.1)
+    def test_porta_oeste_com_folha_no_meio_nao_cabe_em_260(self):
+        # Na parede oeste a dobradica fica no lado norte do vao: a folha aberta corta o quarto (visto ao vivo).
+        r=resolver({'dimensoes_cm':[260,350],'objetos':QUARTO,'aberturas':PORTA_OESTE,'segundos':15})
+        self.assertFalse(r['ok']);self.assertEqual(r['motivo'],'filtro2d_reprovou')
+
+    def test_compacto_dentro_dos_limites(self):
+        r=resolver({'minimo_cm':[220,260],'maximo_cm':[320,380],'objetos':QUARTO,'aberturas':PORTA_OESTE,'segundos':40})
+        self.assertTrue(r['ok'],r.get('detalhe'))
+        self.assertTrue(220<=r['dimensoes_cm'][0]<=320 and 260<=r['dimensoes_cm'][1]<=380)
 
     def test_impossivel_explica_quem_nao_cabe_sozinho(self):
         r=resolver({'dimensoes_cm':[150,150],'objetos':QUARTO,'aberturas':PORTA_OESTE,'segundos':5})

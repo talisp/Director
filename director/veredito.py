@@ -61,7 +61,7 @@ def de_planejamento(res):
     motivo = res.get("motivo")
     detalhe = res.get("detalhe") or res.get("porque") or motivo or "falha sem detalhe"
     acoes = {
-        "filtro2d_reprovou": "aumente o tamanho maximo, tire ou diminua o objeto citado, ou aumente segundos/tentativas; nao mude a cena para testar tamanhos (use sala + minimo_cm/maximo_cm)",
+        "filtro2d_reprovou": "aumente o tamanho maximo, tire ou diminua o objeto citado, mude a porta de lugar (a folha aberta conta como obstaculo) ou aumente segundos; nao mude a cena para testar tamanhos (use sala + minimo_cm/maximo_cm)",
         "impossivel_no_modelo": "nao cabe: aumente o tamanho maximo ou tire um objeto; os que nao cabem nem sozinhos estao em nao_cabem_sozinhos",
         "sem_prova_no_prazo": "aumente segundos; nada foi provado",
         "modelo_invalido": "confira medidas e campos do pedido",
