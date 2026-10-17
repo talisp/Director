@@ -681,7 +681,9 @@ def _freio_de_fundo(soltar: bool):
     st = _estado()
     try:
         cfg = U.load_object(None, "/Script/UnrealEd.Default__EditorPerformanceSettings")
-        prop = "throttle_cpu_when_not_foreground"
+        # Esta classe nao tem wrapper Python proprio nesta instalacao. O nome
+        # C++ refletido funciona; o alias snake_case nao e encontrado.
+        prop = "bThrottleCPUWhenNotForeground"
         anterior = getattr(st, "freio_anterior", None)
         if soltar:
             if anterior is None:
@@ -690,9 +692,12 @@ def _freio_de_fundo(soltar: bool):
         elif anterior is not None:
             cfg.set_editor_property(prop, anterior)
             st.freio_anterior = None
-        return bool(cfg.get_editor_property(prop))
+        return {"aplicado": True, "atual": bool(cfg.get_editor_property(prop)),
+                "anterior": anterior if anterior is not None else getattr(st,"freio_anterior",None),
+                "restaurado": not soltar and anterior is not None, "propriedade": prop,
+                "persistido": False}
     except Exception as e:  # noqa: BLE001
-        return f"erro: {e}"
+        return {"aplicado": False, "atual": None, "erro": str(e), "persistido": False}
 
 
 def _parar_amostragem():
@@ -716,7 +721,8 @@ def play_start(simulate: bool = True, full_speed: bool = True):
         _les().editor_play_simulate()
     else:
         _les().editor_request_begin_play()
-    return {"modo": "simulate" if simulate else "pie", "economia_de_cpu_ligada": freio}
+    return {"modo": "simulate" if simulate else "pie", "controle_cpu":freio,
+            "economia_de_cpu_ligada":freio.get('atual') if freio else None}
 
 
 @op
@@ -732,7 +738,8 @@ def play_stop():
     _estado().andar = None
     if _mundo_jogo() is not None:
         _les().editor_request_end_play()
-    return {"pedido": "parar", "economia_de_cpu_ligada": _freio_de_fundo(False)}
+    freio=_freio_de_fundo(False)
+    return {"pedido": "parar", "controle_cpu":freio,"economia_de_cpu_ligada":freio['atual']}
 
 
 def _raiz_fisica(ator):

@@ -100,3 +100,7 @@ offline; `procurar cadeira` inclui esses candidatos ao atualizar. Baixado nao
 significa importado nem com fisica; confira escala artistica, licenca e geometria.
 Nao escolha estante como guarda-roupa apenas pelo alias. Kenney da amostra requer
 reescalonamento. Banco/RAG permanente ainda nao decidido.
+
+`play_start`/`play_stop` devolvem `controle_cpu.aplicado`, `atual`, `anterior` e
+`restaurado`. Falha desse controle nao significa que Play falhou. O valor e
+restaurado em memoria, sem gravar preferencias. Consumo CPU nao foi aferido.

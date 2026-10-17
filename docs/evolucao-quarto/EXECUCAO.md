@@ -246,3 +246,18 @@ Recomendacao para o proximo lote: Kenney selecionado, Poly Haven selecionado por
 qualidade/escala/custo de arquivos; Objaverse somente com filtro por objeto e
 licenca. Cache Fab ja pode ser consultado localmente, sujeito aos direitos de cada
 compra. Nao prometer que todos os tres acervos estao baixados ou prontos no Unreal.
+
+## #28 — controle de CPU no Play
+
+Reproducao em play_start e play_stop: "DeveloperSettings: Failed to find property
+ 'throttle_cpu_when_not_foreground' for attribute 'throttle_cpu_when_not_foreground'
+ on 'EditorPerformanceSettings'". Texto original preservado no registro local,
+sem caminhos privados no comentario da issue.
+
+Cabecalho e objeto reais da instalacao confirmam bThrottleCPUWhenNotForeground.
+A classe nao tem wrapper Python especifico: alias snake_case falha, nome refletido
+C++ funciona. Ajustado esse acesso, sem trocar por CVar de efeito diferente.
+Play medido: anterior=true -> atual=false com aplicado=true; stop atual=true e
+restaurado=true. Sem SaveConfig; mudanca de sessao. Falha eventual retorna
+aplicado=false e erro especifico sem mascarar resultado do Play. Testes cobrem
+valores anteriores true/false e propriedade indisponivel; nao medem consumo CPU.
