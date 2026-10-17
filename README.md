@@ -71,6 +71,23 @@ python -m director fazer sala director/fichas/comando1.json
 
 Code comments and documents are in Portuguese.
 
+## References and credits
+
+Director borrows ideas, thresholds and, where an issue says so, adapted code from these research projects. Thanks to their authors.
+
+- **[SceneSmith](https://github.com/nepfaff/scenesmith)** — *SceneSmith: Agentic Generation of Simulation-Ready Indoor Scenes* ([arXiv 2602.09153](https://arxiv.org/abs/2602.09153), ICML 2026), MIT and Toyota Research Institute. Code under the MIT License. Used for:
+  - door and window clearance zones and the 2D reachability check ([#29](https://github.com/talisp/Director/issues/29));
+  - the text floor plan for a model without vision ([#30](https://github.com/talisp/Director/issues/30));
+  - scored review with bounded rounds ([#31](https://github.com/talisp/Director/issues/31));
+  - physics thresholds ([#25](https://github.com/talisp/Director/issues/25));
+  - mass from size and material ([#13](https://github.com/talisp/Director/issues/13));
+  - size-ranked asset retrieval ([#27](https://github.com/talisp/Director/issues/27)).
+
+  Director does not use its multi-agent orchestration, its Drake simulation or its 3D generation.
+- **[SpatialGen](https://github.com/manycore-research/SpatialGen)** — *SpatialGen: Layout-guided 3D Indoor Scene Generation* (3DV 2026), HKUST Spatial AI Lab and Manycore Tech. Code under the MIT License; its model weights have their own licenses (the FLUX LoRA is non-commercial). Studied as a reference for appearance generated from a layout, together with its sibling [SpatialLM](https://github.com/manycore-research/SpatialLM) (point cloud to structured walls, doors, windows and boxes). Not used in the code yet.
+
+Code adapted from an MIT project keeps its copyright notice and license text in a third-party notices file.
+
 ## License
 
 Source-available, not open source. See [LICENSE](LICENSE).
