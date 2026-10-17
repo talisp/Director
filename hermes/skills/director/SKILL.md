@@ -87,3 +87,8 @@ altera toda a malha; regiao tambem altera o perfil HIGH compartilhado e tiles
 atingidos. Nao conclua sucesso por `pronta`: use varredura, caminho e boneco via
 `verificar`. Refinamento regional ainda nao resolveu o caso norte-sul auditado;
 nao aplicar ajuste global sem declarar esse escopo ao usuario.
+
+Antes de inventar chamada Python, use `api TERMO` (ex.: `api get_linear_damping`).
+`api atualizar` gera a referencia no editor instalado; consultas depois sao
+offline, curtas e com versao/data. Para outras classes: `api atualizar PEDIDO.json`
+com `classes: [nome, ...]`. Nao achar algo no recorte nao prova inexistencia.

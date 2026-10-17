@@ -189,3 +189,13 @@ https://issues.unrealengine.com/issue/UE-214913
 https://forums.unrealengine.com/t/changing-navmeshresolutionparams-cellsize-in-ini-fails-to-generate-new-bvquantfactor-which-breaks-findnearestpoly/2653823
 A API instalada confirma modificadores e resolucoes; os relatos nao provam a
 causa local. Preferida a navegacao nativa, sem construir outro pathfinder.
+
+## #24 — referencia da API instalada
+
+`api atualizar [PEDIDO.json]` exportou 2.844 entradas de 26 classes da instalacao
+5.8.3 para cache de 1.264.357 bytes, sem enviar o texto inteiro ao modelo.
+`api TERMO` consulta offline e devolve ate cinco trechos de 1.800 caracteres.
+Lista de classes pode ser ampliada por arquivo, sem editar documentacao manual.
+Consulta get_linear_damping encontrou metodos reais; simbolo inventado retornou
+zero. Alias massa -> mass testado. Os textos sao gerados; execucao/contexto nao
+sao garantidos pela documentacao. Nao indexa automaticamente todos os plugins.

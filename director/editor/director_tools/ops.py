@@ -963,3 +963,23 @@ def nav_config(acao='diagnosticar',celula_cm=5.0,altura_cm=2.0,regiao=None,escop
     return {'backup':anterior,'atual':[_nav_dados(a) for a in navs], 'escopo':escopo,
         'aviso':'regiao afeta tiles tocados e qualquer outro modificador HIGH que use o perfil alterado; level afeta toda a malha',
         'rebuild_solicitado':True,'custo_nao_medido':['memoria e FPS; tempo de estabilizacao e medido pelo cliente']}
+
+@op
+def api_export(caminho: str, classes: list):
+    """Exporta documentacao real da instalacao, sem devolver todo o texto ao agente."""
+    from pathlib import Path
+    from datetime import datetime,timezone
+    dados=[];ausentes=[]
+    for nome in classes:
+        cls=getattr(U,nome,None)
+        if cls is None:ausentes.append(nome);continue
+        dados.append({'simbolo':nome,'tipo':'classe','doc':cls.__doc__ or ''})
+        for metodo in dir(cls):
+            if metodo.startswith('_'):continue
+            valor=getattr(cls,metodo,None)
+            if callable(valor) and getattr(valor,'__doc__',None):
+                dados.append({'simbolo':nome+'.'+metodo,'tipo':'metodo','doc':valor.__doc__})
+    p=Path(caminho);p.parent.mkdir(parents=True,exist_ok=True)
+    meta={'motor':info()['motor'],'gerado_utc':datetime.now(timezone.utc).isoformat(),'classes':classes,'ausentes':ausentes}
+    p.write_text(json.dumps({'meta':meta,'entradas':dados},ensure_ascii=True),encoding='utf-8')
+    return {'arquivo':str(p),'entradas':len(dados),'bytes':p.stat().st_size,**meta}
