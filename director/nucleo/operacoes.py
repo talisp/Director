@@ -526,8 +526,10 @@ def conferir(planta: dict, final: bool = True) -> None:
             raise Invalida(f"{oid}: medidas fora do aceito")
         # Compara so quem esta no mesmo apoio: o chao, ou o mesmo movel (travesseiro sobre a cama).
         apoio = o.get("sobre")
-        for outro_id, (ox, oy, omx, omy, oapoio) in caixas.items():
-            if oapoio == apoio and abs(o["x"] - ox) < mx + omx and abs(o["y"] - oy) < my + omy:
+        # Entre operacoes da mesma ficha os moveis podem se cruzar (rearrumar um comodo); so o fim conta.
+        for outro_id, (ox, oy, omx, omy, oapoio) in (caixas.items() if final else ()):
+            # 0,01 cm de tolerancia: moveis encostados (cadeira na mesa) com medidas como 55,00000000000001
+            if oapoio == apoio and abs(o["x"] - ox) < mx + omx - .01 and abs(o["y"] - oy) < my + omy - .01:
                 raise Invalida(f"{oid} e {outro_id} ficariam um em cima do outro")
         caixas[oid] = (o["x"], o["y"], mx, my, apoio)
     for oid, o in objs.items():

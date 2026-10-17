@@ -97,6 +97,8 @@ def verificar(cena, pedido, editor, raiz=None):
     mapa=pedido.get("associacoes",{})
     geo=editor.chamar("scene_geometry",colisoes=True)["atores"]
     rows=[]; problemas=[]
+    # Objeto apoiado e seu apoio (travesseiro e cama) se tocam de proposito: nao e sobreposicao.
+    apoios={frozenset((i,o["sobre"])) for i,o in p["objetos"].items() if o.get("sobre")}
     for a in geo:
         oid=a["id"]; o=p["objetos"].get(oid,{})
         # Atores externos permanecem listados mesmo quando nao sao moveis candidatos.
@@ -133,6 +135,7 @@ def verificar(cena, pedido, editor, raiz=None):
         sobreposicoes=[]
         nativas={path for c in a["componentes_fisicos"] for path in c.get("sobreposicoes_nativas",[])}
         for b in geo:
+            if frozenset((a["id"],b["id"])) in apoios:continue
             if b["caminho"] in nativas and all(min(a["max"][j],b["max"][j])-max(a["min"][j],b["min"][j])>.5 for j in range(3)):
                 sobreposicoes.append(b["rotulo"])
         check["sobreposicoes_colisao"]=sobreposicoes
@@ -143,6 +146,7 @@ def verificar(cena, pedido, editor, raiz=None):
     pares=[]
     for i,a in enumerate(rows):
         for b in rows[i+1:]:
+            if frozenset((a["id"],b["id"])) in apoios:continue
             if a["sala"]==b["sala"] and all(min(a["max"][j],b["max"][j])-max(a["min"][j],b["min"][j])>.1 for j in range(3)):
                 pares.append([a["ator"],b["ator"]])
     circulacao=[]

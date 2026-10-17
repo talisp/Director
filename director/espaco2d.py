@@ -82,7 +82,7 @@ def na_planta(planta,sid,extras=None):
     s=planta['objetos'][sid];objetos=[];aberturas=[]
     for oid,o in planta['objetos'].items():
         if o.get('sala')!=sid:continue
-        if o['tipo'] in OP.MOVEIS:objetos.append({**o,'id':oid,'x':o['x']-s['x'],'y':o['y']-s['y'],'z':o.get('z',s['z'])-s['z']})
+        if o['tipo'] in OP.MOVEIS and not o.get('sobre'):objetos.append({**o,'id':oid,'x':o['x']-s['x'],'y':o['y']-s['y'],'z':o.get('z',s['z'])-s['z']})
         elif o['tipo'] in OP.VAOS:aberturas.append({**o,'id':oid})
     return {'dimensoes_cm':[s['largura'],s['comprimento']],'objetos':objetos+(extras or []),'aberturas':aberturas}
 

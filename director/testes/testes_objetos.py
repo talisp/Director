@@ -80,3 +80,34 @@ class Fixos(unittest.TestCase):
         r,p=self._fazer({'categoria':'cadeira'})
         self.assertTrue(p['objetos']['box1']['fisica']['simular'])
         with self.assertRaises(ValueError):self._fazer({'categoria':'pia','simular':True})
+
+
+class AlturaDeApoio(unittest.TestCase):
+    """Cabeceira mais alta que o colchao: o topo da caixa (83) nao e onde o travesseiro apoia (53)."""
+    def _altura(self,alturas,ids=None):
+        from director.objetos import _altura_de_apoio
+        class Ed:
+            def chamar(s,nome,consultas):
+                return {'medidas':[{'acertou':True,'id':(ids or ['cama']*5)[i],'rotulo':(ids or ['cama']*5)[i],'ponto':[0,0,z]} for i,z in enumerate(alturas)]}
+        cama={'z':1,'altura':82}
+        return _altura_de_apoio(Ed(),cama,'cama',{'x':480,'y':560,'giro':0,'largura':62,'profundidade':42})
+    def test_colchao_plano(self):
+        self.assertEqual(self._altura([53,53,53.5,53,52.8]),53.5)
+    def test_canto_na_cabeceira_recusa(self):
+        with self.assertRaises(ValueError) as e:self._altura([53,53,83,53,83])
+        self.assertIn('irregular (53.0 a 83.0 cm)',str(e.exception))
+    def test_canto_fora_da_cama_recusa(self):
+        with self.assertRaises(ValueError) as e:self._altura([53,53,53,53,0],ids=['cama']*4+['quarto.piso'])
+        self.assertIn('canto nordeste',str(e.exception))
+
+
+class Rearrumar(unittest.TestCase):
+    def test_trocar_dois_moveis_de_lugar_numa_ficha(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ed=EditorFalso();ok=lambda f:X.executar('teste',f,ed,tmp,pausa=lambda _:None)
+            ok(ficha(1));ok(_reg('a',_asset(330,80,1,60,60,50)));ok(_reg('b',_asset(330,320,1,60,60,50)))
+            troca={'operacoes':[{'operacao':'mudar','id':'a','y_m':3.2},{'operacao':'mudar','id':'b','y_m':.8}]}
+            r=ok(troca);self.assertTrue(r['ok'],r)
+            o=PL.carregar(tmp,'teste')['objetos'];self.assertEqual((o['a']['y'],o['b']['y']),(320,80))
+            # no fim, um em cima do outro continua recusado
+            self.assertFalse(ok({'operacoes':[{'operacao':'mudar','id':'a','y_m':.8}]})['ok'])

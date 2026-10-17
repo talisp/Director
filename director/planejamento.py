@@ -48,21 +48,25 @@ def resolver(pedido,filtro=True):
     W=model.new_int_var(math.ceil(minimo[0]),math.floor(maximo[0]),'largura')
     H=model.new_int_var(math.ceil(minimo[1]),math.floor(maximo[1]),'comprimento')
     area=model.new_int_var(1,math.ceil(maximo[0]*maximo[1]),'area');model.add_multiplication_equality(area,[W,H]);model.minimize(area)
-    dados=[];xis=[];yis=[];folga=int(pedido.get('folga_cm',5))
+    dados=[];xis=[];yis=[];zonas_lado=[];folga=int(pedido.get('folga_cm',5))
     for o in pedido['objetos']:
         w,d=map(lambda v:math.ceil(v),o['dimensoes_cm'][:2]);uso=math.ceil(o.get('uso_frente_cm',70))
+        # Cadeira na frente da mesa: a area livre fica ATRAS dela (para puxar e sentar), nao na frente.
+        if o.get('na_frente_de'):uso=math.ceil(o.get('uso_atras_cm',max(uso,60)))
         if min(w,d)<=0 or uso<0:raise ValueError('objeto precisa de dimensoes positivas e uso nao negativo')
         # Giro 0/90/180/270: a frente (e a area de uso) aponta para sul/leste/norte/oeste.
         ori=[model.new_bool_var(o['id']+f'_giro{90*k}') for k in range(4)]
         model.add_exactly_one(ori)
         if o.get('girar',True) is False:model.add(ori[0]==1)
         rot=model.new_bool_var(o['id']+'_rot');model.add(rot==ori[1]+ori[3])
+        # zona[j]: a area de uso fica do lado j (sul/leste/norte/oeste); na cadeira, o lado oposto ao giro.
+        zona=[ori[(j+2)%4] for j in range(4)] if o.get('na_frente_de') else ori
         rw=model.new_int_var(min(w,d),max(w,d),o['id']+'_w');rh=model.new_int_var(min(w,d),max(w,d),o['id']+'_h')
         model.add(rw==w+(d-w)*rot);model.add(rh==d+(w-d)*rot)
         x=model.new_int_var(folga,math.floor(maximo[0]),o['id']+'_x');y=model.new_int_var(folga,math.floor(maximo[1]),o['id']+'_y')
         model.add(x+rw<=W-folga);model.add(y+rh<=H-folga)
-        model.add(y>=uso+folga).only_enforce_if(ori[0]);model.add(x+rw+uso<=W-folga).only_enforce_if(ori[1])
-        model.add(y+rh+uso<=H-folga).only_enforce_if(ori[2]);model.add(x>=uso+folga).only_enforce_if(ori[3])
+        model.add(y>=uso+folga).only_enforce_if(zona[0]);model.add(x+rw+uso<=W-folga).only_enforce_if(zona[1])
+        model.add(y+rh+uso<=H-folga).only_enforce_if(zona[2]);model.add(x>=uso+folga).only_enforce_if(zona[3])
         # Encostado: as costas na parede (padrao), menos o que fica na frente de outro objeto.
         if o.get('encostar',not o.get('na_frente_de')):
             model.add(y+rh==H-folga).only_enforce_if(ori[0]);model.add(x==folga).only_enforce_if(ori[1])
@@ -71,7 +75,7 @@ def resolver(pedido,filtro=True):
         model.add(xe==x+rw);model.add(ye==y+rh)
         xis.append(model.new_interval_var(x,rw,xe,o['id']+'_ix'))
         yis.append(model.new_interval_var(y,rh,ye,o['id']+'_iy'))
-        dados.append((o,x,y,rw,rh,ori,uso))
+        dados.append((o,x,y,rw,rh,ori,uso));zonas_lado.append(zona)
     model.add_no_overlap_2d(xis,yis)
     def separar(a,b,cond=None):
         bits=[model.new_bool_var('separa') for _ in range(4)]
@@ -100,13 +104,15 @@ def resolver(pedido,filtro=True):
                 model.add(yy+hh==y).only_enforce_if([lados[2],rot_alvo]);model.add(yy==y+h).only_enforce_if([lados[3],rot_alvo])
                 model.add_bool_or(lados[:2]).only_enforce_if(rot_alvo.Not());model.add_bool_or(lados[2:]).only_enforce_if(rot_alvo)
             com_uso=[(x,y-u,w,h+u),(x,y,w+u,h),(x,y,w,h+u),(x-u,y,w+u,h)]
-            for k,ret in enumerate(com_uso):separar(ret,(xx,yy,ww,hh),r[k])
+            for k,ret in enumerate(com_uso):separar(ret,(xx,yy,ww,hh),zonas_lado[i][k])
         for b in reservas:separar((x,y,w,h),b)
         for a in pedido.get('aberturas',[]):
             z0=a.get('peitoril',0) if a['tipo']=='janela' else 0
             if obj['dimensoes_cm'][2]<=z0:continue
             d=max(80,math.ceil(a['largura'])) if a['tipo']=='porta' else 50
-            lo=math.floor(a['posicao']-a['largura']/2);hi=math.ceil(a['posicao']+a['largura']/2)
+            # Porta: 10 cm a mais de cada lado para a folha aberta (vista ao vivo batendo na escrivaninha).
+            m=10 if a['tipo']=='porta' else 0
+            lo=math.floor(a['posicao']-a['largura']/2)-m;hi=math.ceil(a['posicao']+a['largura']/2)+m
             b={'sul':(lo,0,hi-lo,d),'norte':(lo,H-d,hi-lo,d),
                 'oeste':(0,lo,d,hi-lo),'leste':(W-d,lo,d,hi-lo)}[a['parede']]
             separar((x,y,w,h),b)
@@ -128,10 +134,11 @@ def resolver(pedido,filtro=True):
         items=[]
         for o,x,y,w,h,r,u in dados:
             xx,yy,ww,hh=[solver.value(v) for v in (x,y,w,h)];k=[solver.value(b) for b in r].index(1)
-            use=[[xx+ww/2,yy-u/2],[xx+ww+u/2,yy+hh/2],[xx+ww/2,yy+hh+u/2],[xx-u/2,yy+hh/2]][k]
+            j=(k+2)%4 if o.get('na_frente_de') else k
+            use=[[xx+ww/2,yy-u/2],[xx+ww+u/2,yy+hh/2],[xx+ww/2,yy+hh+u/2],[xx-u/2,yy+hh/2]][j]
             # Alcance: o centro da capsula chega a ate raio+20 cm da frente, mesmo com area de uso rasa.
             a=max(u,int(pedido.get('raio_cm',34))+20)
-            caixa=[[xx,yy-a,xx+ww,yy],[xx+ww,yy,xx+ww+a,yy+hh],[xx,yy+hh,xx+ww,yy+hh+a],[xx-a,yy,xx,yy+hh]][k]
+            caixa=[[xx,yy-a,xx+ww,yy],[xx+ww,yy,xx+ww+a,yy+hh],[xx,yy+hh,xx+ww,yy+hh+a],[xx-a,yy,xx,yy+hh]][j]
             items.append({'id':o['id'],'x_m':(xx+ww/2)/100,'y_m':(yy+hh/2)/100,'giro':90*k,
                           'dimensoes_cm':o['dimensoes_cm'],'uso_frente_cm':u,'ponto_uso_cm':use,'zona_uso_cm':caixa,
                           **{c:o[c] for c in ('na_frente_de','ao_lado_de') if o.get(c)}})
@@ -140,12 +147,13 @@ def resolver(pedido,filtro=True):
             'dimensoes_cm':dims,'area_m2':solver.value(area)/10000,'objetos':items,'tentativas':tentativa,
             'otimo_no_modelo':status==cp_model.OPTIMAL and tentativa==1,'nao_verificado':['circulacao e geometria real exigem verificar',
             'otimo apenas para retangulos, orientacoes e areas de uso modeladas; nao e minimo global arquitetonico']+
-            (['objetos na_frente_de (cadeira) nao entram no filtro 2D: supoe-se que sao afastados para usar a mesa'] if any(i.get('na_frente_de') for i in items) else [])}
+            (['mesa com cadeira na frente: o acesso exigido e o espaco atras da cadeira (ponto_uso_cm da cadeira)'] if any(i.get('na_frente_de') for i in items) else [])}
         if not filtro:return resultado
         from .espaco2d import avaliar
-        # Cadeira "na frente de" e afastada por quem usa a mesa: nao bloqueia o acesso no filtro 2D.
-        check=avaliar({'dimensoes_cm':dims,'objetos':_pegadas([i for i in items if not i.get('na_frente_de')],pedido),'aberturas':pedido.get('aberturas',[]),
-                       'alvos':[{'id':i['id'],'caixa':i['zona_uso_cm']} for i in items if i['uso_frente_cm']>0]})
+        # A cadeira e obstaculo; quem usa a mesa chega por tras da cadeira, entao a mesa nao e alvo proprio.
+        com_cadeira={i['na_frente_de'] for i in items if i.get('na_frente_de')}
+        check=avaliar({'dimensoes_cm':dims,'objetos':_pegadas(items,pedido),'aberturas':pedido.get('aberturas',[]),
+                       'alvos':[{'id':i['id'],'caixa':i['zona_uso_cm']} for i in items if i['uso_frente_cm']>0 and i['id'] not in com_cadeira]})
         resultado['verificacao2d']=check
         if check['aprovado']:
             if tentativa>1:resultado['nao_verificado'].append(f'{tentativa-1} arrumacoes anteriores foram reprovadas pelo filtro 2D; esta e a primeira aprovada, nao a menor possivel')
@@ -165,7 +173,7 @@ def resolver(pedido,filtro=True):
         model.add_bool_or(bits)
         # Depois de algumas tentativas no mesmo tamanho, passa para um tamanho maior.
         a0=solver.value(area);por_area[a0]=por_area.get(a0,0)+1
-        if por_area[a0]>=por_tamanho:model.add(area>=math.ceil(a0*(1+float(pedido.get("passo_area",.03)))))
+        if por_area[a0]>=por_tamanho and list(minimo)!=list(maximo):model.add(area>=math.ceil(a0*(1+float(pedido.get("passo_area",.03)))))
     estado=solver.status_name(status) if status is not None else 'SEM_TEMPO'
     falha={'ok':False,'estado':estado,'solver':versao,'tentativas':len(historico)}
     if historico:
@@ -224,7 +232,8 @@ def planejar(cena,pedido,editor):
         reservas=list(q.get('reservas',[]));mantidos=[]
         for oid,o in p['objetos'].items():
             if o.get('sala')!=sid:continue
-            if o['tipo'] in OP.MOVEIS and oid not in {x['id'] for x in q['objetos']}:
+            # Objeto apoiado em outro movel (travesseiro, notebook) nao ocupa o chao.
+            if o['tipo'] in OP.MOVEIS and not o.get('sobre') and oid not in {x['id'] for x in q['objetos']}:
                 g=math.radians(o['giro']);w=abs(o['largura']*math.cos(g))+abs(o['profundidade']*math.sin(g));h=abs(o['largura']*math.sin(g))+abs(o['profundidade']*math.cos(g))
                 reservas.append([o['x']-s['x']-w/2,o['y']-s['y']-h/2,w,h]);mantidos.append(oid)
             if o['tipo']=='porta' and not hipotese:

@@ -10,6 +10,26 @@ MASSAS={'cama':45,'criado_mudo':12,'guarda_roupa':80,'escrivaninha':25,'cadeira'
 FIXOS=('box','box_chuveiro','chuveiro','vaso_sanitario','pia','bancada','divisoria','parede','bancada_pia')
 
 
+def _altura_de_apoio(editor,b,sobre,o,folga=2.0,irregular=3.0):
+    """Altura real da superficie sob o objeto: raios para baixo no centro e nos quatro cantos.
+    O topo da caixa do movel engana (a cabeceira da cama e mais alta que o colchao: visto em 17/10)."""
+    g=math.radians(o['giro']);hw,hd=max(o['largura']/2-folga,0),max(o['profundidade']/2-folga,0)
+    pts=[(0,0)]+[(sx*hw,sy*hd) for sx in (-1,1) for sy in (-1,1)]
+    topo=b.get('z',0)+b['altura']
+    qs=[{'tipo':'raio','de':[o['x']+px*math.cos(g)-py*math.sin(g),o['y']+px*math.sin(g)+py*math.cos(g),topo+50],
+         'ate':[o['x']+px*math.cos(g)-py*math.sin(g),o['y']+px*math.sin(g)+py*math.cos(g),b.get('z',0)]} for px,py in pts]
+    med=editor.chamar('measure',consultas=qs)['medidas']
+    zs=[]
+    for nome,m in zip(('centro','canto sudoeste','canto noroeste','canto sudeste','canto nordeste'),med):
+        if not m.get('acertou') or m.get('id')!=sobre:
+            raise ValueError(f"sobre {sobre}: o {nome} do objeto nao fica em cima de {sobre} (o raio bateu em {m.get('rotulo') or 'nada'}); mova ou diminua o objeto")
+        zs.append(m['ponto'][2])
+    if max(zs)-min(zs)>irregular:
+        raise ValueError(f'sobre {sobre}: a superficie embaixo do objeto e irregular ({min(zs):.1f} a {max(zs):.1f} cm); '
+                         f'mova o objeto para uma parte plana (ex.: longe da cabeceira ou da borda)')
+    return max(zs)
+
+
 def fazer(cena,pedido,editor):
     p=PL.carregar(C.CENAS,cena)
     if editor.chamar('info')['level']!=p['nivel']: raise ValueError('abra a cena antes de criar/adotar objeto')
@@ -39,7 +59,7 @@ def fazer(cena,pedido,editor):
             raise ValueError(f'sobre: {sobre!r} precisa ser um movel registrado na sala {sid}')
         if 'x_m' not in pedido:o['x']=b['x']
         if 'y_m' not in pedido:o['y']=b['y']
-        o['z']=b.get('z',s['z'])+b['altura'];o['sobre']=sobre
+        o['z']=_altura_de_apoio(editor,b,sobre,o);o['sobre']=sobre
     fixo=pedido.get('fixo',o['categoria'] in FIXOS)
     if fixo and pedido.get('simular') is True:raise ValueError('fixo e simular ao mesmo tempo: escolha um')
     massa=pedido.get('massa_kg',MASSAS.get(o['categoria'],MASSAS['generico']))

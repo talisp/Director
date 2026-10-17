@@ -95,3 +95,20 @@ class SalaHipotetica(unittest.TestCase):
         self.assertIn('NAO foi alterada',r['origem']['dimensoes'])
         self.assertEqual(r['mantidos_da_cena'],['mesa1'])
         self.assertEqual({a['id'] for a in r['verificacao2d']['acessos']},{'armario'})
+
+    def test_objeto_apoiado_nao_ocupa_o_chao(self):
+        import json,shutil,tempfile
+        from pathlib import Path
+        from director import config as C, planejamento
+        orig=Path(__file__).resolve().parents[1]/'cenas'/'sala'/'planta.json'
+        d=json.loads(orig.read_text(encoding='utf-8'))
+        m=d['objetos']['mesa1']
+        d['objetos']['note']={'tipo':'asset','sala':'sala1','x':m['x'],'y':m['y'],'z':76,'giro':0,'largura':30,'profundidade':20,'altura':2,'sobre':'mesa1',
+            'modelo':{'asset':'/Game/N','tamanho':[30,20,2],'centro':[0,0,1],'min_z':0},'fisica':{'simular':True,'massa_kg':2,'amortecimento_linear':.5,'amortecimento_angular':1,'subir':False}}
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp)/'sala').mkdir();(Path(tmp)/'sala'/'planta.json').write_text(json.dumps(d),encoding='utf-8')
+            velho=C.CENAS;C.CENAS=tmp
+            try:r=planejamento.planejar('sala',{'sala':'sala1','minimo_cm':[300,300],'maximo_cm':[500,400],'segundos':5,
+                    'objetos':[{'id':'mesa1','dimensoes_cm':[120,80,75],'uso_frente_cm':60}]},None)
+            finally:C.CENAS=velho
+        self.assertTrue(r['ok'],r.get('detalhe'));self.assertNotIn('mantidos_da_cena',r)
