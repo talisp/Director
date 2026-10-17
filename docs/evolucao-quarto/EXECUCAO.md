@@ -132,3 +132,19 @@ trata orientacao vertical (yaw), com limites declarados para objetos inclinados.
 Perfis fisicos padrao ainda requerem validacao especifica para materiais/escala.
 Uma falha de inventario durante desenvolvimento expos necessidade de recuperar
 tambem erro ao conferir; esse caminho agora solicita a recuperacao existente.
+
+## #21 — consulta unica (#19/#20)
+
+`procurar cadeira` atualiza metadados da cena e AssetRegistry e consulta um indice
+local pequeno. Cena vem antes do projeto, independente da pontuacao nominal.
+Aliases PT/EN e nomes anteriores dos objetos adotados sao preservados. Nomes,
+classes e dimensoes sao dados do motor; categorias por sinonimos sao sugestoes.
+Filtros dimensionais excluem dimensoes desconhecidas. O indice JSON deste lote
+nao decide banco permanente nem implementa embeddings, scheduler ou novo RAG.
+
+Teste no editor: consulta cadeira retornou quatro candidatos, com os tres objetos
+da cena antes do asset do projeto. A cadeira adotada mantem Cadeira_mesa1 como
+apelido; o teste da cena final rev14 ainda precisa confirmar o nome original.
+Teste negativo: geladeira nao retorna candidatos no catalogo reduzido de cadeiras;
+limite 40 x 40 cm exclui cadeira de 50 x 50 cm e asset sem dimensoes. 56 testes
+passaram. A prova de novo asset apos atualizacao fica para o lote offline #27.

@@ -18,6 +18,8 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
+    "procurar": {"uso": "procurar TERMO [TERMO ...] | procurar consultar PEDIDO.json", "faz": "Atualiza e consulta cena, projeto e indice offline com sinonimos PT/EN; poucos candidatos e cena primeiro."},
+    "catalogo": {"uso": "catalogo atualizar", "faz": "Gera indice local dos metadados atuais sem imprimir todo o catalogo."},
     "objeto": {"uso": "objeto CENA PEDIDO.json", "faz": "Adota, duplica, compoe ou coloca StaticMesh com identidade na planta e perfil fisico ajustavel."},
     "preparar": {"uso": "preparar CENA_NOVA PASTA_SNAPSHOT", "faz": "Prepara copia historica em novo level e planta; nao executa pedido do operador."},
     "verificar": {"uso": "verificar CENA CONSULTAS.json", "faz": "Verifica contencao por geometria fisica, raios externos e rotas; informa limites e objetos fora da planta."},
@@ -73,7 +75,7 @@ def main(argv: list) -> None:
             r = {"ok": False, "motivo": "ensaio", "porque": str(e)}
         _sair(r, 0 if r.get("ok") else 2)
     aridade = {"capacidades": (0, 0), "pecas": (0, 0), "fazer": (2, 2), "estado": (1, 1),
-               "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None), "relatorio": (1, None), "verificar": (2, 2), "preparar": (2, 2), "objeto": (2, 2)}
+               "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None), "relatorio": (1, None), "verificar": (2, 2), "preparar": (2, 2), "objeto": (2, 2), "procurar": (1,None), "catalogo": (1,1)}
     if modo not in aridade:
         _sair(_ajuda(modo), 2)
     minimo, maximo = aridade[modo]
@@ -92,6 +94,13 @@ def main(argv: list) -> None:
         with ponte.Ponte(f"director-{modo}") as p:
             if modo == "pecas":
                 res = p.chamar("pieces_build", pecas=pecas.PECAS)
+            elif modo == "procurar":
+                from . import catalogo
+                res = catalogo.cli(argv[1:],p)
+            elif modo == "catalogo":
+                from . import catalogo
+                if argv[1]!='atualizar':raise ValueError('uso: catalogo atualizar')
+                res=catalogo.atualizar(p);res.pop('dados',None)
             elif modo == "preparar":
                 from . import preparacao
                 res = preparacao.preparar(argv[1],argv[2],p)

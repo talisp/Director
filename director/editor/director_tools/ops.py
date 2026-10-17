@@ -373,6 +373,27 @@ def assets_find(termos: list, limite: int = 20):
 
 
 @op
+def catalog_snapshot():
+    """Metadados da cena e AssetRegistry, sem carregar todas as malhas."""
+    atores=[]
+    for a in _eas().get_all_level_actors():
+        if a.get_class().get_name().startswith(IGNORAR):continue
+        d=_descrever(a);d['id'],d['tipo']=_etiquetas(a)
+        componentes=list(a.get_components_by_class(U.StaticMeshComponent))+list(a.get_components_by_class(U.DynamicMeshComponent))
+        caixas=[(_v(b[0]),_v(b[1])) for b in (U.SystemLibrary.get_component_bounds(c) for c in componentes)]
+        if caixas:
+            mn=[min(b[0][j]-b[1][j] for b in caixas) for j in range(3)]
+            mx=[max(b[0][j]+b[1][j] for b in caixas) for j in range(3)]
+            d['dimensoes_cm']=[round(mx[j]-mn[j],3) for j in range(3)]
+        d['assets']=[c.static_mesh.get_path_name().rsplit('.',1)[0] for c in componentes if isinstance(c,U.StaticMeshComponent) and c.static_mesh]
+        atores.append(d)
+    assets=[]
+    for a in U.AssetRegistryHelpers.get_asset_registry().get_assets_by_path('/Game',recursive=True):
+        assets.append({'nome':str(a.asset_name),'caminho':str(a.package_name),'classe':str(a.asset_class_path)})
+    return {'level':_level(),'atores':atores,'assets':assets,'motor':U.SystemLibrary.get_engine_version()}
+
+
+@op
 def scene_geometry(mundo: str = "editor", colisoes: bool = False):
     """Geometria de componentes fisicos; exclui billboards dos bounds de moveis."""
     w = _mundo_jogo() if mundo == "jogo" else _mundo_editor()
