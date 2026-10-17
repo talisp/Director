@@ -1,0 +1,814 @@
+{
+  "data": "2026-10-17",
+  "motor": "5.8.3-58210709+++UE5+Release-5.8",
+  "baseline_commit": "1f5e729",
+  "implementacao_commit": "56be177",
+  "proveniencia": "Extratos de registros locais; testes anteriores não foram repetidos nesta revisão documental.",
+  "testes_offline": {
+    "director": 49,
+    "hermes": 4
+  },
+  "ensaios_deterministicos": [
+    {
+      "cena": "ensaio_codex_20261017_a",
+      "parametros_cm": {
+        "x": 0,
+        "y": 0,
+        "largura_sala": 400,
+        "comprimento_sala": 400,
+        "largura_corredor": 150
+      },
+      "etapas": [
+        {
+          "nome": "construcao",
+          "execucao_ok": true,
+          "acoes": [
+            [
+              "criar",
+              "sala_a.piso"
+            ],
+            [
+              "criar",
+              "sala_a.nav"
+            ],
+            [
+              "criar",
+              "corredor.piso"
+            ],
+            [
+              "criar",
+              "corredor.nav"
+            ],
+            [
+              "criar",
+              "sala_b.piso"
+            ],
+            [
+              "criar",
+              "sala_b.nav"
+            ],
+            [
+              "criar",
+              "porta_a"
+            ],
+            [
+              "criar",
+              "porta_b"
+            ],
+            [
+              "criar",
+              "mesa_a"
+            ],
+            [
+              "criar",
+              "mesa_b"
+            ],
+            [
+              "criar",
+              "corredor.parede_leste"
+            ],
+            [
+              "criar",
+              "corredor.parede_oeste"
+            ],
+            [
+              "criar",
+              "sala_a.parede_sul"
+            ],
+            [
+              "criar",
+              "sala_a.parede_norte"
+            ],
+            [
+              "criar",
+              "sala_a.parede_leste"
+            ],
+            [
+              "criar",
+              "sala_a.parede_oeste"
+            ],
+            [
+              "criar",
+              "sala_b.parede_sul"
+            ],
+            [
+              "criar",
+              "sala_b.parede_norte"
+            ],
+            [
+              "criar",
+              "sala_b.parede_leste"
+            ],
+            [
+              "criar",
+              "sala_b.parede_oeste"
+            ]
+          ],
+          "criterios": {
+            "largura_medido_cm": 150.0,
+            "largura_ok": true,
+            "passagem_livre": true,
+            "caminho_completo": false,
+            "parede_lateral_barra": true
+          }
+        },
+        {
+          "nome": "correcao",
+          "congelados_alterados": [],
+          "atores_recriados": [],
+          "fora_preservado": true,
+          "execucao_ok": true,
+          "acoes": [
+            [
+              "atualizar",
+              "corredor.piso",
+              "Largura"
+            ],
+            [
+              "atualizar",
+              "corredor.nav"
+            ],
+            [
+              "atualizar",
+              "corredor.parede_leste"
+            ]
+          ],
+          "criterios": {
+            "largura_medido_cm": 180.0,
+            "largura_ok": true,
+            "passagem_livre": true,
+            "caminho_completo": false,
+            "parede_lateral_barra": true
+          }
+        },
+        {
+          "nome": "repeticao",
+          "inventario_identico": true,
+          "execucao_ok": true,
+          "acoes": [],
+          "criterios": null
+        },
+        {
+          "nome": "invalido",
+          "cena_intacta": true,
+          "execucao_ok": false,
+          "acoes": null,
+          "criterios": null
+        }
+      ]
+    },
+    {
+      "cena": "ensaio_codex_20261017_b",
+      "parametros_cm": {
+        "x": 1000,
+        "y": -600,
+        "largura_sala": 500,
+        "comprimento_sala": 300,
+        "largura_corredor": 180
+      },
+      "etapas": [
+        {
+          "nome": "construcao",
+          "execucao_ok": true,
+          "acoes": [
+            [
+              "criar",
+              "sala_a.piso"
+            ],
+            [
+              "criar",
+              "sala_a.nav"
+            ],
+            [
+              "criar",
+              "corredor.piso"
+            ],
+            [
+              "criar",
+              "corredor.nav"
+            ],
+            [
+              "criar",
+              "sala_b.piso"
+            ],
+            [
+              "criar",
+              "sala_b.nav"
+            ],
+            [
+              "criar",
+              "porta_a"
+            ],
+            [
+              "criar",
+              "porta_b"
+            ],
+            [
+              "criar",
+              "mesa_a"
+            ],
+            [
+              "criar",
+              "mesa_b"
+            ],
+            [
+              "criar",
+              "corredor.parede_leste"
+            ],
+            [
+              "criar",
+              "corredor.parede_oeste"
+            ],
+            [
+              "criar",
+              "sala_a.parede_sul"
+            ],
+            [
+              "criar",
+              "sala_a.parede_norte"
+            ],
+            [
+              "criar",
+              "sala_a.parede_leste"
+            ],
+            [
+              "criar",
+              "sala_a.parede_oeste"
+            ],
+            [
+              "criar",
+              "sala_b.parede_sul"
+            ],
+            [
+              "criar",
+              "sala_b.parede_norte"
+            ],
+            [
+              "criar",
+              "sala_b.parede_leste"
+            ],
+            [
+              "criar",
+              "sala_b.parede_oeste"
+            ]
+          ],
+          "criterios": {
+            "largura_medido_cm": 180.0,
+            "largura_ok": true,
+            "passagem_livre": true,
+            "caminho_completo": false,
+            "parede_lateral_barra": true
+          }
+        },
+        {
+          "nome": "correcao",
+          "congelados_alterados": [],
+          "atores_recriados": [],
+          "fora_preservado": true,
+          "execucao_ok": true,
+          "acoes": [
+            [
+              "atualizar",
+              "corredor.piso",
+              "Largura"
+            ],
+            [
+              "atualizar",
+              "corredor.nav"
+            ],
+            [
+              "atualizar",
+              "corredor.parede_leste"
+            ]
+          ],
+          "criterios": {
+            "largura_medido_cm": 210.0,
+            "largura_ok": true,
+            "passagem_livre": true,
+            "caminho_completo": false,
+            "parede_lateral_barra": true
+          }
+        },
+        {
+          "nome": "repeticao",
+          "inventario_identico": true,
+          "execucao_ok": true,
+          "acoes": [],
+          "criterios": null
+        },
+        {
+          "nome": "invalido",
+          "cena_intacta": true,
+          "execucao_ok": false,
+          "acoes": null,
+          "criterios": null
+        }
+      ]
+    }
+  ],
+  "qwen": {
+    "modelo": "qwen3.8-flash-next-q8_0",
+    "rodadas": [
+      {
+        "arquivo_origem": "hermes_qwen_online.jsonl",
+        "chamadas": 16,
+        "duracao_ms": 224996,
+        "exit_code": 1
+      },
+      {
+        "arquivo_origem": "hermes_qwen_continuacao.jsonl",
+        "chamadas": 13,
+        "duracao_ms": 589215,
+        "exit_code": 0
+      }
+    ],
+    "consultas": [
+      {
+        "tipo": "raio",
+        "de": [
+          565,
+          200,
+          135
+        ],
+        "ate": [
+          565,
+          -800,
+          135
+        ]
+      },
+      {
+        "tipo": "raio",
+        "de": [
+          565,
+          200,
+          135
+        ],
+        "ate": [
+          565,
+          1200,
+          135
+        ]
+      },
+      {
+        "tipo": "varredura",
+        "de": [
+          200,
+          200,
+          92
+        ],
+        "ate": [
+          930,
+          200,
+          92
+        ],
+        "raio": 34,
+        "meia_altura": 88
+      },
+      {
+        "tipo": "caminho",
+        "de": [
+          200,
+          200,
+          1
+        ],
+        "ate": [
+          930,
+          200,
+          1
+        ]
+      }
+    ],
+    "medidas": {
+      "ok": true,
+      "medidas": [
+        {
+          "acertou": true,
+          "id": "corredor.parede_sul",
+          "tipo": "parede",
+          "rotulo": "corredor.parede_sul",
+          "componente": "Dir",
+          "distancia": 75.0,
+          "ponto": [
+            565.0,
+            125.0,
+            135.0
+          ]
+        },
+        {
+          "acertou": true,
+          "id": "corredor.parede_norte",
+          "tipo": "parede",
+          "rotulo": "corredor.parede_norte",
+          "componente": "Dir",
+          "distancia": 75.0,
+          "ponto": [
+            565.0,
+            275.0,
+            135.0
+          ]
+        },
+        {
+          "acertou": false
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              200.0,
+              200.0,
+              11.0
+            ],
+            [
+              930.0,
+              200.0,
+              11.0
+            ]
+          ]
+        }
+      ]
+    },
+    "largura_cm": 150.0
+  },
+  "nav_ablacoes": [
+    {
+      "ensaio": "sem_porta_b",
+      "removidos": [
+        "porta_b"
+      ],
+      "medida": {
+        "ok": true,
+        "medidas": [
+          {
+            "existe": true,
+            "parcial": true,
+            "comprimento": 384.1,
+            "pontos": [
+              [
+                200.0,
+                300.0,
+                11.0
+              ],
+              [
+                209.0,
+                684.0,
+                11.0
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "ensaio": "sem_parede_porta_b",
+      "removidos": [
+        "sala_b.parede_sul",
+        "porta_b"
+      ],
+      "medida": {
+        "ok": true,
+        "medidas": [
+          {
+            "existe": true,
+            "parcial": false,
+            "comprimento": 737.2,
+            "pontos": [
+              [
+                200.0,
+                300.0,
+                11.0
+              ],
+              [
+                209.0,
+                437.0,
+                11.0
+              ],
+              [
+                300.0,
+                1030.0,
+                11.0
+              ]
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "interface": {
+    "nav_ao_abrir": {
+      "ok": true,
+      "medidas": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": true,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": false,
+          "conectividade_verificada": false
+        }
+      ]
+    },
+    "medidas": {
+      "ok": true,
+      "cena": "ensaio_qwen_20261017",
+      "unidades": "centimetros",
+      "mundo": "editor",
+      "consultas": [
+        {
+          "tipo": "raio",
+          "de": [
+            565,
+            200,
+            135
+          ],
+          "ate": [
+            565,
+            -800,
+            135
+          ]
+        },
+        {
+          "tipo": "raio",
+          "de": [
+            565,
+            200,
+            135
+          ],
+          "ate": [
+            565,
+            1200,
+            135
+          ]
+        },
+        {
+          "tipo": "varredura",
+          "de": [
+            200,
+            200,
+            92
+          ],
+          "ate": [
+            930,
+            200,
+            92
+          ],
+          "raio": 34,
+          "meia_altura": 88
+        },
+        {
+          "tipo": "caminho",
+          "de": [
+            200,
+            200,
+            1
+          ],
+          "ate": [
+            930,
+            200,
+            1
+          ]
+        },
+        {
+          "tipo": "varredura",
+          "de": [
+            565,
+            200,
+            135
+          ],
+          "ate": [
+            565,
+            1200,
+            135
+          ],
+          "raio": 34,
+          "meia_altura": 88
+        }
+      ],
+      "medidas": [
+        {
+          "acertou": true,
+          "id": "corredor.parede_sul",
+          "tipo": "parede",
+          "rotulo": "corredor.parede_sul",
+          "componente": "Dir",
+          "distancia": 75.0,
+          "ponto": [
+            565.0,
+            125.0,
+            135.0
+          ]
+        },
+        {
+          "acertou": true,
+          "id": "corredor.parede_norte",
+          "tipo": "parede",
+          "rotulo": "corredor.parede_norte",
+          "componente": "Dir",
+          "distancia": 75.0,
+          "ponto": [
+            565.0,
+            275.0,
+            135.0
+          ]
+        },
+        {
+          "acertou": false,
+          "livre": true
+        },
+        {
+          "existe": false,
+          "parcial": false,
+          "comprimento": -1.0,
+          "pontos": [],
+          "completo": false
+        },
+        {
+          "acertou": true,
+          "id": "corredor.parede_norte",
+          "tipo": "parede",
+          "rotulo": "corredor.parede_norte",
+          "componente": "Dir",
+          "distancia": 41.0,
+          "ponto": [
+            565.0,
+            275.0,
+            136.0
+          ],
+          "livre": false
+        }
+      ]
+    },
+    "apos_rebuild_nativo": {
+      "ok": true,
+      "cena": "ensaio_qwen_20261017",
+      "unidades": "centimetros",
+      "mundo": "editor",
+      "consultas": [
+        {
+          "tipo": "raio",
+          "de": [
+            565,
+            200,
+            135
+          ],
+          "ate": [
+            565,
+            -800,
+            135
+          ]
+        },
+        {
+          "tipo": "raio",
+          "de": [
+            565,
+            200,
+            135
+          ],
+          "ate": [
+            565,
+            1200,
+            135
+          ]
+        },
+        {
+          "tipo": "varredura",
+          "de": [
+            200,
+            200,
+            92
+          ],
+          "ate": [
+            930,
+            200,
+            92
+          ],
+          "raio": 34,
+          "meia_altura": 88
+        },
+        {
+          "tipo": "caminho",
+          "de": [
+            200,
+            200,
+            1
+          ],
+          "ate": [
+            930,
+            200,
+            1
+          ]
+        },
+        {
+          "tipo": "varredura",
+          "de": [
+            565,
+            200,
+            135
+          ],
+          "ate": [
+            565,
+            1200,
+            135
+          ],
+          "raio": 34,
+          "meia_altura": 88
+        }
+      ],
+      "medidas": [
+        {
+          "acertou": true,
+          "id": "corredor.parede_sul",
+          "tipo": "parede",
+          "rotulo": "corredor.parede_sul",
+          "componente": "Dir",
+          "distancia": 75.0,
+          "ponto": [
+            565.0,
+            125.0,
+            135.0
+          ]
+        },
+        {
+          "acertou": true,
+          "id": "corredor.parede_norte",
+          "tipo": "parede",
+          "rotulo": "corredor.parede_norte",
+          "componente": "Dir",
+          "distancia": 75.0,
+          "ponto": [
+            565.0,
+            275.0,
+            135.0
+          ]
+        },
+        {
+          "acertou": false,
+          "livre": true
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              200.0,
+              200.0,
+              11.0
+            ],
+            [
+              930.0,
+              200.0,
+              11.0
+            ]
+          ],
+          "completo": true
+        },
+        {
+          "acertou": true,
+          "id": "corredor.parede_norte",
+          "tipo": "parede",
+          "rotulo": "corredor.parede_norte",
+          "componente": "Dir",
+          "distancia": 41.0,
+          "ponto": [
+            565.0,
+            275.0,
+            136.0
+          ],
+          "livre": false
+        }
+      ]
+    },
+    "original_preservado": true
+  },
+  "cena_original_preservada": true,
+  "nav_config_observada": {
+    "malhas": [
+      {
+        "rotulo": "RecastNavMesh-Default",
+        "runtime_generation": "<RuntimeGenerationType.DYNAMIC: 2>",
+        "agent_radius": "35.0",
+        "agent_height": "144.0",
+        "cell_size": "RecastNavMesh: Property 'CellSize' for attribute 'cell_size' on 'RecastNavMesh' is protected and can",
+        "cell_height": "RecastNavMesh: Property 'CellHeight' for attribute 'cell_height' on 'RecastNavMesh' is protected and",
+        "agent_max_step_height": "RecastNavMesh: Property 'AgentMaxStepHeight' for attribute 'agent_max_step_height' on 'RecastNavMesh"
+      }
+    ],
+    "editor_settings": {
+      "classe": "/Script/UnrealEd.LevelEditorMiscSettings",
+      "navigation_auto_update": "DeveloperSettings: Failed to find property 'navigation_auto_update' for attribute 'navigation_auto_u",
+      "bNavigationAutoUpdate": "True"
+    }
+  },
+  "sha256_origens_locais": {
+    "resultados.json": "9a75768b627a1695e0dd6adcd9ecabd76c49f8f1c8f1e926e673cfbf85a23fe0",
+    "validacao_final_independente.json": "e7379b712d9cd127e7120582317233ad85b55e26e932bec2e1cda41ac90159ac",
+    "validar_interface.json": "4f83b4f43062eea153713f7cd839f431c5fcdef0e3c55aa5f5b518d1295b07ee",
+    "nav_config_real.json": "ebb9488dfd149a7fb07b179f38dd4c80eaa7e7144c81ecbabb6b74f41778db1b",
+    "hermes_qwen_online.jsonl": "61811aaabecb2434de4309dae4fde692941c8c84db753cb104d2995558a63bd8",
+    "hermes_qwen_continuacao.jsonl": "01a54acea6b25f6614ffd38b04308d105544ecf4062c8c091722a1db24abe2b5"
+  }
+}

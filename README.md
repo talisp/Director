@@ -8,6 +8,8 @@ The LLM (or a person) writes a *ficha*: a short JSON with an operation and a few
 
 ## Status: early, first delivery only
 
+**Histórico e próximos passos:** [entrega, evidências publicadas e pendências de 17/10/2026](docs/evolucao-2026-10-17/README.md). Inclui o ensaio real do Qwen, resultados negativos de navegação, fichas de referência e issues para a evolução seguinte.
+
 **17 Oct 2026 — agent interface:** `python -m director --help` lists the commands without connecting to Unreal. `observar CENA [ID ...]` separates the desired plan from measured actor bounds, `medir CENA CONSULTAS.json` exposes native collision/navigation queries, and `assets TERMO ...` searches assets already in `/Game`. Creating a new scene is automatic through `fazer`. JSON output is compact ASCII to avoid corrupted accents in Windows terminal transports.
 
 Navigation readiness now checks the engine's loading/build lock as well as build activity. It is reported separately from connectivity: only a complete path query validates a specific route. No changes to the construction representation or rollback mechanism are required by this increment.

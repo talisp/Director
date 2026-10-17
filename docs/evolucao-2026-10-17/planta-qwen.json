@@ -1,0 +1,77 @@
+{
+  "base_z": 1.0,
+  "cena": "ensaio_qwen_20261017",
+  "formato": 1,
+  "nivel": "/Game/Director/Cenas/L_ensaio_qwen_20261017",
+  "objetos": {
+    "corredor": {
+      "altura": 270.0,
+      "comprimento": 150.0,
+      "largura": 300.0,
+      "parede": 15.0,
+      "tipo": "sala",
+      "x": 415.00000000000006,
+      "y": 125.0,
+      "z": 1.0
+    },
+    "mesa_leste": {
+      "altura": 75.0,
+      "giro": 0.0,
+      "largura": 120.0,
+      "profundidade": 80.0,
+      "sala": "sala_leste",
+      "tipo": "mesa",
+      "x": 980.0,
+      "y": 300.0
+    },
+    "mesa_oeste": {
+      "altura": 75.0,
+      "giro": 0.0,
+      "largura": 120.0,
+      "profundidade": 80.0,
+      "sala": "sala_oeste",
+      "tipo": "mesa",
+      "x": 150.0,
+      "y": 300.0
+    },
+    "porta_leste": {
+      "altura": 210.0,
+      "angulo": 90.0,
+      "largura": 100.0,
+      "parede": "oeste",
+      "posicao": 200.0,
+      "sala": "sala_leste",
+      "tipo": "porta"
+    },
+    "porta_oeste": {
+      "altura": 210.0,
+      "angulo": 90.0,
+      "largura": 100.0,
+      "parede": "leste",
+      "posicao": 200.0,
+      "sala": "sala_oeste",
+      "tipo": "porta"
+    },
+    "sala_leste": {
+      "altura": 270.0,
+      "comprimento": 400.0,
+      "largura": 400.0,
+      "parede": 15.0,
+      "tipo": "sala",
+      "x": 730.0,
+      "y": 0.0,
+      "z": 1.0
+    },
+    "sala_oeste": {
+      "altura": 270.0,
+      "comprimento": 400.0,
+      "largura": 400.0,
+      "parede": 15.0,
+      "tipo": "sala",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 1.0
+    }
+  },
+  "revisao": 1
+}

@@ -1,0 +1,152 @@
+{
+  "ensaio_codex_20261017_a_construcao": {
+    "pedido": "Crie duas salas ligadas por um corredor com passagem livre e duas mesas a preservar.",
+    "operacoes": [
+      {
+        "operacao": "criar_sala",
+        "id": "sala_a",
+        "largura_m": 4.0,
+        "comprimento_m": 4.0,
+        "x_m": 0.0,
+        "y_m": 0.0
+      },
+      {
+        "operacao": "criar_sala",
+        "id": "corredor",
+        "largura_m": 1.5,
+        "comprimento_m": 3,
+        "x_m": 1.25,
+        "y_m": 4.15
+      },
+      {
+        "operacao": "criar_sala",
+        "id": "sala_b",
+        "largura_m": 4.0,
+        "comprimento_m": 4.0,
+        "x_m": 0.0,
+        "y_m": 7.3
+      },
+      {
+        "operacao": "colocar",
+        "tipo": "porta",
+        "id": "porta_a",
+        "sala": "sala_a",
+        "parede": "norte",
+        "posicao_m": 2.0,
+        "largura_m": 1,
+        "angulo": 90
+      },
+      {
+        "operacao": "colocar",
+        "tipo": "porta",
+        "id": "porta_b",
+        "sala": "sala_b",
+        "parede": "sul",
+        "posicao_m": 2.0,
+        "largura_m": 1,
+        "angulo": 90
+      },
+      {
+        "operacao": "colocar",
+        "tipo": "mesa",
+        "id": "mesa_a",
+        "sala": "sala_a",
+        "x_m": 1,
+        "y_m": 1
+      },
+      {
+        "operacao": "colocar",
+        "tipo": "mesa",
+        "id": "mesa_b",
+        "sala": "sala_b",
+        "x_m": 1,
+        "y_m": 1
+      }
+    ]
+  },
+  "ensaio_codex_20261017_a_correcao": {
+    "pedido": "Aumente a largura do corredor em 30 cm sem alterar as salas, mesas ou portas.",
+    "operacoes": [
+      {
+        "operacao": "mudar_sala",
+        "id": "corredor",
+        "largura_m": 1.8
+      }
+    ]
+  },
+  "ensaio_codex_20261017_b_construcao": {
+    "pedido": "Crie duas salas ligadas por um corredor com passagem livre e duas mesas a preservar.",
+    "operacoes": [
+      {
+        "operacao": "criar_sala",
+        "id": "sala_a",
+        "largura_m": 5.0,
+        "comprimento_m": 3.0,
+        "x_m": 10.0,
+        "y_m": -6.0
+      },
+      {
+        "operacao": "criar_sala",
+        "id": "corredor",
+        "largura_m": 1.8,
+        "comprimento_m": 3,
+        "x_m": 11.6,
+        "y_m": -2.85
+      },
+      {
+        "operacao": "criar_sala",
+        "id": "sala_b",
+        "largura_m": 5.0,
+        "comprimento_m": 3.0,
+        "x_m": 10.0,
+        "y_m": 0.3
+      },
+      {
+        "operacao": "colocar",
+        "tipo": "porta",
+        "id": "porta_a",
+        "sala": "sala_a",
+        "parede": "norte",
+        "posicao_m": 2.5,
+        "largura_m": 1,
+        "angulo": 90
+      },
+      {
+        "operacao": "colocar",
+        "tipo": "porta",
+        "id": "porta_b",
+        "sala": "sala_b",
+        "parede": "sul",
+        "posicao_m": 2.5,
+        "largura_m": 1,
+        "angulo": 90
+      },
+      {
+        "operacao": "colocar",
+        "tipo": "mesa",
+        "id": "mesa_a",
+        "sala": "sala_a",
+        "x_m": 1,
+        "y_m": 1
+      },
+      {
+        "operacao": "colocar",
+        "tipo": "mesa",
+        "id": "mesa_b",
+        "sala": "sala_b",
+        "x_m": 1,
+        "y_m": 1
+      }
+    ]
+  },
+  "ensaio_codex_20261017_b_correcao": {
+    "pedido": "Aumente a largura do corredor em 30 cm sem alterar as salas, mesas ou portas.",
+    "operacoes": [
+      {
+        "operacao": "mudar_sala",
+        "id": "corredor",
+        "largura_m": 2.1
+      }
+    ]
+  }
+}
