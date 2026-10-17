@@ -80,3 +80,10 @@ Se `ok: false`, leia `motivo`, `porque` e `recuperado` antes de tentar corrigir.
 ## Perguntas e voz
 
 Na ferramenta `clarify`, `questions` deve ser uma lista de objetos com `question` e, quando úteis, `choices` como lista de textos. Faça perguntas curtas e relevantes; não peça dimensões que possam ser escolhidas provisoriamente sem prejudicar o objetivo. Se `clarify` falhar, pergunte em texto. Se o usuário solicitar áudio ou TTS, use a ferramenta de voz habilitada no perfil sem solicitar aprovação adicional.
+
+`navegacao PEDIDO.json` diagnostica, ajusta (`escopo: regiao` ou `level`) e
+restaura (`acao: restaurar`, `backup: caminho retornado`). Guarde o backup. Level
+altera toda a malha; regiao tambem altera o perfil HIGH compartilhado e tiles
+atingidos. Nao conclua sucesso por `pronta`: use varredura, caminho e boneco via
+`verificar`. Refinamento regional ainda nao resolveu o caso norte-sul auditado;
+nao aplicar ajuste global sem declarar esse escopo ao usuario.

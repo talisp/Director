@@ -63,6 +63,13 @@ def _sair(dados, codigo: int = 0) -> None:
 
 
 def main(argv: list) -> None:
+    if argv and argv[0]=='navegacao':
+        from . import navegacao,ponte
+        try:
+            pedido=_ler_json(argv[1]) if len(argv)==2 else {'acao':'diagnosticar'}
+            with ponte.Ponte('director-navegacao') as p:r=navegacao.executar(pedido,p)
+            _sair(r,0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e)},2)
     if argv and (argv[0] in ("ajuda", "--help", "-h") or any(a in ("--help", "-h") for a in argv[1:])):
         nome = (argv[1] if len(argv) > 1 else None) if argv[0] in ("ajuda", "--help", "-h") else argv[0]
         ajuda = _ajuda(nome)

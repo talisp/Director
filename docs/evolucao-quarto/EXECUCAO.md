@@ -163,3 +163,29 @@ paredes vem da planta; requer conferencia posterior no motor. Objetos externos
 nao registrados e forma real complexa ainda exigem verificacao #25. Nao prova
 minimo global arquitetonico. Dois testes positivos/negativos passaram no ambiente
 opcional; consulta no editor propos armario e criado sem mudar a cena.
+
+## #10 — navegacao com escopo (parcial)
+
+`navegacao PEDIDO.json`: diagnosticar, ajustar regiao por NavModifierVolume nativo,
+ou level explicitamente, e restaurar backup persistido antes da mudanca. Guarda
+parametros, raio e atores criados. Regiao afeta tiles e outros modificadores HIGH
+que compartilhem o perfil; nao promete isolamento geometrico exato.
+
+Na copia: padroes 38/19/19 cm, altura 10, raio 35. Ajuste de todo level para
+2/2/2 cm e altura 2 foi explicitamente testado, salvo e reaberto: boneco chegou
+nas duas orientacoes a 7,3 e 6,8 cm, tolerancia 10. Tempo observado do pedido ate
+nav pronta: 0,52 s (nao e benchmark de CPU/memoria/FPS). Restauracao devolveu
+38/19/19 e altura 10. Regiao de tamanho zero foi recusada.
+
+Pendente: refinamento apenas regional nao corrigiu norte-sul nesta instalacao;
+leste-oeste chegou a 7,3 cm. Nao declarar #10 corrigida. Ensaios por componente
+e volume, com classe de area nula/default, estao registrados. Nao repetir esses
+ensaios sem nova evidencia. O primeiro componente usou area Null padrao e cortou
+a malha; corrigido, experimentos removidos e configuracao original restaurada.
+
+Fontes consultadas em 17/10/2026:
+https://dev.epicgames.com/documentation/unreal-engine/navigation-mesh-resolutions-user-guide
+https://issues.unrealengine.com/issue/UE-214913
+https://forums.unrealengine.com/t/changing-navmeshresolutionparams-cellsize-in-ini-fails-to-generate-new-bvquantfactor-which-breaks-findnearestpoly/2653823
+A API instalada confirma modificadores e resolucoes; os relatos nao provam a
+causa local. Preferida a navegacao nativa, sem construir outro pathfinder.
