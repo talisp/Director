@@ -148,3 +148,18 @@ apelido; o teste da cena final rev14 ainda precisa confirmar o nome original.
 Teste negativo: geladeira nao retorna candidatos no catalogo reduzido de cadeiras;
 limite 40 x 40 cm exclui cadeira de 50 x 50 cm e asset sem dimensoes. 56 testes
 passaram. A prova de novo asset apos atualizacao fica para o lote offline #27.
+
+## #12 — planejamento espacial
+
+Adotado OR-Tools CP-SAT 9.15.6755 em ambiente opcional isolado, evitando escrever
+um solver de empacotamento. Fontes oficiais verificadas em 17/10/2026:
+https://github.com/google/or-tools/releases/tag/v9.15 e
+https://developers.google.com/optimization/cp/cp_solver/ .
+
+`planejar CENA PEDIDO.json` mede salas existentes, reserva portas e moveis da
+planta, propoe retangulos e areas de uso frontal; nao aplica a proposta. Pode
+minimizar area dentro de limites, com orientacoes 0/90 graus. Compartilhamento de
+paredes vem da planta; requer conferencia posterior no motor. Objetos externos
+nao registrados e forma real complexa ainda exigem verificacao #25. Nao prova
+minimo global arquitetonico. Dois testes positivos/negativos passaram no ambiente
+opcional; consulta no editor propos armario e criado sem mudar a cena.

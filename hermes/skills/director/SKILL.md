@@ -68,6 +68,11 @@ o ensaio nao promete rollback automatico nem qualidade integral por retornar `ok
 
 ## Fichas e respostas
 
+`planejar CENA PEDIDO.json` propoe distribuicao por CP-SAT (OR-Tools opcional em
+`.venv-planejamento`). Nao altera a cena: mede a sala existente, reserva portas e
+moveis registrados. Usa retangulos e orientacoes 0/90 graus; otimo no modelo nao
+prova minimo arquitetonico nem trafego real. Aplique uma ficha e use `verificar`.
+
 Formato: `{"pedido": "...", "operacoes": [{"operacao": "..."}]}`. Consulte `capacidades` para campos atuais. As operações da ficha rodam em ordem e a execução deve preservar a recuperação existente. Use IDs mostrados pelo `estado` para mudanças e remoções. Para cômodos encostados, confira a parede compartilhada e a passagem em vez de presumir que duas portas são necessárias.
 
 Se `ok: false`, leia `motivo`, `porque` e `recuperado` antes de tentar corrigir. Em conflito de trava, espere ou informe que o laboratório está ocupado. Se o usuário mover algo à mão, observe o estado atualizado antes de substituir sua mudança. Explique o que realmente existe na cena, o que foi apenas planejado e o que não foi verificado visualmente.

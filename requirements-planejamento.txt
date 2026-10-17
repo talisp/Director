@@ -1,0 +1,2 @@
+# Optional isolated planning runtime; core commands remain standard-library only.
+ortools==9.15.6755
