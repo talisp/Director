@@ -18,6 +18,9 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
+    "preparar": {"uso": "preparar CENA_NOVA PASTA_SNAPSHOT", "faz": "Prepara copia historica em novo level e planta; nao executa pedido do operador."},
+    "verificar": {"uso": "verificar CENA CONSULTAS.json", "faz": "Verifica contencao por geometria fisica, raios externos e rotas; informa limites e objetos fora da planta."},
+    "relatorio": {"uso": "relatorio CENA [ID ...]", "faz": "Separa plano e medidas internas reais por raios; nao abre outra cena."},
     "ensaio": {"uso": "ensaio criar NOME PEDIDO.txt | executar ID SCRIPT.py | listar [ID]", "faz": "Registra pedido, copia exata/hash do script, resultado/erro e diferencas do inventario; usa a ponte e trava existentes."},
     "capacidades": {"uso": "capacidades", "faz": "Contrato das fichas, campos e padroes; sem Unreal."},
     "fazer": {"uso": "fazer CENA FICHA.json|-", "faz": "Cria a cena automaticamente se for nova; aplica, confere e salva a ficha."},
@@ -69,7 +72,7 @@ def main(argv: list) -> None:
             r = {"ok": False, "motivo": "ensaio", "porque": str(e)}
         _sair(r, 0 if r.get("ok") else 2)
     aridade = {"capacidades": (0, 0), "pecas": (0, 0), "fazer": (2, 2), "estado": (1, 1),
-               "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None)}
+               "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None), "relatorio": (1, None), "verificar": (2, 2), "preparar": (2, 2)}
     if modo not in aridade:
         _sair(_ajuda(modo), 2)
     minimo, maximo = aridade[modo]
@@ -79,7 +82,7 @@ def main(argv: list) -> None:
     if modo == "capacidades":
         _sair({**operacoes.capacidades(), "comandos": COMANDOS})
     try:
-        entrada = _ler_json(argv[2]) if modo in ("fazer", "medir") else None
+        entrada = _ler_json(argv[2]) if modo in ("fazer", "medir", "verificar") else None
     except (ValueError, OSError) as e:
         _sair({"ok": False, "motivo": "entrada_invalida", "porque": str(e), "tocou_na_cena": False}, 2)
     from . import ponte  # só aqui: `capacidades` roda sem o Unreal
@@ -88,12 +91,21 @@ def main(argv: list) -> None:
         with ponte.Ponte(f"director-{modo}") as p:
             if modo == "pecas":
                 res = p.chamar("pieces_build", pecas=pecas.PECAS)
+            elif modo == "preparar":
+                from . import preparacao
+                res = preparacao.preparar(argv[1],argv[2],p)
             elif modo == "estado":
                 res = executor.estado(argv[1], p, C.CENAS)
             elif modo == "observar":
                 res = consultas.observar(argv[1], p, C.CENAS, argv[2:])
+            elif modo == "relatorio":
+                from . import relatorio
+                res = relatorio.consultar(argv[1], p, C.CENAS, argv[2:] or None)
             elif modo == "medir":
                 res = consultas.medir(argv[1], entrada, p, C.CENAS)
+            elif modo == "verificar":
+                from . import verificacao
+                res = verificacao.verificar(argv[1], entrada, p)
             elif modo == "assets":
                 res = p.chamar("assets_find", termos=argv[1:])
             elif modo == "fazer":

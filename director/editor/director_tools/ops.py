@@ -267,6 +267,26 @@ def reload_level():
 
 
 @op
+def level_from_snapshot(arquivo: str, caminho: str):
+    """Importa copia historica e salva em novo level, sem sobrescrever a fonte."""
+    import os
+    import shutil
+    import uuid
+    if _mundo_jogo() is not None: raise RuntimeError("pare o Play antes")
+    if not caminho.startswith(PASTA+"/Cenas/") or U.EditorAssetLibrary.does_asset_exist(caminho):
+        raise ValueError("destino precisa ser um novo level em Director/Cenas")
+    if _sujos(): raise RuntimeError("salve alteracoes atuais antes de trocar de level")
+    pacote=PASTA+"/ImportacoesEnsaios/"+uuid.uuid4().hex+"/"+os.path.splitext(os.path.basename(arquivo))[0]
+    destino=os.path.join(U.Paths.project_content_dir(),*pacote.split('/')[2:])+'.umap'
+    os.makedirs(os.path.dirname(destino),exist_ok=True)
+    shutil.copy2(arquivo,destino)
+    U.AssetRegistryHelpers.get_asset_registry().scan_paths_synchronous([pacote.rsplit('/',1)[0]],True)
+    if not _les().new_level_from_template(caminho,pacote): raise RuntimeError("nao criou o novo level a partir da copia historica")
+    with open(arquivo,'rb') as f: digest=hashlib.sha256(f.read()).hexdigest()
+    return {"level":_level(),"origem_sha256":digest,"importacao":pacote}
+
+
+@op
 def save():
     """Salva só o que é do Director: o level da cena e os assets em /Game/Director."""
     util = U.EditorLoadingAndSavingUtils
@@ -345,6 +365,43 @@ def assets_find(termos: list, limite: int = 20):
     encontrados.sort(key=lambda a: a["pacote"])
     return {"assets": encontrados[:limite], "total": len(encontrados), "limitado": len(encontrados) > limite,
             "escopo": "/Game; nomes e caminhos, nao busca semantica nem biblioteca do Fab"}
+
+
+@op
+def scene_geometry(mundo: str = "editor", colisoes: bool = False):
+    """Geometria de componentes fisicos; exclui billboards dos bounds de moveis."""
+    w = _mundo_jogo() if mundo == "jogo" else _mundo_editor()
+    atores = U.GameplayStatics.get_all_actors_of_class(w, U.Actor) if mundo == "jogo" else _eas().get_all_level_actors()
+    saida = []
+    for a in atores:
+        if a.get_class().get_name().startswith(IGNORAR):
+            continue
+        oid, tipo = _etiquetas(a)
+        partes = []
+        for c in a.get_components_by_class(U.StaticMeshComponent):
+            if c.get_collision_enabled() == U.CollisionEnabled.NO_COLLISION or c.static_mesh is None:
+                continue
+            centro, ext, _ = U.SystemLibrary.get_component_bounds(c)
+            v, av = c.get_physics_linear_velocity(), c.get_physics_angular_velocity_in_degrees()
+            parte={"nome": c.get_name(), "centro": _v(centro), "meia_extensao": _v(ext),
+                "asset": c.static_mesh.get_path_name(), "fisica": bool(c.is_simulating_physics()),
+                "massa_kg": round(float(c.get_mass()), 3), "velocidade": _v(v), "velocidade_angular": _v(av),
+                "movel": c.get_editor_property("mobility") == U.ComponentMobility.MOVABLE}
+            if colisoes and parte["movel"]:
+                try:
+                    tipos=[getattr(U.ObjectTypeQuery,n) for n in dir(U.ObjectTypeQuery) if n.startswith("OBJECT_TYPE_QUERY")]
+                    tocados=U.SystemLibrary.component_overlap_actors(c,c.get_world_transform(),tipos,U.Actor,[a])
+                    parte["sobreposicoes_nativas"]=[b.get_path_name() for b in (tocados or [])]
+                except Exception as exc:
+                    parte["sobreposicoes_erro"]=str(exc)
+            partes.append(parte)
+        if partes:
+            d = _descrever(a)
+            d.update({"id": oid, "tipo": tipo, "componentes_fisicos": partes,
+                "min": [min(c["centro"][j]-c["meia_extensao"][j] for c in partes) for j in range(3)],
+                "max": [max(c["centro"][j]+c["meia_extensao"][j] for c in partes) for j in range(3)]})
+            saida.append(d)
+    return {"atores": saida, "mundo": mundo}
 
 
 def _uma(a: dict, idx: dict) -> str:

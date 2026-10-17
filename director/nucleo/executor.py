@@ -149,11 +149,19 @@ def executar(cena: str, ficha: dict, editor, raiz_cenas: str, lab_dir: str = "",
                 res = {"ok": False, "motivo": "recusado", "porque": str(e), "tocou_na_cena": False}
             else:
                 res = _efetivar(editor, raiz_cenas, planta0, planta2, inv0, rel, resumo, lab_dir, pasta_pontos, pausa)
+                if res.get("ok"):
+                    from director import relatorio
+                    alterados = [i for i, o in planta2["objetos"].items() if o != planta0["objetos"].get(i)]
+                    res["resultado"] = relatorio.medir(planta2, editor, alterados, solicitado=entrada_publica(ficha))
     except Exception as e:  # noqa: BLE001
         PL.registrar(raiz_cenas, cena, {"evento": "fim", "ok": False, "motivo": "erro", "erro": f"{type(e).__name__}: {e}"[:500]})
         raise
     PL.registrar(raiz_cenas, cena, {"evento": "fim", **{k: v for k, v in res.items() if k != "atores_mantidos"}})
     return res
+
+
+def entrada_publica(ficha):
+    return {"pedido": ficha.get("pedido"), "operacoes": ficha.get("operacoes", [])}
 
 
 def incorporar(cena: str, editor, raiz_cenas: str, lab_dir: str = "", pasta_pontos: str = "", ids=None, pausa=time.sleep) -> dict:
