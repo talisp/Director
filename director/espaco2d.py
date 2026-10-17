@@ -75,9 +75,17 @@ def avaliar(pedido):
     if alvos and portas:
         entrada=set()
         for a in portas:entrada.update(regiao_de(zona(a,W,H).bounds))
+        from shapely.ops import nearest_points
         for t in alvos:
             toca=regiao_de(t['caixa'])
-            acessos.append({'id':t['id'],'alcancado':bool(entrada.intersection(toca))})
+            ok=bool(entrada.intersection(toca));item={'id':t['id'],'alcancado':ok}
+            if ok:
+                # Ponto onde o boneco consegue ficar: dentro da area alcancavel, 4 cm longe da borda, perto do centro do alvo.
+                alvo=box(*t['caixa']);dentro=unary_union([areas[i] for i in entrada]).intersection(alvo)
+                miolo=dentro.buffer(-4)
+                p=nearest_points(miolo if not miolo.is_empty else dentro,alvo.centroid)[0]
+                item['ponto_cm']=[round(p.x,1),round(p.y,1)]
+            acessos.append(item)
         aprovado=not violacoes and bool(entrada) and all(a['alcancado'] for a in acessos)
         criterio='porta alcanca cada area de uso; bolsoes sem alvo nao reprovam'
     else:

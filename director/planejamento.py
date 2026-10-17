@@ -151,7 +151,9 @@ def resolver(pedido,filtro=True):
         for o,x,y,w,h,r,u in dados:
             xx,yy,ww,hh=[solver.value(v) for v in (x,y,w,h)];k=[solver.value(b) for b in r].index(1)
             j=(k+2)%4 if o.get('na_frente_de') else k
-            use=[[xx+ww/2,yy-u/2],[xx+ww+u/2,yy+hh/2],[xx+ww/2,yy+hh+u/2],[xx-u/2,yy+hh/2]][j]
+            # Ponto onde o boneco fica: meio da area de uso, mas a pelo menos raio+2 cm do movel (a capsula cabe ali).
+            e=max(u/2,int(pedido.get('raio_cm',34))+2)
+            use=[[xx+ww/2,yy-e],[xx+ww+e,yy+hh/2],[xx+ww/2,yy+hh+e],[xx-e,yy+hh/2]][j]
             # Alcance: o centro da capsula chega a ate raio+20 cm da frente, mesmo com area de uso rasa.
             a=max(u,int(pedido.get('raio_cm',34))+20)
             caixa=[[xx,yy-a,xx+ww,yy],[xx+ww,yy,xx+ww+a,yy+hh],[xx,yy+hh,xx+ww,yy+hh+a],[xx-a,yy,xx,yy+hh]][j]
@@ -172,6 +174,10 @@ def resolver(pedido,filtro=True):
                        'alvos':[{'id':i['id'],'caixa':i['zona_uso_cm']} for i in items if i['uso_frente_cm']>0 and i['id'] not in com_cadeira]})
         resultado['verificacao2d']=check
         if check['aprovado']:
+            pontos={a['id']:a.get('ponto_cm') for a in check.get('acessos',[])}
+            for i in items:
+                if pontos.get(i['id']):i['ponto_uso_cm']=pontos[i['id']]
+            resultado['nao_verificado'].append('ponto_uso_cm: onde o boneco alcanca a area de uso no filtro 2D (sala em cm, canto sudoeste); use-o como destino das rotas do verificar')
             if tentativa>1:resultado['nao_verificado'].append(f'{tentativa-1} arrumacoes anteriores foram reprovadas pelo filtro 2D; esta e a primeira aprovada, nao a menor possivel')
             return resultado
         historico.append({'tentativa':tentativa,'dimensoes_cm':dims,'regioes':check['regioes'],
