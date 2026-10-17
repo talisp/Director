@@ -1,13 +1,32 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.4.0
+version: 0.5.0
 author: Talis / Codex
 license: MIT
 platforms: [windows]
 ---
 
 # Director no laboratório
+
+## Regras que valem acima de tudo (teste de 17/10)
+
+- **Leia o `veredito` antes de qualquer coisa.** `planejar` e `verificar` começam com `veredito`
+  (APROVADO, REPROVADO ou ERRO), `motivo` e `proxima_acao`. `ok: true` só diz que a ferramenta
+  rodou. **Nunca diga ao usuário que algo passou sem `veredito: APROVADO`.** Se reprovou, diga
+  o `motivo` com as palavras e os números dele e siga a `proxima_acao`.
+- **Diga de onde veio cada objeto:** asset já existente no projeto (com o caminho), objeto
+  composto pelo Director, ou reaproveitado de um ensaio anterior. Não diga "importado do Fab"
+  sem ter importado.
+- **Use as ferramentas prontas.** Não escreva busca, solver ou script de layout próprio:
+  `planejar` já testa tamanhos e arrumações. Script próprio só por `ensaio` e quando
+  nenhuma ferramenta faz o pedido; diga por quê.
+- **Esperas de no máximo 60 s.** A guarda do perfil barra `sleep` acima de 60 s e reduz
+  `process wait` para 60 s. Acompanhe um processo com `process wait` (até 60 s), confira e,
+  se terminou, siga na hora.
+- **Uma alteração por cena de cada vez.** A guarda barra um segundo comando que altera a
+  mesma cena enquanto outro roda em segundo plano. Nunca mude a sala na cena para "testar"
+  tamanhos: use `planejar` com `sala` + `minimo_cm`/`maximo_cm`, que não toca na cena.
 
 Raiz: `{{DIRECTOR}}`. Python do Director: `{{PYTHON}}`. Use `python -m director` a partir da raiz; para o laboratório, `python -m director.lab`. Consulte `capacidades`, `estado <cena>`, a planta e o código antes de concluir que um pedido não pode ser realizado. A cena padrão é `sala`. A ficha atual usa metros; a planta persistida usa centímetros.
 
@@ -23,6 +42,12 @@ Para colocar asset use `acao:colocar` e `asset:/Game/...`; dimensoes sao medidas
 `{"centro_cm":[0,0,45],"tamanho_cm":[40,40,5]}`; o merge e a colisao composta sao nativos do Unreal.
 Perfis de massa sao estimativas ajustaveis por `massa_kg` (nao medidas do material real); informe a categoria.
 Outros campos: `simular`, `subir`, `amortecimento_linear` e `amortecimento_angular`.
+**Em cima de um móvel:** `"sobre":"cama1"` põe o objeto no tampo do móvel registrado (no centro, ou em
+`x_m`/`y_m` da sala), com física; ele vai junto quando o móvel muda. Ex.: travesseiro na cama, notebook
+na escrivaninha. Não escreva script do editor para isso.
+**Peça fixa:** `"fixo":true` (padrão para as categorias box, box_chuveiro, chuveiro, vaso_sanitario, pia,
+bancada, divisoria, parede) registra sem simular física: o box é parte da casa, não um móvel que cai.
+O `verificar` só exige que ela fique parada.
 Malha dinamica pode virar StaticMesh pela GeometryScript nativa; comportamento de Blueprint nao e transferido.
 Use `mudar`/`remover` pelo ID para objetos registrados; mover o comodo nao autoriza apagar seu conteudo.
 Depois use `verificar` para confirmar geometria, apoio e fisica. Recusa da planta nao comprova falta de asset.
@@ -85,14 +110,31 @@ o ensaio nao promete rollback automatico nem qualidade integral por retornar `ok
 
 ## Fichas e respostas
 
-`planejar CENA PEDIDO.json` propoe distribuicao por CP-SAT (OR-Tools opcional em
-`.venv-planejamento`). Nao altera a cena: mede a sala existente, reserva portas e
-moveis registrados. Usa retangulos e orientacoes 0/90 graus; otimo no modelo nao
-prova minimo arquitetonico nem trafego real. Aplique uma ficha e use `verificar`.
+`planejar CENA PEDIDO.json` propoe distribuicao por CP-SAT (OR-Tools em
+`.venv-planejamento`). Nunca altera a cena. Giros 0/90/180/270 (a frente aponta
+para sul/leste/norte/oeste); por padrao cada movel fica com as costas na parede.
+Exemplo de quarto compacto numa sala que ja existe, sem mexer nela:
+`{"sala":"quarto","minimo_cm":[220,260],"maximo_cm":[320,380],"segundos":30,"objetos":[
+{"id":"cama1","dimensoes_cm":[100,200,82],"uso_frente_cm":65},
+{"id":"criado1","dimensoes_cm":[40,41,44],"uso_frente_cm":35,"ao_lado_de":"cama1"},
+{"id":"guarda1","dimensoes_cm":[100,62,200],"uso_frente_cm":65},
+{"id":"escrivaninha1","dimensoes_cm":[100,55,75],"uso_frente_cm":75},
+{"id":"cadeira1","dimensoes_cm":[50,50,83],"uso_frente_cm":0,"na_frente_de":"escrivaninha1"}]}`
+- `na_frente_de`: a cadeira fica encostada na frente da mesa, virada para ela.
+- `ao_lado_de`: o criado-mudo fica junto da cama, do lado da cabeceira.
+- Com `sala` e sem `minimo_cm`/`maximo_cm`, usa as medidas reais da sala (precisa do editor).
+  Com eles, testa o tamanho com as portas reais, sem abrir o editor; `origem` diz qual foi.
+- Moveis ja registrados na sala e fora do pedido ficam reservados (`mantidos_da_cena`). Para
+  replanejar um movel existente, use o MESMO id dele no pedido.
+- Quando o filtro 2D reprova, o proprio planejar tenta outras arrumacoes (`tentativas`).
+  Se ainda reprovar, siga a `proxima_acao`; nao varra tamanhos com lacos no terminal.
+- Para aplicar: `mudar_sala` (se o tamanho mudou) e `objeto`/`mudar` com `x_m`, `y_m` e `giro`
+  da proposta, relativos ao canto sudoeste da sala; depois `verificar` com `simular` e rotas
+  da porta ate cada `ponto_uso_cm`. O planejar nao prova trafego real.
 
 Formato: `{"pedido": "...", "operacoes": [{"operacao": "..."}]}`. Consulte `capacidades` para campos atuais. As operações da ficha rodam em ordem e a execução deve preservar a recuperação existente. Use IDs mostrados pelo `estado` para mudanças e remoções. Para cômodos encostados, confira a parede compartilhada e a passagem em vez de presumir que duas portas são necessárias.
 
-Se `ok: false`, leia `motivo`, `porque` e `recuperado` antes de tentar corrigir. Em conflito de trava, espere ou informe que o laboratório está ocupado. Se o usuário mover algo à mão, observe o estado atualizado antes de substituir sua mudança. Explique o que realmente existe na cena, o que foi apenas planejado e o que não foi verificado visualmente.
+Se `ok: false` ou `veredito` diferente de APROVADO, leia `motivo`, `porque` e `recuperado` antes de tentar corrigir. Em conflito de trava, espere ou informe que o laboratório está ocupado. Se o usuário mover algo à mão, observe o estado atualizado antes de substituir sua mudança. Explique o que realmente existe na cena, o que foi apenas planejado e o que não foi verificado visualmente.
 
 ## Perguntas e voz
 
@@ -126,7 +168,8 @@ restaurado em memoria, sem gravar preferencias. Consumo CPU nao foi aferido.
 pegadas, areas diante de portas (80 cm) e janelas (50 cm), regioes e bloqueadores.
 Usa Shapely no ambiente opcional do planejamento. Movel abaixo do peitoril nao
 bloqueia a janela. So considera objetos registrados: proxies fora da planta
-exigem dados adicionais, e verificacao no motor. `planejar` aplica esse filtro e
-pode retornar `filtro2d_reprovou`, sem proposta aprovada. Uma regiao livre nao
-prova chegada desde a porta; mantenha `verificar` com boneco. A regra de janela
+exigem dados adicionais, e verificacao no motor. Dentro do `planejar`, o filtro
+aprova quando da porta se chega a area de uso de cada movel (`acessos`); um canto
+isolado sem uso nao reprova. A cadeira `na_frente_de` nao conta como bloqueio (e
+afastada para usar a mesa). Mantenha `verificar` com boneco. A regra de janela
 somente em parede externa nao faz parte desta implementacao parcial da #29.

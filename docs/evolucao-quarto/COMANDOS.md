@@ -47,6 +47,19 @@ Exemplo `planejamento.json`:
 {"sala":"quarto","objetos":[{"id":"armario","dimensoes_cm":[100,60,180],"uso_frente_cm":80,"girar":true}],"segundos":5}
 ```
 Para compactar: use `minimo_cm: [200,200]` e `maximo_cm: [400,400]` sem sala fixa.
+Com `sala` e `minimo_cm`/`maximo_cm`, testa outros tamanhos com as portas reais
+da sala sem abrir a ponte e sem mudar a cena (`origem` diz isso). Giros
+0/90/180/270; moveis encostados na parede por padrao (`encostar: false` solta).
+`na_frente_de` (cadeira encostada e virada para a mesa) e `ao_lado_de`
+(criado-mudo junto da cama). Se o filtro 2D reprova, o planejar tenta outras
+arrumacoes (`tentativas`, padrao 40; `tentativas_por_tamanho` 6, depois o
+tamanho sobe 3%). Moveis registrados fora do pedido ficam reservados
+(`mantidos_da_cena`). `planejar` e `verificar` respondem primeiro com
+`veredito` (APROVADO/REPROVADO/ERRO), `motivo` e `proxima_acao`.
+
+Objeto apoiado: `{"acao":"colocar","asset":"/Game/...","sala":"quarto","id":"travesseiro1","sobre":"cama1","categoria":"travesseiro"}`.
+Peca fixa: `"fixo": true` (padrao para box, chuveiro, vaso_sanitario, pia,
+bancada, divisoria, parede) registra sem simular fisica.
 Para examinar paredes compartilhadas da proposta, inclua
 `nova_sala: {"id":"quarto_novo","x_m":-2.15,"y_m":0}`. A proposta deve passar
 pelo nucleo e pela verificacao do editor depois; o solver usa retangulos 0/90.
