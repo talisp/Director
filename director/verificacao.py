@@ -181,7 +181,12 @@ def verificar(cena, pedido, editor, raiz=None):
         resposta["play"]=teste
         for rota,teste_rota in zip(resposta['circulacao'],teste['rotas']):
             rota['personagem']={'executado':True,'chegou':teste_rota['chegou'],'distancia_cm':teste_rota['final']['distancia_chao']}
-        resposta["aprovado"] &= all(r["chegou"] for r in teste["rotas"]) and all(r["estavel"] and r["fisica"] for r in teste["fisica"])
+        # Peca fixa (simular false na planta: box, pia) so precisa ficar parada; o resto precisa de fisica ligada.
+        rotulo_id={r["ator"]:r["id"] for r in rows}
+        for f in teste["fisica"]:
+            o=p["objetos"].get(rotulo_id.get(f["ator"]),{})
+            f["exige_fisica"]=o.get("fisica",{}).get("simular",True)
+        resposta["aprovado"] &= all(r["chegou"] for r in teste["rotas"]) and all(r["estavel"] and (r["fisica"] or not r["exige_fisica"]) for r in teste["fisica"])
         resposta["nao_verificado"][1]="estabilidade medida em Play; apoio ainda requer raio de piso"
     if pedido.get("baseline"):
         import json

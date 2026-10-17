@@ -28,3 +28,35 @@ class Circulacao(unittest.TestCase):
             rota=r['circulacao'][0]
             self.assertFalse(rota['linha_direta']['livre'])
             self.assertEqual(rota['passagem']['livre'],not bloqueado)
+
+
+class PecaFixa(unittest.TestCase):
+    """Box do banheiro (simular false na planta) nao precisa de fisica; a cadeira precisa."""
+    def _verificar(self,fisica_cadeira):
+        from unittest.mock import patch,Mock
+        from director import verificacao as V
+        sala={'tipo':'sala','x':0,'y':0,'z':1,'largura':300,'comprimento':300,'altura':270,'parede':15}
+        f=lambda sim:{'simular':sim,'massa_kg':8,'amortecimento_linear':.5,'amortecimento_angular':1,'subir':False}
+        planta={'nivel':'level','objetos':{'sala':sala,'box':{'tipo':'asset','sala':'sala','fisica':f(False)},
+                                             'cadeira':{'tipo':'asset','sala':'sala','fisica':f(True)}}}
+        comp=lambda fis:[{'fisica':fis,'movel':True,'sobreposicoes_nativas':[]}]
+        geo=[{'id':'box','rotulo':'box','caminho':'L.box','tipo':'asset','min':[10,10,1],'max':[100,100,200],'componentes_fisicos':comp(False)},
+             {'id':'cadeira','rotulo':'cadeira','caminho':'L.cad','tipo':'asset','min':[150,150,1],'max':[200,200,80],'componentes_fisicos':comp(fisica_cadeira)}]
+        def chamar(n,**kw):
+            if n=='info':return {'level':'level'}
+            if n=='scene_geometry':return {'atores':geo}
+            return {'medidas':[{'acertou':True,'distancia':1}]}
+        ed=Mock();ed.chamar.side_effect=chamar
+        estavel=lambda a,fis:{'ator':a,'estavel':True,'fisica':fis}
+        play={'rotas':[],'fisica':[estavel('box',False),estavel('cadeira',fisica_cadeira)]}
+        with patch.object(V.PL,'carregar',return_value=planta),patch.object(V.relatorio,'medir',return_value={}),patch.object(V,'testar_play',return_value=play):
+            return V.verificar('teste',{'simular':True},ed)
+
+    def test_box_fixo_parado_aprova(self):
+        r=self._verificar(True);self.assertTrue(r['aprovado'],r['play'])
+        self.assertEqual([f['exige_fisica'] for f in r['play']['fisica']],[False,True])
+
+    def test_cadeira_sem_fisica_reprova(self):
+        from director.veredito import com_veredito
+        r=self._verificar(False);self.assertFalse(r['aprovado'])
+        v=com_veredito('verificar',r);self.assertIn('cadeira: sem fisica',v['motivo']);self.assertNotIn('box',v['motivo'])

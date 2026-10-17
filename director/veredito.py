@@ -37,7 +37,7 @@ def de_verificacao(res):
     motivos += [f"envelopes sobrepostos: {a} e {b}" for a, b in res.get("possiveis_penetracoes_envelopes", [])]
     motivos += _rotas(res)
     for f in (res.get("play") or {}).get("fisica", []):
-        if not f.get("fisica"):
+        if not f.get("fisica") and f.get("exige_fisica", True):
             motivos.append(f"{f.get('ator')}: sem fisica ligada no Play")
         elif not f.get("estavel"):
             motivos.append(f"{f.get('ator')}: nao ficou parado no Play (andou {f.get('deslocamento_cm')} cm)")

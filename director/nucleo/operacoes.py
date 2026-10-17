@@ -391,8 +391,11 @@ def levar_junto(planta: dict, mesa_id: str, antes: dict, depois: dict) -> list:
         lx, ly = dx * math.cos(g0) + dy * math.sin(g0), -dx * math.sin(g0) + dy * math.cos(g0)
         o["x"] = depois["x"] + lx * math.cos(g1) - ly * math.sin(g1)
         o["y"] = depois["y"] + lx * math.sin(g1) + ly * math.cos(g1)
-        o["z"] += depois["altura"] - antes["altura"]
-        o["rot"] = [o["rot"][0], o["rot"][1] + depois["giro"] - antes["giro"], o["rot"][2]]
+        o["z"] += depois.get("z", 0) + depois["altura"] - antes.get("z", 0) - antes["altura"]
+        if "rot" in o:
+            o["rot"] = [o["rot"][0], o["rot"][1] + depois["giro"] - antes["giro"], o["rot"][2]]
+        else:  # asset apoiado: gira junto
+            o["giro"] += depois["giro"] - antes["giro"]
         levados.append(oid)
     return levados
 
@@ -521,10 +524,24 @@ def conferir(planta: dict, final: bool = True) -> None:
             invalido=o["altura"] > s["altura"] - 20.0 or min(o["largura"], o["profundidade"]) < 30.0 or o["altura"] < 20.0
         if invalido:
             raise Invalida(f"{oid}: medidas fora do aceito")
-        for outro_id, (ox, oy, omx, omy) in caixas.items():
-            if abs(o["x"] - ox) < mx + omx and abs(o["y"] - oy) < my + omy:
+        # Compara so quem esta no mesmo apoio: o chao, ou o mesmo movel (travesseiro sobre a cama).
+        apoio = o.get("sobre")
+        for outro_id, (ox, oy, omx, omy, oapoio) in caixas.items():
+            if oapoio == apoio and abs(o["x"] - ox) < mx + omx and abs(o["y"] - oy) < my + omy:
                 raise Invalida(f"{oid} e {outro_id} ficariam um em cima do outro")
-        caixas[oid] = (o["x"], o["y"], mx, my)
+        caixas[oid] = (o["x"], o["y"], mx, my, apoio)
+    for oid, o in objs.items():
+        if o["tipo"] != "asset" or not o.get("sobre"):
+            continue
+        b = objs.get(o["sobre"])
+        if not b or b["tipo"] not in MOVEIS or b.get("sobre"):
+            raise Invalida(f"{oid}: o apoio {o['sobre']} precisa ser um movel no chao")
+        x, y, mx, my, _ = caixas[oid]
+        bx, by, bmx, bmy, _ = caixas[o["sobre"]]
+        if x - mx < bx - bmx - 1e-6 or x + mx > bx + bmx + 1e-6 or y - my < by - bmy - 1e-6 or y + my > by + bmy + 1e-6:
+            raise Invalida(f"{oid} sairia para fora de {o['sobre']}: coloque dentro do tampo ou diminua")
+        if o["z"] + o["altura"] > objs[o["sala"]]["z"] + objs[o["sala"]]["altura"]:
+            raise Invalida(f"{oid} sobre {o['sobre']} passaria do teto")
     for oid, o in objs.items():
         if o["tipo"] not in OBJETOS:
             continue

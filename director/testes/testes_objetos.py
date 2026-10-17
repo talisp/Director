@@ -23,3 +23,60 @@ class Objetos(unittest.TestCase):
             self.assertFalse(bad['ok']);self.assertEqual(PL.carregar(tmp,'teste')['objetos']['cadeira']['x'],100)
             r=X.executar('teste',{'operacoes':[{'operacao':'remover','id':'cadeira'}]},ed,tmp,pausa=lambda _:None)
             self.assertTrue(r['ok']);self.assertNotIn('cadeira',ed.memoria)
+
+
+def _asset(x,y,z,larg,prof,alt,simular=True,**extra):
+    return {'tipo':'asset','sala':'sala1','x':x,'y':y,'z':z,'giro':0,'largura':larg,'profundidade':prof,'altura':alt,
+        'modelo':{'asset':'/Game/X','tamanho':[100,100,100],'centro':[0,0,0],'min_z':-50},
+        'fisica':{'simular':simular,'massa_kg':1,'amortecimento_linear':.5,'amortecimento_angular':1,'subir':False},**extra}
+
+
+def _reg(oid,modelo):
+    return {'operacoes':[{'operacao':'registrar_objeto','id':oid,'modelo_json':json.dumps(modelo)}]}
+
+
+class Apoiados(unittest.TestCase):
+    """Travesseiro sobre a cama: no teste de 17/10 a planta recusava e o Hermes escreveu scripts soltos."""
+    def test_sobre_a_cama_vai_junto_e_nao_sai_do_tampo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ed=EditorFalso();ok=lambda f:X.executar('teste',f,ed,tmp,pausa=lambda _:None)
+            ok(ficha(1))
+            self.assertTrue(ok(_reg('cama',_asset(330,120,1,100,200,50)))['ok'])
+            self.assertFalse(ok(_reg('mala',_asset(330,120,1,40,40,40)))['ok'])  # no chao, no lugar da cama: recusa
+            r=ok(_reg('travesseiro',_asset(330,190,51,60,40,14,sobre='cama')))
+            self.assertTrue(r['ok'],r)
+            fora=ok(_reg('livro',_asset(330,225,51,30,30,4,sobre='cama')))
+            self.assertFalse(fora['ok']);self.assertIn('fora de cama',json.dumps(fora,ensure_ascii=False))
+            # mover a cama leva o travesseiro (x, altura e giro)
+            r=ok({'operacoes':[{'operacao':'mudar','id':'cama','x_m':3.2,'altura_m':.6}]});self.assertTrue(r['ok'],r)
+            t=PL.carregar(tmp,'teste')['objetos']['travesseiro']
+            self.assertEqual((t['x'],t['z']),(320,61))
+            # nao remove a cama com o travesseiro em cima
+            self.assertFalse(ok({'operacoes':[{'operacao':'remover','id':'cama'}]})['ok'])
+
+    def test_dois_no_mesmo_tampo_nao_se_sobrepoem(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ed=EditorFalso();ok=lambda f:X.executar('teste',f,ed,tmp,pausa=lambda _:None)
+            ok(ficha(1));ok(_reg('mesa_a',_asset(330,330,1,120,60,75)))
+            self.assertTrue(ok(_reg('note',_asset(300,330,76,33,23,2,sobre='mesa_a')))['ok'])
+            self.assertFalse(ok(_reg('livro',_asset(320,330,76,30,20,4,sobre='mesa_a')))['ok'])
+
+
+class Fixos(unittest.TestCase):
+    def _fazer(self,pedido):
+        from director import config as C, objetos
+        class Ed(EditorFalso):
+            def _object_model(self,asset='',ator='',partes=None):
+                return {'modelo':{'asset':'/Game/Box','tamanho':[120,100,200],'centro':[0,0,100],'min_z':0}}
+        with tempfile.TemporaryDirectory() as tmp:
+            ed=Ed();X.executar('teste',ficha(1),ed,tmp,pausa=lambda _:None)
+            velho=C.CENAS;C.CENAS=tmp
+            try:return objetos.fazer('teste',{'sala':'sala1','id':'box1','acao':'colocar','asset':'/Game/Box','x_m':.8,'y_m':.8,**pedido},ed),PL.carregar(tmp,'teste')
+            finally:C.CENAS=velho
+
+    def test_box_e_fixo_e_cadeira_simula(self):
+        r,p=self._fazer({'categoria':'box_chuveiro'})
+        self.assertTrue(r['ok'],r);self.assertFalse(p['objetos']['box1']['fisica']['simular']);self.assertTrue(r['fisica']['fixo'])
+        r,p=self._fazer({'categoria':'cadeira'})
+        self.assertTrue(p['objetos']['box1']['fisica']['simular'])
+        with self.assertRaises(ValueError):self._fazer({'categoria':'pia','simular':True})

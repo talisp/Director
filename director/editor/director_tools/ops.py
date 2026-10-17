@@ -345,7 +345,7 @@ def inventory(variaveis: dict, detalhes: bool = False):
         if tipo == "asset":
             c=a.get_components_by_class(U.StaticMeshComponent)[0]
             d["objeto"]={"asset":c.static_mesh.get_path_name().rsplit('.',1)[0],"simular":bool(c.is_simulating_physics()),
-                "massa_kg":round(float(c.get_mass()),3),"amortecimento_linear":float(c.get_linear_damping()),
+                "massa_kg":_massa(c),"amortecimento_linear":float(c.get_linear_damping()),
                 "amortecimento_angular":float(c.get_angular_damping()),"subir":c.get_editor_property("can_character_step_up_on")==U.CanBeCharacterBase.ECB_YES}
         controlados[oid] = d
     return {"level": _level(), "controlados": controlados, "fora": sorted(fora, key=lambda x: x["caminho"]),
@@ -394,6 +394,20 @@ def catalog_snapshot():
 
 
 @op
+def _massa(c):
+    """Massa sem chamar GetMass em corpo que nao simula (parede, piso): isso enchia o log de avisos (#37).
+    Sem simulacao, devolve a massa fixada no corpo, ou None quando nao ha."""
+    if c.is_simulating_physics():
+        return round(float(c.get_mass()), 3)
+    try:
+        corpo = c.get_editor_property("body_instance")
+        if corpo.get_editor_property("override_mass"):
+            return round(float(corpo.get_editor_property("mass_in_kg_override")), 3)
+    except Exception:
+        pass
+    return None
+
+
 def scene_geometry(mundo: str = "editor", colisoes: bool = False):
     """Geometria de componentes fisicos; exclui billboards dos bounds de moveis."""
     w = _mundo_jogo() if mundo == "jogo" else _mundo_editor()
@@ -412,7 +426,7 @@ def scene_geometry(mundo: str = "editor", colisoes: bool = False):
             v, av = c.get_physics_linear_velocity(), c.get_physics_angular_velocity_in_degrees()
             parte={"nome": c.get_name(), "centro": _v(centro), "meia_extensao": _v(ext),
                 "asset": mesh.get_path_name() if mesh else None, "fisica": bool(c.is_simulating_physics()),
-                "massa_kg": round(float(c.get_mass()), 3), "velocidade": _v(v), "velocidade_angular": _v(av),
+                "massa_kg": _massa(c), "velocidade": _v(v), "velocidade_angular": _v(av),
                 "movel": c.get_editor_property("mobility") == U.ComponentMobility.MOVABLE}
             if colisoes and parte["movel"]:
                 try:
