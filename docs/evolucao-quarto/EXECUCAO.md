@@ -199,3 +199,50 @@ Lista de classes pode ser ampliada por arquivo, sem editar documentacao manual.
 Consulta get_linear_damping encontrou metodos reais; simbolo inventado retornou
 zero. Alias massa -> mass testado. Os textos sao gerados; execucao/contexto nao
 sao garantidos pela documentacao. Nao indexa automaticamente todos os plugins.
+
+## #27 — prova pequena offline, sem Unreal
+
+Reutilizados trimesh 5.1.1 (release 02/10/2026, Python 3.13 Windows testado) e
+Blender instalado 5.2.2 LTS para FBX em processo separado, sem UI. Considerado
+ASSETMCP: busca, manifestos e inspecao ja existem, mas sem release e com issue #1
+sobre inicializacao MCP 2.x; nao instalado nem adotado como infraestrutura nesta
+prova. O adaptador aqui so chama leitores existentes e integra o catalogo #21.
+
+Cinco GLB Kenney + licenca: 103.553 bytes baixados de commit fixo
+3694c6879e487c108f55677be7dd2ca75b07cc3b. Recursos dos GLB da amostra embutidos.
+Mais um FBX do cache Fab existente: poltrona de 20.711.724 bytes, 199.817 triangulos,
+114,57 x 66,16 x 176,40 cm. Total seis modelos: 20.814.564 bytes; inspecao 9,969 s.
+Cama Kenney mede 57,10 x 112,50 x 37,50 cm: requer escala escolhida e conferida.
+BookcaseClosedDoors e estante fechada; nao foi certificado como guarda-roupa.
+
+`biblioteca indexar PEDIDO.json` usa fontes com arquivos explicitos, proveniencia,
+licenca e Blender opcional; cache guarda hash, caminho, medidas, materiais,
+triangulos, estado baixado_nao_importado e preview quando disponivel. Nao fabrica
+preview ou prova de direitos Fab a partir de arquivo em cache. Consulta biblioteca
+funciona sem ponte; procurar inclui o indice offline quando atualiza. Novo asset
+Kenney cama apareceu na consulta unificada. Geladeira nao retornou candidatos;
+arquivo ausente reprova e preserva indice anterior. Nao foi instalado banco SQL,
+embeddings, sincronizador ou novo servidor RAG. A amostra nao mede escala de milhoes.
+
+Pesquisa verificada em 17/10/2026:
+- https://github.com/shorepine/kenney : ultimo commit 30/08/2026, CC0, caminhos
+  estaveis; e espelho de assets Kenney. Preservada licenca local.
+- https://kenney.nl/assets/furniture-kit : origem oficial do pacote.
+- https://polyhaven.com/our-api : mudanca de 18/07/2026 permite API tambem para uso
+  comercial, exigindo credito ao usar API ao vivo. Assets sao CC0. Pagina atual
+  prevalece sobre relato antigo de restricao comercial; termos devem acompanhar
+  qualquer futura integracao. Nao baixamos toda a biblioteca nesta prova.
+- https://github.com/allenai/objaverse-xl : ultimo release 0.1.7 de 01/11/2023,
+  ultimo commit observado 27/08/2024. Dataset ODC-By, objetos com licencas diferentes.
+  Nao tratar todos os objetos como CC0 nem recomendar baixar tudo sem selecao.
+- https://trimesh.org/trimesh.exchange.load.html e
+  https://github.com/mikedh/trimesh/releases/tag/5.1.1 : leitor pronto. Issues
+  abertas incluem memoria em GLB grande e limites geometricos; bounds aqui sao
+  envelopes, nao prova de colisao ou adequacao ao jogo.
+- https://github.com/evonar543/ASSETMCP e issue #1: alternativa mais abrangente,
+  candidata futura; nao ha comparacao de producao que justifique trocar a ponte.
+
+Recomendacao para o proximo lote: Kenney selecionado, Poly Haven selecionado por
+qualidade/escala/custo de arquivos; Objaverse somente com filtro por objeto e
+licenca. Cache Fab ja pode ser consultado localmente, sujeito aos direitos de cada
+compra. Nao prometer que todos os tres acervos estao baixados ou prontos no Unreal.

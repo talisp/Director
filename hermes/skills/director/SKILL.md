@@ -92,3 +92,11 @@ Antes de inventar chamada Python, use `api TERMO` (ex.: `api get_linear_damping`
 `api atualizar` gera a referencia no editor instalado; consultas depois sao
 offline, curtas e com versao/data. Para outras classes: `api atualizar PEDIDO.json`
 com `classes: [nome, ...]`. Nao achar algo no recorte nao prova inexistencia.
+
+`biblioteca indexar PEDIDO.json` inspeciona arquivos locais sem Unreal (fontes:
+lista com arquivos, licenca, proveniencia; blender opcional para FBX). Requer
+`.venv-biblioteca` com requirements-biblioteca.txt. `biblioteca cadeira` consulta
+offline; `procurar cadeira` inclui esses candidatos ao atualizar. Baixado nao
+significa importado nem com fisica; confira escala artistica, licenca e geometria.
+Nao escolha estante como guarda-roupa apenas pelo alias. Kenney da amostra requer
+reescalonamento. Banco/RAG permanente ainda nao decidido.

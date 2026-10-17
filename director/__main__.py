@@ -63,6 +63,11 @@ def _sair(dados, codigo: int = 0) -> None:
 
 
 def main(argv: list) -> None:
+    if argv and argv[0]=='biblioteca':
+        from . import biblioteca
+        try:
+            r=biblioteca.cli(argv[1:]);_sair(r,0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e)},2)
     if argv and argv[0]=='api':
         from . import api
         try:
