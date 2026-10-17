@@ -34,14 +34,15 @@ def _inventario(editor) -> dict:
 
 
 def _esperar_nav(editor, pausa) -> bool:
-    """Espera a malha de navegação do motor terminar de ser refeita (ela é refeita sozinha quando a cena muda).
-    Só vale "pronta" depois de 4 leituras seguidas sem obra: logo depois de uma mudança o motor ainda diz que não
-    está construindo, e começa em seguida (medido em 13/10: uma leitura só deixou passar a malha pela metade)."""
+    """Espera malha disponível, sem construção nem trava nativa, em quatro leituras seguidas.
+    IsNavigationBeingBuilt sozinho retorna False durante AsyncLoadLock no UE 5.8.3.
+    Prontidão não prova conectividade: isso requer uma consulta de caminho com destinos concretos."""
     pausa(0.5)
     fim = time.monotonic() + PRAZO_NAV_S
     calmas = 0
     while time.monotonic() < fim:
-        calmas = 0 if editor.chamar("measure", consultas=[{"tipo": "nav"}])["medidas"][0]["construindo"] else calmas + 1
+        estado_nav = editor.chamar("measure", consultas=[{"tipo": "nav"}])["medidas"][0]
+        calmas = calmas + 1 if estado_nav.get("pronta") is True else 0
         if calmas >= 4:
             return True
         pausa(0.25)
@@ -91,7 +92,7 @@ def _efetivar(editor, raiz_cenas: str, planta0: dict, planta2: dict, inv0: dict,
             return _recuperar(editor, inv0, "falha_ao_aplicar", erro=r["erro"], ponto_de_restauracao=ponto)
         nav_pronta = _esperar_nav(editor, pausa)
     else:
-        nav_pronta = True
+        nav_pronta = editor.chamar("measure", consultas=[{"tipo": "nav"}])["medidas"][0].get("pronta") is True
     inv1 = _inventario(editor)
     difs = PN.diferencas(alvo, inv1["controlados"])
     fora_igual = inv1["fora"] == inv0["fora"]
@@ -109,7 +110,8 @@ def _efetivar(editor, raiz_cenas: str, planta0: dict, planta2: dict, inv0: dict,
             "acoes": [[a["acao"], a["id"]] + (sorted(a.get("params", {})) if a["acao"] == "atualizar" else []) for a in acoes],
             "adotados": rel["adotados"], "levados_junto": rel.get("levados_junto", []),
             "estrutura_reposta": rel["estrutura_divergente"], "pecas": len(alvo), "atores_mantidos": mesmos,
-            "navegacao_pronta": nav_pronta, "ponto_de_restauracao": ponto, "salvou": s["pacotes"]}
+            "navegacao_pronta": nav_pronta, "conectividade_verificada": False,
+            "ponto_de_restauracao": ponto, "salvou": s["pacotes"]}
 
 
 def _preparar(editor, raiz_cenas: str, cena: str, removidos: set) -> tuple:

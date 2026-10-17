@@ -38,7 +38,7 @@ class EditorFalso:
         self.level = caminho
         return {"estado": "ja_aberto", "level": caminho}
 
-    def _inventory(self, variaveis):
+    def _inventory(self, variaveis, detalhes=False):
         return {"level": self.level, "controlados": copy.deepcopy(self.memoria), "fora": copy.deepcopy(self.fora),
                 "por_salvar": [self.level] if self.sujo else []}
 
@@ -71,7 +71,8 @@ class EditorFalso:
         return {"aplicado": True, "erro": None, "feitos": feitos}
 
     def _measure(self, consultas, mundo="editor"):
-        return {"medidas": [{"construindo": False, "malhas": []} for _ in consultas]}
+        return {"medidas": [{"disponivel": True, "construindo": False, "construindo_ou_bloqueada": False,
+                             "malhas": ["nav_falsa"], "pronta": True, "conectividade_verificada": False} for _ in consultas]}
 
     def _save(self):
         if self.nao_salvar:

@@ -1,27 +1,27 @@
 # Director no Hermes: a LLM local como operadora
 
-Aqui ficam as instruções que deixam uma LLM barata (hoje o Qwen local, pelo [Hermes Agent](https://github.com/NousResearch/hermes-agent)) operar o Director. A pessoa descreve a cena em português; a LLM pergunta o que falta, escreve a ficha e chama `python -m director`. Ela **não** mexe no Unreal por outro caminho.
+Aqui ficam as instruções do perfil experimental `director` no Hermes. A pessoa descreve a cena em português; a LLM consulta o estado, usa as capacidades existentes e pode investigar outras operações no laboratório quando a ficha atual não atender ao pedido.
 
 O repositório é a fonte destas instruções. O perfil do Hermes é gerado a partir daqui pelo `instalar_perfil.py`.
 
 | Arquivo | O que é |
 |---|---|
-| `SOUL.md` | Quem o operador é e as regras dele: português simples, sempre perguntar antes de mexer na cena, pergunta ou crítica não é ordem, sem resposta não faz nada, lacuna se diz em vez de improvisar. |
+| `SOUL.md` | Orientação do operador: autonomia no laboratório, perguntas somente quando necessárias, observação e correção do resultado. |
 | `skills/director/SKILL.md` | Como trabalhar: passo a passo, como perguntar (formato da ferramenta `clarify`), a ficha, as direções da sala, exemplos, o que cada resposta do Director quer dizer, o que ele ainda não sabe fazer. |
 | `instalar_perfil.py` | Copia os dois arquivos para o perfil, trocando `{{DIRECTOR}}` e `{{PYTHON}}` pelos caminhos da máquina; guarda o arquivo antigo do perfil ao lado, com a data. |
 | `config.exemplo.yaml` | O `config.yaml` do perfil, sem segredos. |
-| `plugins/director-guarda/` | Complemento do Hermes que faz as regras valerem por programa, não por obediência do modelo: **cartão de aprovação** antes de qualquer comando que possa mudar o Unreal (mostra em português o que a ficha faz; sem aprovação não roda; leituras do Director passam); escrita de arquivo só em `work/fichas/` e `work/propostas/`; comando que mexa na configuração do Hermes, apague ou mova arquivos também pede o cartão; e conserta as perguntas da ferramenta `clarify` quando o modelo manda a lista como texto. |
+| `plugins/director-guarda/` | Complemento que corrige argumentos malformados de `clarify`. Não cria cartões nem bloqueios. |
 | `testes_guarda.py` | Testes do complemento, sem Hermes e sem Unreal: `python -m unittest hermes.testes_guarda`. |
 
 ## Montar o perfil
 1. `hermes profile create director --no-skills`
 2. Copie `config.exemplo.yaml` para o `config.yaml` do perfil e troque `<pasta do Director>`. Ponha a chave do servidor do modelo no `.env` do perfil.
-3. `hermes -p director tools disable web browser code_execution vision image_gen tts memory session_search connections delegation cronjob computer_use`
+3. Use os toolsets e `approvals.mode: "off"` do `config.exemplo.yaml`. O TTS aponta para o serviço local Kokoro na porta 8880; esse serviço precisa estar em execução para gerar áudio.
 4. Na raiz do Director, com o Python que roda o Director: `python hermes/instalar_perfil.py` (copia também o complemento)
 5. Uma vez: `hermes -p director plugins enable director-guarda`
-6. Abra: `hermes -p director`. O laboratório do Unreal precisa estar aberto pelo programa (`python -m director.lab abrir`).
+6. Abra: `hermes -p director`. O laboratório pode ser aberto por `python -m director.lab abrir` quando necessário.
 
-## O que o primeiro teste mostrou (14/10/2026)
+## Histórico do primeiro teste (14/10/2026; regras antigas, não vigentes)
 Um teste automático e uma conversa de verdade com o Talis, no aplicativo do Hermes. Não é medição: a medição (o mesmo pedido 10 vezes e umas 10 frases diferentes, contando acertos) ainda não foi feita.
 
 **Funcionou:** o operador leu a skill; montou uma sala nova pedida em uma frase (ficha certa, conferida pelo Director); descreveu a cena certo; foi franco sobre não ver a cena (reconhece as peças pelo nome e pela posição, não pela forma); quando cobrado, testou em vez de afirmar.
@@ -36,5 +36,5 @@ Um teste automático e uma conversa de verdade com o Talis, no aplicativo do Her
 - **A pergunta às vezes sai no formato errado** (a lista escrita como texto; numa conversa, três vezes seguidas, e o formulário nunca chegou). Desde o complemento `director-guarda`, o formato é consertado antes de a ferramenta rodar. A primeira versão do conserto só lia a lista certinha e falhou no aplicativo: o modelo deixa um `}` sobrando no fim, ou esquece o `]` final. Corrigido; as 15 perguntas gravadas nas conversas passam pela validação do Hermes.
 - **No aplicativo do Hermes, a ferramenta de escrever arquivo falhou** ("No shell found"); o operador escreve a ficha pelo terminal (a skill ensina).
 - **O Hermes edita a skill sozinho** depois das conversas (revisão automática; registro em `skills/.curator_ledger.jsonl` do perfil). Parte das mudanças é boa, parte é errada. O que for bom é trazido para cá e reinstalado; o que for errado é desfeito ao reinstalar.
-- **"Sempre perguntar" era só instrução** e o operador desobedeceu (mudou a cena depois de uma crítica; montou um rascunho da casa quando o pedido era planejar). Agora é o cartão do complemento `director-guarda`: testado em modo sem tela, o comando que mexe no Unreal não rodou; a escrita no código do Director foi barrada. O cartão no aplicativo ainda não foi visto por uma pessoa.
-- **Lacuna real que apareceu:** corredor (sala estreita ligada a outra por uma passagem). Resolvida no mesmo dia, a pedido do Talis: cômodo de qualquer tamanho, e cômodos encostados (a 0,15 m) dividem uma parede só, em que uma porta é a passagem.
+- **Política antiga de aprovação:** após alterações não solicitadas, foi introduzido um cartão por comando. Essa política foi substituída em 16/10, a pedido do Talis: o perfil experimental executa tarefas autorizadas sem esses cartões. Uma discussão continua não sendo uma ordem de alterar a cena.
+- **Corredores e passagens:** o contrato aceita cômodos estreitos e paredes compartilhadas. Nos testes de 17/10, uma montagem leste–oeste teve passagem física e trajeto completo após reconstrução nativa da navegação; outra montagem norte–sul continuou com caminho parcial. A navegação ainda requer investigação, mesmo quando a geometria passa nas verificações.
