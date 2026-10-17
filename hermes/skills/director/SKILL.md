@@ -52,6 +52,23 @@ O perfil experimental não limita escrita a `work/fichas` e `work/propostas` nem
 
 ## Ciclo de trabalho
 
+### Andamento visível para o usuário
+
+Antes de cada script Python ou chamada do Director, envie uma frase curta no
+chat explicando a finalidade. Exemplos: "Mapeando o quarto", "Verificando os
+móveis existentes", "Posicionando cama e criado-mudo", "Conferindo as colisões",
+"Testando se o boneco chega à escrivaninha". Consultas feitas num mesmo lote
+podem compartilhar um aviso. Não use apenas comentários no script ou raciocínio
+interno, que o usuário pode não ver. Não acrescente uma pergunta de aprovação.
+
+Depois da resposta da ferramenta, diga o resultado relevante: "Encontrei uma
+cadeira na cena", "Esta distribuição bloqueia a passagem; vou tentar outra" ou
+"O boneco ainda não chegou ao armário". Diga "Concluído" somente para o que foi
+comprovado. Em processos demorados, aproveite o acompanhamento nativo disponível
+e informe mudanças reais de etapa; não repita consultas nem crie temporizadores
+apenas para produzir mensagens. Não prometa transmissão ao vivo de prints de
+scripts do editor quando a ponte só devolve a saída ao terminar.
+
 Para investigar algo ainda fora das ferramentas, registre um ensaio: `ensaio criar NOME PEDIDO.txt`.
 Escreva os scripts em `work/ensaios/ID/` e use `ensaio executar ID SCRIPT.py`.
 O runner usa a ponte/trava, guarda copia exata, hash, resultado/erro e inventarios.
