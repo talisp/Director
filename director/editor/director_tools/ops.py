@@ -393,7 +393,6 @@ def catalog_snapshot():
     return {'level':_level(),'atores':atores,'assets':assets,'motor':U.SystemLibrary.get_engine_version()}
 
 
-@op
 def _massa(c):
     """Massa sem chamar GetMass em corpo que nao simula (parede, piso): isso enchia o log de avisos (#37).
     Sem simulacao, devolve a massa fixada no corpo, ou None quando nao ha."""
@@ -408,6 +407,7 @@ def _massa(c):
     return None
 
 
+@op
 def scene_geometry(mundo: str = "editor", colisoes: bool = False):
     """Geometria de componentes fisicos; exclui billboards dos bounds de moveis."""
     w = _mundo_jogo() if mundo == "jogo" else _mundo_editor()
