@@ -100,8 +100,9 @@ def _responde(prazo_s: float = 3.0) -> bool:
 
 
 def _pid_vivo(pid: int) -> bool:
-    saida = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], capture_output=True, text=True).stdout
-    return str(pid) in saida and "UnrealEditor" in saida
+    # PID e nome do executavel sao ASCII; nao decodificar mensagens localizadas do Windows.
+    saida = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], capture_output=True).stdout
+    return str(pid).encode("ascii") in saida and b"UnrealEditor" in saida
 
 
 def _ler_estado() -> dict:
