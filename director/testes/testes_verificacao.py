@@ -60,3 +60,36 @@ class PecaFixa(unittest.TestCase):
         from director.veredito import com_veredito
         r=self._verificar(False);self.assertFalse(r['aprovado'])
         v=com_veredito('verificar',r);self.assertIn('cadeira: sem fisica',v['motivo']);self.assertNotIn('box',v['motivo'])
+
+
+class MesaFixa(unittest.TestCase):
+    def _verificar(self, declarada=None, estavel=True):
+        from unittest.mock import patch, Mock
+        from director import verificacao as V
+        sala={'tipo':'sala','x':0,'y':0,'z':1,'largura':300,'comprimento':300,'altura':270,'parede':15}
+        mesa={'tipo':'mesa','sala':'sala'}
+        if declarada is not None:
+            mesa['fisica']={'simular':declarada}
+        planta={'nivel':'level','objetos':{'sala':sala,'mesa':mesa}}
+        geo=[{'id':'mesa','rotulo':'mesa','caminho':'L.mesa','tipo':'mesa',
+              'min':[50,50,1],'max':[150,130,76],
+              'componentes_fisicos':[{'fisica':False,'movel':True,'sobreposicoes_nativas':[]}]}]
+        ed=Mock()
+        ed.chamar.side_effect=lambda n,**kw: {'level':'level'} if n=='info' else (
+            {'atores':geo} if n=='scene_geometry' else {'medidas':[{'acertou':True,'distancia':1}]})
+        play={'rotas':[],'fisica':[{'ator':'mesa','estavel':estavel,'fisica':False}]}
+        with patch.object(V.PL,'carregar',return_value=planta), patch.object(V.relatorio,'medir',return_value={}), patch.object(V,'testar_play',return_value=play):
+            return V.verificar('teste',{'simular':True},ed)
+
+    def test_mesa_nativa_estavel_com_colisao_nao_exige_simulacao(self):
+        r=self._verificar()
+        self.assertTrue(r['aprovado'])
+        self.assertFalse(r['play']['fisica'][0]['exige_fisica'])
+
+    def test_exigencia_dinamica_explicita_nao_e_ignorada(self):
+        r=self._verificar(declarada=True)
+        self.assertFalse(r['aprovado'])
+        self.assertTrue(r['play']['fisica'][0]['exige_fisica'])
+
+    def test_mesa_fixa_instavel_continua_reprovando(self):
+        self.assertFalse(self._verificar(estavel=False)['aprovado'])

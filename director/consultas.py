@@ -49,7 +49,7 @@ def observar(cena, editor, raiz_cenas, ids=()):
             "objetos": objetos, "diferencas": PN.diferencas(D.derivar(p), inv["controlados"]),
             "navegacao": editor.chamar("measure", consultas=[{"tipo": "nav"}])["medidas"][0],
             "outros_atores": len(inv["fora"]), "por_salvar": inv["por_salvar"],
-            "limite": "caixa e envolvente geometrica, nao largura livre nem prova de interacao; use medir"}
+            "limite": "caixa envolve componentes com colisao; nao e largura livre nem prova de interacao; use medir"}
 
 
 def medir(cena, pedido, editor, raiz_cenas):

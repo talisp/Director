@@ -325,7 +325,8 @@ def inventory(variaveis: dict, detalhes: bool = False):
         oid, tipo = _etiquetas(a)
         d = _descrever(a)
         if detalhes:
-            centro, extensao = a.get_actor_bounds(False, include_from_child_actors=True)
+            # Marcadores Billboard/Ancora sem colisao nao fazem parte do envelope fisico.
+            centro, extensao = a.get_actor_bounds(True, include_from_child_actors=True)
             d["caixa"] = {"centro": _v(centro), "meia_extensao": _v(extensao)}
             d["componentes"] = [
                 {"nome": str(c.get_name()), "classe": str(c.get_class().get_name()),

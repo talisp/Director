@@ -1,0 +1,640 @@
+{
+  "motor": "5.8.3-58210709+++UE5+Release-5.8",
+  "baseline_codigo": "a733517",
+  "revisao_antes": 71,
+  "revisao_depois": 78,
+  "hermes": {
+    "modelo": "qwen3.8-flash-next-q8_0",
+    "skill": "0.5.0 + notas locais anteriores",
+    "chamadas": 32,
+    "duracao_ms": 632957,
+    "tokens_acumulados": {
+      "input": 1646150,
+      "output": 37107,
+      "total": 1683257,
+      "cache_read": 1596346,
+      "cache_write": 0
+    }
+  },
+  "mesa": {
+    "antes": {
+      "altura": 75.0,
+      "giro": 0.0,
+      "largura": 120.0,
+      "profundidade": 80.0,
+      "sala": "sala1",
+      "tipo": "mesa",
+      "x": 230.0,
+      "y": 200.0
+    },
+    "depois": {
+      "altura": 75.0,
+      "giro": 0.0,
+      "largura": 160.0,
+      "profundidade": 90.0,
+      "sala": "sala1",
+      "tipo": "mesa",
+      "x": 230.0,
+      "y": 200.0
+    }
+  },
+  "cozinha": {
+    "altura": 270.0,
+    "comprimento": 300.0,
+    "largura": 300.0,
+    "parede": 15.0,
+    "tipo": "sala",
+    "x": -315.0,
+    "y": 40.0,
+    "z": 1.0
+  },
+  "mesas_novas": [],
+  "controlados_anteriores_removidos": [],
+  "controlados_anteriores_recriados": [],
+  "anteriores_fora_que_deixaram_de_ser_externos": [
+    "Cadeira_mesa1"
+  ],
+  "bounds_mesa_antes": {
+    "todos": {
+      "centro": [
+        230.0,
+        200.0,
+        1.0
+      ],
+      "meia_extensao": [
+        128.0,
+        128.0,
+        128.0
+      ]
+    },
+    "colisao": {
+      "centro": [
+        230.0,
+        200.0,
+        38.5
+      ],
+      "meia_extensao": [
+        80.0,
+        45.0,
+        37.5
+      ]
+    }
+  },
+  "verificacoes_hermes": [
+    {
+      "origem": "ver_out.json",
+      "veredito": "REPROVADO",
+      "motivo": "cozinha_para_sala: o boneco nao chegou (ficou a 12.5 cm do destino); porta_sala_para_mesa: o boneco nao chegou (ficou a 35.6 cm do destino); mesa1: sem fisica ligada no Play; Cadeira_mesa1: sem fisica ligada no Play",
+      "circulacao": [
+        {
+          "nome": "cozinha_para_sala",
+          "passagem": {
+            "livre": true,
+            "segmentos": [
+              {
+                "acertou": false,
+                "livre": true
+              },
+              {
+                "acertou": false,
+                "livre": true
+              }
+            ],
+            "metodo": "capsula ao longo do caminho nativo"
+          },
+          "linha_direta": {
+            "acertou": true,
+            "id": "sala1.parede_oeste",
+            "tipo": "parede",
+            "rotulo": "sala1.parede_oeste",
+            "componente": "Dir",
+            "distancia": 121.86,
+            "ponto": [
+              -15.0,
+              185.0,
+              103.857
+            ],
+            "livre": false
+          },
+          "caminho": {
+            "existe": true,
+            "parcial": false,
+            "comprimento": 286.7,
+            "pontos": [
+              [
+                -165.0,
+                190.0,
+                3.0
+              ],
+              [
+                -20.0,
+                145.0,
+                3.0
+              ],
+              [
+                114.792,
+                139.774,
+                3.0
+              ]
+            ],
+            "completo": true
+          },
+          "destino_na_malha": true,
+          "personagem": {
+            "executado": true,
+            "chegou": false,
+            "distancia_cm": 12.5
+          }
+        },
+        {
+          "nome": "porta_sala_para_mesa",
+          "passagem": {
+            "livre": true,
+            "segmentos": [
+              {
+                "acertou": false,
+                "livre": true
+              }
+            ],
+            "metodo": "capsula ao longo do caminho nativo"
+          },
+          "linha_direta": {
+            "acertou": true,
+            "id": "mesa1",
+            "tipo": "mesa",
+            "rotulo": "mesa1",
+            "componente": "Tampo",
+            "distancia": 38.0,
+            "ponto": [
+              200.0,
+              245.0,
+              75.812
+            ],
+            "livre": false
+          },
+          "caminho": {
+            "existe": true,
+            "parcial": false,
+            "comprimento": 37.0,
+            "pontos": [
+              [
+                200.0,
+                317.0,
+                3.0
+              ],
+              [
+                200.0,
+                280.0,
+                3.0
+              ]
+            ],
+            "completo": true
+          },
+          "destino_na_malha": false,
+          "personagem": {
+            "executado": true,
+            "chegou": false,
+            "distancia_cm": 35.6
+          }
+        }
+      ],
+      "fisica": [
+        {
+          "ator": "mesa1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": true
+        },
+        {
+          "ator": "prato1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": true,
+          "estavel": true,
+          "exige_fisica": true
+        },
+        {
+          "ator": "copo1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": true,
+          "estavel": true,
+          "exige_fisica": true
+        },
+        {
+          "ator": "Cadeira_mesa1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": true
+        },
+        {
+          "ator": "pia2",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        },
+        {
+          "ator": "geladeira1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        },
+        {
+          "ator": "bancada1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        },
+        {
+          "ator": "cooktop1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        }
+      ]
+    },
+    {
+      "origem": "ver2_out.json",
+      "veredito": "REPROVADO",
+      "motivo": "mesa1: sem fisica ligada no Play",
+      "circulacao": [
+        {
+          "nome": "cozinha_para_sala",
+          "passagem": {
+            "livre": true,
+            "segmentos": [
+              {
+                "acertou": false,
+                "livre": true
+              },
+              {
+                "acertou": false,
+                "livre": true
+              }
+            ],
+            "metodo": "capsula ao longo do caminho nativo"
+          },
+          "linha_direta": {
+            "acertou": true,
+            "id": "sala1.parede_oeste",
+            "tipo": "parede",
+            "rotulo": "sala1.parede_oeste",
+            "componente": "Dir",
+            "distancia": 123.19,
+            "ponto": [
+              -15.0,
+              185.0,
+              103.857
+            ],
+            "livre": false
+          },
+          "caminho": {
+            "existe": true,
+            "parcial": false,
+            "comprimento": 271.9,
+            "pontos": [
+              [
+                -165.0,
+                190.0,
+                3.0
+              ],
+              [
+                -20.0,
+                145.0,
+                3.0
+              ],
+              [
+                100.0,
+                140.0,
+                3.0
+              ]
+            ],
+            "completo": true
+          },
+          "destino_na_malha": true,
+          "personagem": {
+            "executado": true,
+            "chegou": true,
+            "distancia_cm": 7.9
+          }
+        },
+        {
+          "nome": "porta_sala_para_mesa",
+          "passagem": {
+            "livre": true,
+            "segmentos": [
+              {
+                "acertou": false,
+                "livre": true
+              }
+            ],
+            "metodo": "capsula ao longo do caminho nativo"
+          },
+          "linha_direta": {
+            "acertou": false,
+            "livre": true
+          },
+          "caminho": {
+            "existe": true,
+            "parcial": false,
+            "comprimento": 34.0,
+            "pontos": [
+              [
+                200.0,
+                317.0,
+                3.0
+              ],
+              [
+                200.0,
+                283.0,
+                3.0
+              ]
+            ],
+            "completo": true
+          },
+          "destino_na_malha": true,
+          "personagem": {
+            "executado": true,
+            "chegou": true,
+            "distancia_cm": 7.9
+          }
+        }
+      ],
+      "fisica": [
+        {
+          "ator": "mesa1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": true
+        },
+        {
+          "ator": "prato1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": true,
+          "estavel": true,
+          "exige_fisica": true
+        },
+        {
+          "ator": "copo1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": true,
+          "estavel": true,
+          "exige_fisica": true
+        },
+        {
+          "ator": "pia2",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        },
+        {
+          "ator": "geladeira1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        },
+        {
+          "ator": "bancada1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        },
+        {
+          "ator": "cooktop1",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        },
+        {
+          "ator": "cadeira_mesa",
+          "deslocamento_cm": 0.0,
+          "giro_graus": 0.0,
+          "velocidade": 0.0,
+          "velocidade_angular": 0.0,
+          "fisica": false,
+          "estavel": true,
+          "exige_fisica": false
+        }
+      ]
+    }
+  ],
+  "pedido_reverificacao": {
+    "salas": [
+      "cozinha",
+      "sala1"
+    ],
+    "simular": true,
+    "rotas": [
+      {
+        "nome": "cozinha_para_sala",
+        "de": [
+          -165,
+          190,
+          1
+        ],
+        "ate": [
+          100,
+          140,
+          1
+        ],
+        "tolerancia_cm": 10
+      },
+      {
+        "nome": "porta_sala_para_mesa",
+        "de": [
+          200,
+          317,
+          1
+        ],
+        "ate": [
+          200,
+          283,
+          1
+        ],
+        "tolerancia_cm": 10
+      }
+    ]
+  },
+  "apos_correcao": {
+    "veredito": "APROVADO",
+    "motivo": "tudo o que foi pedido passou nas medidas desta verificacao",
+    "circulacao": [
+      {
+        "nome": "cozinha_para_sala",
+        "passagem": {
+          "livre": true,
+          "segmentos": [
+            {
+              "acertou": false,
+              "livre": true
+            },
+            {
+              "acertou": false,
+              "livre": true
+            }
+          ],
+          "metodo": "capsula ao longo do caminho nativo"
+        },
+        "linha_direta": {
+          "acertou": true,
+          "id": "sala1.parede_oeste",
+          "tipo": "parede",
+          "rotulo": "sala1.parede_oeste",
+          "componente": "Dir",
+          "distancia": 123.19,
+          "ponto": [
+            -15.0,
+            185.0,
+            103.857
+          ],
+          "livre": false
+        },
+        "caminho": {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 271.9,
+          "pontos": [
+            [
+              -165.0,
+              190.0,
+              3.0
+            ],
+            [
+              -20.0,
+              145.0,
+              3.0
+            ],
+            [
+              100.0,
+              140.0,
+              3.0
+            ]
+          ],
+          "completo": true
+        },
+        "destino_na_malha": true,
+        "personagem": {
+          "executado": true,
+          "chegou": true,
+          "distancia_cm": 7.3
+        }
+      },
+      {
+        "nome": "porta_sala_para_mesa",
+        "passagem": {
+          "livre": true,
+          "segmentos": [
+            {
+              "acertou": false,
+              "livre": true
+            }
+          ],
+          "metodo": "capsula ao longo do caminho nativo"
+        },
+        "linha_direta": {
+          "acertou": false,
+          "livre": true
+        },
+        "caminho": {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 34.0,
+          "pontos": [
+            [
+              200.0,
+              317.0,
+              3.0
+            ],
+            [
+              200.0,
+              283.0,
+              3.0
+            ]
+          ],
+          "completo": true
+        },
+        "destino_na_malha": true,
+        "personagem": {
+          "executado": true,
+          "chegou": true,
+          "distancia_cm": 7.9
+        }
+      }
+    ],
+    "mesa_dimensoes_cm": [
+      160.0,
+      90.0,
+      75.0
+    ],
+    "inventario_preservado_nesta_verificacao": true,
+    "avisos_GetMass_na_janela_inspecao": [],
+    "em_play_final": false,
+    "por_salvar_final": []
+  },
+  "testes": {
+    "director_antes": 97,
+    "guarda": 11,
+    "director_apos": 100
+  },
+  "sha256_registros_locais": {
+    "antes.json": "a6f99d820879cb9784d9a71151348acb0eadedcd74a593fb94f14799da1366e8",
+    "hermes.jsonl": "41fb2f6e77be5fffbe7a0e8e7badc1cb0a6b29820cca876b8b2e820c70caf452",
+    "auditoria.json": "cb4f1f0386735d88c9235c51fb33758aef06b5cb4b97c05957c654608e920fe7",
+    "bounds_mesa_antes.json": "7c9163d049a122016f29f2890e93a477496094d044ec624c231b8d3d678fd7a8",
+    "apos_correcao.json": "acbfc5676ec27e137b09685cc3d46d2c98adee90036e0da84e93bc9dcf7fad9f"
+  }
+}
