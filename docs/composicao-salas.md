@@ -45,8 +45,8 @@ nao retangulares nem decisao semantica de todos os comodos necessarios.
 
 ## Evidencias
 
-- 129 testes Director + 11 guarda passaram antes da ultima guarda de revisao;
-  testes adicionais direcionados comprovaram a recusa de plano antigo sem apply.
+- Fechamento em 18/10: 130 testes Director + 11 guarda aprovados, incluindo recusa
+  de plano antigo sem apply. Logs locais em work/pipeline_20261018/*fechamento.log.
 - Offline: quatro comodos em duas variacoes de medidas; ficha aceita pelo nucleo;
   conflito entre salas fixas identificado; alteracao local preserva outro comodo/movel;
   passagem de 65 cm recusada e parede cortada uma vez sem ator proprio.
