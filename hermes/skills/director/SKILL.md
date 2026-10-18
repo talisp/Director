@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.5
+version: 0.5.6
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -34,6 +34,16 @@ platforms: [windows]
   tamanhos: use `planejar` com `sala` + `minimo_cm`/`maximo_cm`, que não toca na cena.
 
 Raiz: `{{DIRECTOR}}`. Python do Director: `{{PYTHON}}`. Use `python -m director` a partir da raiz; para o laboratório, `python -m director.lab`. Ao retomar, consulte `contexto`: ele informa o level aberto e o caminho real da planta. Nao assuma que a cena e `sala` nem leia uma copia de planta do checkout quando houver fonte vinculada. Consulte `capacidades`, `estado <cena>` e `api TERMO` antes de concluir que falta uma operacao ou escrever codigo experimental. A ficha atual usa metros; a planta persistida usa centímetros.
+
+**Compor varios comodos sem macro:** `planejar CENA PEDIDO.json` aceita
+`{"salas":[{"id":"sala","largura_m":4,"comprimento_m":3},{"id":"cozinha","largura_m":3,"comprimento_m":3}],"adjacencias":[{"salas":["sala","cozinha"],"lado":"leste"}]}`.
+Lado e opcional; contato minimo padrao 120 cm. A saida `ficha_salas` ainda NAO foi aplicada;
+use-a inteira em `fazer` para preservar revisao_base. Se a revisao mudou, replaneje.
+Salas existentes ficam com cantos fixos; uma mudanca de tamanho pode ser recusada por vizinhos/moveis.
+Adjacencia nao e passagem: para integrar ambientes, `colocar tipo:passagem` corta a parede
+sem criar folha/ator. Escolha parede/posicao/largura e confirme no motor. Minimo 70x178 cm
+so considera capsula 34/88; nao garante navegacao. O planejador e retangular, em cm, ate 32 salas;
+nao prometa vila completa nem casa funcional apenas por obter APROVADO na distribuicao.
 
 Para abrir o laboratorio, use `python -m director.lab estado` e `abrir`; nao lance outro projeto.
 Se precisar esperar, acompanhe em intervalos de ate 60 s. Depois consulte `contexto`.

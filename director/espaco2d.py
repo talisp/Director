@@ -16,7 +16,7 @@ def _poligono(o):
 
 def zona(a,W,H):
     from shapely.geometry import box
-    pos=a['posicao'];w=a['largura'];d=80 if a['tipo']=='porta' else 50
+    pos=a['posicao'];w=a['largura'];d=80 if a['tipo'] in ('porta','passagem') else 50
     return box(*{'sul':(pos-w/2,0,pos+w/2,d),'norte':(pos-w/2,H-d,pos+w/2,H),
         'oeste':(0,pos-w/2,d,pos+w/2),'leste':(W-d,pos-w/2,W,pos+w/2)}[a['parede']])
 
@@ -69,7 +69,7 @@ def avaliar(pedido):
                 if area>1e-6:violacoes.append({'objeto':o['id'],'abertura':a['id'],'tipo':'folha_porta','area_cm2':round(area,3)})
     # Acesso: da porta tem de dar para chegar a cada area de uso pedida. Bolsao sem alvo nao reprova.
     alvos=list(pedido.get('alvos',[]))
-    portas=[a for a in pedido.get('aberturas',[]) if a['tipo']=='porta']
+    portas=[a for a in pedido.get('aberturas',[]) if a['tipo'] in ('porta','passagem')]
     acessos=[]
     def regiao_de(caixa):
         alvo=box(*caixa);toca=[i for i,r in enumerate(areas) if r.intersects(alvo) and r.intersection(alvo).area>1]

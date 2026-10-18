@@ -54,6 +54,9 @@ def de_verificacao(res):
 
 def de_planejamento(res):
     if res.get("ok"):
+        if 'ficha_salas' in res:
+            return {'veredito':'APROVADO','motivo':f"distribuicao de {len(res['salas'])} salas validada; adjacencia nao comprova circulacao nem completude da casa",
+                    'proxima_acao':'revise ficha_salas e as aberturas; aplicar com fazer, medir e verificar no laboratorio'}
         v = res.get("verificacao2d") or {}
         dims = res.get("dimensoes_cm")
         return {"veredito": "APROVADO", "motivo": f"proposta de {dims[0]} x {dims[1]} cm aprovada pelo solver e pelo filtro 2D ({v.get('criterio', 'circulacao')})",

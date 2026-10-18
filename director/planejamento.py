@@ -115,7 +115,7 @@ def resolver(pedido,filtro=True):
         for a in pedido.get('aberturas',[]):
             z0=a.get('peitoril',0) if a['tipo']=='janela' else 0
             if obj['dimensoes_cm'][2]<=z0:continue
-            d=max(80,math.ceil(a['largura'])) if a['tipo']=='porta' else 50
+            d=max(80,math.ceil(a['largura'])) if a['tipo'] in ('porta','passagem') else 50
             # Porta: 10 cm a mais de cada lado para a folha aberta (vista ao vivo batendo na escrivaninha).
             m=10 if a['tipo']=='porta' else 0
             lo=math.floor(a['posicao']-a['largura']/2)-m;hi=math.ceil(a['posicao']+a['largura']/2)+m
@@ -243,6 +243,9 @@ def compartilhadas(planta):
 
 
 def planejar(cena,pedido,editor):
+    if 'salas' in pedido:
+        from .planejamento_salas import planejar as salas
+        return salas(cena,pedido)
     p=PL.carregar(C.CENAS,cena);sid=pedido.get('sala');q=dict(pedido)
     hipotese=bool(sid) and any(k in pedido for k in ('dimensoes_cm','minimo_cm','maximo_cm'))
     if sid:

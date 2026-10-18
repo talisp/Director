@@ -152,6 +152,10 @@ def executar(cena: str, ficha: dict, editor, raiz_cenas: str, lab_dir: str = "",
                     "revisao": planta0["revisao"], "nivel": planta0["nivel"],
                     "faltando": rel["faltando"], "sobrando": rel["sobrando"],
                     "proxima_acao": "confira se esta e a planta correspondente ao level; compare uma copia conhecida com o inventario antes de recuperar; nao reconstrua paredes nem contorne a recusa automaticamente"}
+        elif isinstance(ficha,dict) and 'revisao_base' in ficha and ficha['revisao_base'] != planta0['revisao']:
+            res={'ok':False,'motivo':'planta_revisao_alterada','tocou_na_cena':False,
+                 'esperada':ficha['revisao_base'],'atual':planta0['revisao'],
+                 'porque':'a planta mudou depois do plano; consulte estado e replaneje antes de aplicar'}
         else:
             try:
                 planta2, resumo = OP.aplicar_ficha(planta1, ficha)

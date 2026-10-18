@@ -21,11 +21,12 @@ PADROES = {
     "sala": {"altura": 270.0, "parede": 15.0},
     "porta": {"largura": 100.0, "altura": 210.0, "angulo": 0.0, "parede": "sul"},
     "janela": {"largura": 120.0, "altura": 110.0, "peitoril": 90.0, "parede": "leste"},
+    "passagem": {"largura": 100.0, "altura": 210.0, "parede": "sul"},
     "mesa": {"largura": 120.0, "profundidade": 80.0, "altura": 75.0, "giro": 0.0},
     "prato": {"diametro": 24.0, "altura": 2.0},
     "copo": {"diametro": 8.0, "altura": 10.0},
 }
-VAOS = ("porta", "janela")
+VAOS = ("porta", "janela", "passagem")
 MOVEIS = ("mesa", "asset")
 OBJETOS = ("prato", "copo")
 # onde o próximo objeto vai sobre o tampo, em fração da meia largura e da meia profundidade
@@ -60,8 +61,8 @@ OPERACOES: dict = {
                    "largura_m": (NUM, False, ""), "comprimento_m": (NUM, False, ""), "altura_m": (NUM, False, "")},
     },
     "colocar": {
-        "descricao": "Coloca uma peça: porta ou janela numa parede; mesa no chão da sala; prato ou copo sobre uma mesa.",
-        "campos": {"tipo": (TXT, True, "porta | janela | mesa | prato | copo"),
+        "descricao": "Coloca porta, janela ou passagem sem folha numa parede; mesa no chao; prato ou copo sobre mesa.",
+        "campos": {"tipo": (TXT, True, "porta | janela | passagem (sem folha) | mesa | prato | copo"),
                    "id": (TXT, False, "nome; se faltar, o núcleo dá um (porta1, mesa1...)"),
                    "sala": (TXT, False, "pode faltar se só existe uma"),
                    "parede": (TXT, False, "porta e janela: sul | norte | leste | oeste"),
@@ -323,7 +324,7 @@ def _colocar(planta: dict, d: dict) -> str:
             o["angulo"] = float(d.get("angulo", pad["angulo"]))
             for k in ('dobradica','sentido'):
                 if k in d:o[k]=d[k]
-        else:
+        elif tipo=='janela':
             o["peitoril"] = _cm(d, "peitoril_m", pad["peitoril"])
     elif tipo in MOVEIS:
         sala_id = _unico(planta, ("sala",), d.get("sala"), "sala")
@@ -361,6 +362,7 @@ def _mudar(planta: dict, d: dict) -> str:
     if tipo == "sala":
         raise Invalida("para mudar uma sala use a operação mudar_sala")
     aceitos = {"porta": ("parede", "posicao_m", "largura_m", "altura_m", "angulo", "dobradica", "sentido"),
+               "passagem": ("parede", "posicao_m", "largura_m", "altura_m"),
                "janela": ("parede", "posicao_m", "largura_m", "altura_m", "peitoril_m"),
                "mesa": ("x_m", "y_m", "giro", "largura_m", "profundidade_m", "altura_m"),
                "asset": ("x_m", "y_m", "giro", "largura_m", "profundidade_m", "altura_m"),
@@ -502,6 +504,8 @@ def conferir(planta: dict, final: bool = True) -> None:
         comp = lado_cm(s, o["parede"])
         if o["largura"] < 40.0 or o["altura"] < 40.0:
             raise Invalida(f"{oid}: vão pequeno demais ({o['largura']:g} x {o['altura']:g} cm)")
+        if o['tipo']=='passagem' and (o['largura']<70 or o['altura']<178):
+            raise Invalida(f'{oid}: passagem requer ao menos 70 x 178 cm para capsula 34/88 com folga de 2 cm; navegacao ainda precisa ser verificada')
         ini, fim = o["posicao"] - o["largura"] / 2, o["posicao"] + o["largura"] / 2
         if ini < FOLGA_VAO - 1e-6 or fim > comp - FOLGA_VAO + 1e-6:
             raise Invalida(f"{oid} não cabe na parede {o['parede']} de {o['sala']} "
@@ -600,9 +604,13 @@ def aplicar_ficha(planta: dict, ficha: dict) -> tuple:
     """Devolve (planta nova, resumo). Não muda a planta recebida. Recusa (Invalida) a ficha inteira se algo não fecha."""
     if not isinstance(ficha, dict) or not isinstance(ficha.get("operacoes"), list) or not ficha["operacoes"]:
         raise Invalida('a ficha precisa de "operacoes": uma lista com pelo menos uma operação')
-    desconhecidos = set(ficha) - {"pedido", "operacoes"}
+    desconhecidos = set(ficha) - {"pedido", "operacoes", "revisao_base"}
     if desconhecidos:
         raise Invalida(f"campo desconhecido na ficha: {', '.join(sorted(desconhecidos))}")
+    if 'revisao_base' in ficha:
+        r=ficha['revisao_base']
+        if isinstance(r,bool) or not isinstance(r,int) or r<0 or r!=planta['revisao']:
+            raise Invalida('revisao_base invalida ou desatualizada; replaneje com a planta atual')
     nova = copy.deepcopy(planta)
     resumo = []
     for n, op in enumerate(ficha["operacoes"], 1):
