@@ -1,100 +1,97 @@
 # Director
 
-Execucao ordenada das correcoes: [pipeline de 18/10](docs/pipeline-2026-10-18.md).
-Retomada entre checkouts: [estado local vinculado ao laboratorio](docs/estado-local.md).
+**Criação e edição de cenários 3D funcionais no Unreal Engine por conversa, com modelos de linguagem locais ou econômicos.**
 
-**Revisão da porta (18/10):** [causa da demora, recuperação local e correções testadas](docs/revisao-porta-2026-10-18.md). Diagnóstico de planta/editor, consulta Windows sem dependência de codificação e skill 0.5.1; 104 testes Director e 11 da guarda.
+O Director busca transformar pedidos como “crie uma cozinha anexa à sala” ou “aumente esse cômodo sem deslocar a mesa” em mudanças verificáveis na cena. A pessoa descreve o que quer, esclarece escolhas importantes e pode corrigir o resultado sem precisar programar ou fornecer coordenadas.
 
-**Teste integrado da cozinha:** [resultado, correções pontuais e limites](docs/teste-cozinha-2026-10-17/README.md). Hermes criou uma cozinha anexa e ampliou a mesa; o teste revelou e corrigiu o envelope de marcadores do editor e a exigência indevida de simulação dinâmica da mesa fixa. 100 testes Director e 11 da guarda passaram; as pendências maiores continuam abertas.
+O destino são **cenas e animações para vídeos de referência**, usados depois em ferramentas de geração de vídeo por IA. Nesta etapa, a prioridade é construir e modificar cenários com coerência espacial, preservação e possibilidade de interação. A aparência final pode ser simples. A exportação do vídeo será feita manualmente pelo usuário no Unreal.
 
-**Builds and edits functional 3D scenes in Unreal Engine through conversation, with a small or local LLM planning, composing operations, inspecting the result and investigating alternatives.**
+**Estado em 18/10/2026: protótipo experimental.** Há capacidades testadas no laboratório, mas ainda não há comprovação de atendimento confiável a todos os pedidos por uma LLM. As limitações e as pendências fazem parte desta entrega.
 
-The LLM (or a person) writes a *ficha*: a short JSON with an operation and a few fields ("create a 4 × 4 m room", "move the door to the opposite wall"). A deterministic core, with no LLM inside, validates it, plans the smallest change, asks Unreal to do it with Unreal's own automation, measures the result and saves. If anything fails, the scene goes back to what it was.
+- [Objetivo e critérios de trabalho](docs/OBJETIVO.md)
+- [Pipeline autorizado e pendências](docs/pipeline-2026-10-18.md) · [issue de acompanhamento #48](https://github.com/talisp/Director/issues/48)
+- [Como retomar o projeto](docs/CONHECIMENTO.md)
+- [Operação pelo Hermes](hermes/README.md) · [instalação publicada separada do desenvolvimento](docs/operador-publicado.md)
 
-> **Director is the successor of [unreal-local-director](https://github.com/talisp/unreal-local-director), now called "Antigo Director" (Old Director), which is discontinued.** An explanation of why will come later.
+## Como funciona
 
-## Status: early, first delivery only
-
-**Histórico e próximos passos:** [entrega, evidências publicadas e pendências de 17/10/2026](docs/evolucao-2026-10-17/README.md). Inclui o ensaio real do Qwen, resultados negativos de navegação, fichas de referência e issues para a evolução seguinte.
-
-**17 Oct 2026 — agent interface:** `python -m director --help` lists the commands without connecting to Unreal. `observar CENA [ID ...]` separates the desired plan from measured actor bounds, `medir CENA CONSULTAS.json` exposes native collision/navigation queries, and `assets TERMO ...` searches assets already in `/Game`. Creating a new scene is automatic through `fazer`. JSON output is compact ASCII to avoid corrupted accents in Windows terminal transports.
-
-Navigation readiness now checks the engine's loading/build lock as well as build activity. It is reported separately from connectivity: only a complete path query validates a specific route. No changes to the construction representation or rollback mechanism are required by this increment.
-
-Verified on 17 Oct: 49 core/interface tests and 4 Hermes guard tests passed. Native queries measured a 150 cm corridor, a clear capsule sweep, a blocking wall and a complete route after rebuilding navigation. Reopening that scene could leave navigation without a usable route until a native rebuild; a separate north–south doorway case still returned a partial path. These navigation issues are not claimed fixed. The original lab scene was restored and its actor inventory preserved. The new interface has not yet been benchmarked in a fresh end-to-end Qwen run.
-
-Measured on 13 Oct 2026, Unreal Engine 5.8.3, in a separate lab project ([numbers](docs/entrega1/README.md)):
-
-| Request | What happened in Unreal |
-|---|---|
-| "Create a 4 × 4 m room with a door, a window and a table." | 9 parts created; inner size measured by ray: 400.0 × 400.0 cm |
-| "Make the room 5 × 4 m and move the door to the opposite wall." | 7 parts updated, none deleted or recreated; a table moved by hand stayed where the person left it |
-| "Put a plate and a glass on the table." | 2 physical objects; with physics running they stayed on the table |
-
-Also measured: the door blocks when closed and frees the way when open; an Unreal `Character` walks in through the open door; save, close the editor and reopen keeps everything; what moved during Play can be written back to the saved scene; an invalid request is refused before touching the scene; a failure in the middle is rolled back. 64 of 64 checks in the final run, 33 of 33 tests without Unreal.
-
-**First contact with a local LLM (14 Oct 2026):** a local Qwen, through Hermes Agent, operated the Director in a first test and a real conversation. It built a room from one sentence correctly, but also made errors (ignored parts of a request, invented a size, changed the scene after being criticized). What happened and what changed is in [`hermes/README.md`](hermes/README.md). Not measured yet.
-
-**Changes on 14 Oct 2026** (after the first contact with the local LLM):
-- **Rooms of any size** (fixes [#1](https://github.com/talisp/Director/issues/1)): the 2–20 m limit was removed; a room only needs sizes above zero (a 1 × 3 m corridor and a 0.6 × 0.5 m closet were built in Unreal).
-- **Rooms side by side share one wall** (fixes [#2](https://github.com/talisp/Director/issues/2)): placed 0.15 m apart (one wall), two rooms get a single 15 cm wall instead of two, and a door in it is the passage from one room to the other. A door or window that would open against another wall is refused. Tested without Unreal (53 tests; existing scenes unchanged); **not yet built in Unreal**.
-- **Historical approval policy** ([#3](https://github.com/talisp/Director/issues/3), superseded on 16 Oct): the experimental Hermes profile now executes authorized tasks without a card per command. `director-guarda` only repairs malformed clarification arguments; the former directory restriction was removed.
-- **Questions reach the person** (fixes [#5](https://github.com/talisp/Director/issues/5)): the same plugin repairs the question list when the model sends it as text (with a stray `}` or a missing `]`); the 15 questions recorded in real conversations pass Hermes' own validation.
-- Operator rules: discussion alone does not authorize scene changes; an execution request authorizes its necessary operations. Experiments are allowed in the lab, with evidence before adopting new permanent solutions.
-
-**Not there yet:** a measured LLM filling the fichas reliably; characters with a body and animation; real-looking parts (everything is cubes and cylinders); Smart Objects; sequences, camera and video; an opening without a door between rooms.
-
-> The numbers above are from the run of 13 Oct 2026, 20:10, made before the package was renamed from `director2` to `director`. After the rename the whole run was repeated on a new scene (22:52): 64 of 64 again, and 33 of 33 tests without Unreal (53 since the changes of 14 Oct).
-
-## Try it
-
-Needs Python 3.11+ (standard library only). Without Unreal:
-
+```text
+Pedido → consulta da cena → plano → execução no Unreal
+       → medidas e diagnóstico → comparação com o pedido → correção
 ```
-python -m unittest director.testes.testes_nucleo
+
+1. **O agente interpreta e investiga.** No ambiente local, o perfil Director do Hermes usa o Qwen. Ele consulta o cenário, procura assets existentes e utiliza as ferramentas disponíveis. Pode investigar alternativas no laboratório quando as operações atuais não bastam, dentro da autorização recebida.
+2. **O núcleo Python calcula e valida.** Fichas JSON descrevem operações; a planta persistente registra o estado desejado. Código determinístico valida medidas e relações, deriva peças e prepara mudanças. O planejamento espacial utiliza CP-SAT para propor arranjos e adjacências.
+3. **O Unreal executa o trabalho de motor.** A ponte aciona a automação do editor, Blueprints paramétricos, assets, colisões, física e navegação. O Director combina essas capacidades em operações repetíveis.
+4. **A observação retorna dados objetivos.** Identidades, parâmetros, caixas reais, medidas, colisões, caminhos e avisos ajudam o agente a comparar o executado com o pretendido. Screenshots podem complementar essa informação.
+
+Uma ficha descreve uma alteração; a planta representa o cenário desejado; os dados do Unreal mostram o estado observado. Essas camadas não são intercambiáveis. `ok: true` indica execução da ferramenta, sem garantir atendimento ao pedido humano. Mesmo um veredito geométrico aprovado tem escopo limitado.
+
+O núcleo possui conciliação, backups e recuperação de falhas. Scripts experimentais e interrupções da ponte têm limites próprios: **não há garantia de desfazer automaticamente qualquer operação arbitrária**.
+
+## O que existe e foi verificado
+
+| Capacidade | Evidência e limites |
+|---|---|
+| Criar e alterar salas, paredes, portas, janelas e objetos, preservando identidades | [Primeira entrega](docs/entrega1/README.md) e [estado compartilhado](docs/estado-local.md). A conciliação depende da planta correta e das alterações suportadas. |
+| Compor vários cômodos por dimensões e adjacências, sem macro de casa | [Pilotos de quatro cômodos e cozinha ampliada](docs/composicao-salas.md). Retângulos, parede de 15 cm, resolução de 1 cm e até 32 salas no piloto; adjacência não cria abertura automaticamente. |
+| Criar passagens sem folha de porta; configurar dobradiça e sentido de abertura | [Composição](docs/composicao-salas.md) e [portas/2D](docs/portas-e-2d.md). Passagem física livre não garante caminho completo na NavMesh. |
+| Procurar assets da cena, do projeto e da biblioteca offline | [Biblioteca e piloto Kenney](docs/biblioteca-piloto.md). Uma cadeira foi importada, unida pelo motor em um objeto e verificada fisicamente; isso não certifica interação corporal. |
+| Observar geometria e conter informação para a LLM | [Observação textual e contenção](docs/observacao-textual.md). O desenho em texto representa a planta desejada; sua vantagem sobre JSON ou imagem ainda não foi demonstrada. |
+| Devolver avisos nativos e erros ao operador | [Diagnósticos](docs/diagnosticos.md). A correlação com a operação é temporal; ausência de avisos não prova qualidade. |
+| Manter operação e desenvolvimento separados | [Instalação publicada e túnel do modelo](docs/operador-publicado.md). Recuperação do túnel foi testada; reinício real do Windows/login e redundância continuam pendentes. |
+
+**Verificação de código desta entrega:** 132 testes do Director e 13 da guarda aprovados; a suíte do Director também passou na instalação publicada. Os documentos acima distinguem testes offline, verificações reais no Unreal e sessões do Hermes. Quantidade de testes não é medida de Pedidos Atendidos.
+
+## O que ainda falta
+
+- Demonstrar que o operador atende pedidos completos e variações sem omitir requisitos ou inventar decisões essenciais.
+- Resolver os dois casos históricos de navegação após reabertura e em passagem norte–sul.
+- Concluir a biblioteca, os testes de observação, a aprendizagem com procedência e a operação no aplicativo do Hermes.
+- Evoluir apoio em superfícies, peças finas, materiais e revisão limitada com preservação.
+- Validar a evolução da pesquisa de GitHub e os pilotos externos previstos.
+
+Personagens com corpo, interações como pegar/sentar e animação temporal pertencem à evolução futura. Os testes atuais de cápsula/Character e de física não equivalem a um sistema de animação corporal pronto.
+
+A lista completa e sua ordem estão no [pipeline](docs/pipeline-2026-10-18.md). O projeto sucede o [unreal-local-director](https://github.com/talisp/unreal-local-director), descontinuado.
+
+## Consultar e testar
+
+O núcleo e os comandos básicos usam Python 3.11+ e biblioteca padrão. Planejamento, validação 2D e análise offline de modelos usam as dependências opcionais declaradas em `requirements-planejamento.txt` e `requirements-biblioteca.txt`.
+
+Sem conectar ao Unreal:
+
+```powershell
+python -m director --help
 python -m director capacidades
+python -m unittest director.testes.testes_nucleo
+python -m unittest hermes.testes_guarda
 ```
 
-With Unreal Engine 5.8 installed (creates and opens a small lab project; it never talks to another project):
+Para a suíte completa, use um ambiente com as dependências de planejamento instaladas:
 
-```
-python -m director.lab criar
-python -m director.lab abrir
-python -m director pecas
-python -m director fazer sala director/fichas/comando1.json
+```powershell
+python -m unittest discover -s director/testes -p 'testes_*.py'
 ```
 
-## Where things are
+A integração foi verificada no Windows com Unreal Engine **5.8.3**, em um projeto de laboratório separado. Ela utiliza Python Editor Scripting, ModelContextProtocol, EditorToolset e GeometryScripting. Isso não comprova compatibilidade com outras instalações ou versões. Consulte [retomada](docs/CONHECIMENTO.md) antes de abrir/criar um laboratório.
 
-| Path | What |
+O perfil de uso deve apontar para uma instalação do código publicado, separada da pasta em que agentes desenvolvem. Plantas, biblioteca e trava compartilhadas não devem ser substituídas por cópias antigas ao trocar a instalação.
+
+## Código e documentação
+
+| Caminho | Responsabilidade |
 |---|---|
-| `director/nucleo/` | the core: operations and refusals, the scene plan (*planta*), minimal-change planner, executor with rollback |
-| `director/nucleo/pecas.py` | the parts: each one is a Blueprint with a Construction Script, created by the program |
-| `director/editor/` | what runs inside the Unreal editor |
-| `director/ponte.py`, `director/lab.py` | protections and the lab project |
-| `director/fichas/` | the three example requests |
-| [`hermes/`](hermes/README.md) | instructions for a local LLM operating the Director through Hermes Agent (rules, skill, profile installer), and what the first test showed |
-| [`docs/CONHECIMENTO.md`](docs/CONHECIMENTO.md) | what is reusable, which Epic APIs are used, pitfalls already measured, what is verified, provisional or only a hypothesis, and how to resume |
+| `director/nucleo/` | Fichas, planta, derivação, conciliação e execução |
+| `director/planejamento.py`, `director/planejamento_salas.py`, `director/espaco2d.py` | Planejamento espacial e verificações 2D |
+| `director/editor/` | Operações executadas dentro do editor Unreal |
+| `director/ponte.py`, `director/lab.py`, `director/estado_local.py` | Comunicação, laboratório e fonte compartilhada |
+| `director/catalogo.py`, `director/biblioteca.py` | Busca e biblioteca de assets |
+| `hermes/` | Orientação do operador, skill e guarda |
+| `docs/` | Objetivo, pipeline, evidências, limitações e histórico |
 
-Code comments and documents are in Portuguese.
+## Referências e licença
 
-## References and credits
+A adaptação de conectividade e áreas livres de SceneSmith está identificada em [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Outros estudos são referências de pesquisa; uma avaliação favorável não significa integração ou validação do repositório inteiro. A [proposta de pesquisa dirigida](docs/pesquisa-dirigida-director.md) distingue código, algoritmo, inspiração e solução pronta.
 
-Director borrows ideas, thresholds and, where an issue says so, adapted code from these research projects. Thanks to their authors.
-
-- **[SceneSmith](https://github.com/nepfaff/scenesmith)** — *SceneSmith: Agentic Generation of Simulation-Ready Indoor Scenes* ([arXiv 2602.09153](https://arxiv.org/abs/2602.09153), ICML 2026), MIT and Toyota Research Institute. Code under the MIT License. Used for:
-  - door and window clearance zones and the 2D reachability check ([#29](https://github.com/talisp/Director/issues/29));
-  - the text floor plan for a model without vision ([#30](https://github.com/talisp/Director/issues/30));
-  - scored review with bounded rounds ([#31](https://github.com/talisp/Director/issues/31));
-  - physics thresholds ([#25](https://github.com/talisp/Director/issues/25));
-  - mass from size and material ([#13](https://github.com/talisp/Director/issues/13));
-  - size-ranked asset retrieval ([#27](https://github.com/talisp/Director/issues/27)).
-
-  Director does not use its multi-agent orchestration, its Drake simulation or its 3D generation.
-- **[SpatialGen](https://github.com/manycore-research/SpatialGen)** — *SpatialGen: Layout-guided 3D Indoor Scene Generation* (3DV 2026), HKUST Spatial AI Lab and Manycore Tech. Code under the MIT License; its model weights have their own licenses (the FLUX LoRA is non-commercial). Studied as a reference for appearance generated from a layout, together with its sibling [SpatialLM](https://github.com/manycore-research/SpatialLM) (point cloud to structured walls, doors, windows and boxes). Not used in the code yet.
-
-Code adapted from an MIT project keeps its copyright notice and license text in a third-party notices file.
-
-## License
-
-Source-available, not open source. See [LICENSE](LICENSE).
+O Director possui **licença própria de código disponível para consulta**, com condições e restrições em [LICENSE](LICENSE); não é apresentado como software open source. Assets, modelos e o Unreal Engine têm licenças próprias e não são incluídos automaticamente nesta publicação.

@@ -10,7 +10,7 @@ O repositório é a fonte destas instruções. O perfil do Hermes é gerado a pa
 | `skills/director/SKILL.md` | Como trabalhar: passo a passo, como perguntar (formato da ferramenta `clarify`), a ficha, as direções da sala, exemplos, o que cada resposta do Director quer dizer, o que ele ainda não sabe fazer. |
 | `instalar_perfil.py` | Copia os dois arquivos para o perfil, trocando `{{DIRECTOR}}` e `{{PYTHON}}` pelos caminhos da máquina; guarda o arquivo antigo do perfil ao lado, com a data. |
 | `config.exemplo.yaml` | O `config.yaml` do perfil, sem segredos. |
-| `plugins/director-guarda/` | Complemento que corrige argumentos malformados de `clarify`. Não cria cartões nem bloqueios. |
+| `plugins/director-guarda/` | Corrige argumentos de `clarify`, limita esperas e barra alterações concorrentes da mesma cena reconhecidas pela guarda. Não cria cartões de aprovação. Ver [verificação e limites](../docs/esperas-hermes.md). |
 | `testes_guarda.py` | Testes do complemento, sem Hermes e sem Unreal: `python -m unittest hermes.testes_guarda`. |
 
 ## Montar o perfil
@@ -41,6 +41,11 @@ Um teste automático e uma conversa de verdade com o Talis, no aplicativo do Her
 - Em modo sem tela (`chat -q`), o Hermes manda o modelo "assumir e seguir" quando ninguém responde; o operador seguiu → `SOUL.md`: sem resposta, não faz nada (testado depois: perguntou e não mexeu na cena).
 
 ## Problemas conhecidos
+
+As observações de 14/10 acima são históricas; a regra vigente está em SOUL/skill.
+Uma ordem de execução autoriza suas operações necessárias, sem exigir a palavra “Sim”
+ou cartão por comando. Discussão e crítica não autorizam alteração por si sós.
+
 - **A pergunta às vezes sai no formato errado** (a lista escrita como texto; numa conversa, três vezes seguidas, e o formulário nunca chegou). Desde o complemento `director-guarda`, o formato é consertado antes de a ferramenta rodar. A primeira versão do conserto só lia a lista certinha e falhou no aplicativo: o modelo deixa um `}` sobrando no fim, ou esquece o `]` final. Corrigido; as 15 perguntas gravadas nas conversas passam pela validação do Hermes.
 - **No aplicativo do Hermes, a ferramenta de escrever arquivo falhou** ("No shell found"); o operador escreve a ficha pelo terminal (a skill ensina).
 - **O Hermes edita a skill sozinho** depois das conversas (revisão automática; registro em `skills/.curator_ledger.jsonl` do perfil). Parte das mudanças é boa, parte é errada. O que for bom é trazido para cá e reinstalado; o que for errado é desfeito ao reinstalar.
