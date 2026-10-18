@@ -191,9 +191,14 @@ def main(argv: list) -> None:
             if modo in ("planejar", "verificar"):
                 from . import veredito
                 res = veredito.com_veredito(modo, res)
+            from .diagnosticos import resumo
+            res['diagnosticos'] = resumo(p.diagnosticos)
             _sair(res, 0 if res.get("ok", True) else 2)
     except Exception as e:  # erro estruturado para o agente, sem confundir com sucesso ou com cena intacta
         res = {"ok": False, "motivo": "erro", "porque": f"{type(e).__name__}: {e}"}
+        if 'p' in locals():
+            from .diagnosticos import resumo
+            res['diagnosticos'] = resumo(p.diagnosticos)
         if modo in ("planejar", "verificar"):
             from . import veredito
             res = veredito.com_veredito(modo, res)

@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.2
+version: 0.5.3
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -15,6 +15,11 @@ platforms: [windows]
   (APROVADO, REPROVADO ou ERRO), `motivo` e `proxima_acao`. `ok: true` só diz que a ferramenta
   rodou. **Nunca diga ao usuário que algo passou sem `veredito: APROVADO`.** Se reprovou, diga
   o `motivo` com as palavras e os números dele e siga a `proxima_acao`.
+- Leia tambem `diagnosticos`: aviso nao e excecao fatal, nem `ok:true` apaga avisos.
+  Os grupos incluem mensagem original, contagem e trecho do log; a correlacao e apenas temporal.
+  Explique o impacto e formule uma hipotese antes de corrigir. Repita so a verificacao afetada;
+  sem hipotese nova, pare e relate o bloqueio. Se a ponte cair depois de mudar algo, confira o estado
+  antes de repetir: nao prometa rollback de ensaio. Nunca afrouxe criterio apenas para aprovar.
 - **Diga de onde veio cada objeto:** asset já existente no projeto (com o caminho), objeto
   composto pelo Director, ou reaproveitado de um ensaio anterior. Não diga "importado do Fab"
   sem ter importado.

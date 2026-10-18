@@ -8,7 +8,7 @@ CLASSES=['Actor','StaticMeshActor','StaticMeshComponent','DynamicMeshComponent',
 'NavModifierVolume','NavModifierComponent','NavMeshResolutionParam','Character','AIController',
 'PhysicsSettings','GeometryScript_NewAssetUtils','GeometryScript_Collision','EditorStaticMeshLibrary',
 'StaticMeshEditorSubsystem','EditorAssetLibrary','AssetRegistryHelpers','AssetRegistry','StaticMesh',
-'BoxSphereBounds','EditorLoadingAndSavingUtils']
+'BoxSphereBounds','EditorLoadingAndSavingUtils','PythonScriptLibrary','PythonLogOutputEntry','PythonLogOutputType']
 ALIASES={'massa':'mass','fisica':'physics','cadeira':'mesh','navegacao':'navigation','amortecimento':'damping','colisao':'collision','salvar':'save','velocidade':'velocity'}
 
 

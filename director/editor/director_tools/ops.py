@@ -142,6 +142,13 @@ def quit_editor(descartar: bool = False):
 
 
 @op
+def logs_flush():
+    """Descarrega o log nativo antes da leitura; nao altera a cena."""
+    U.SystemLibrary.execute_console_command(_mundo_editor(), "FlushLog")
+    return {"solicitado": True}
+
+
+@op
 def dev_exec(codigo: str):
     """SÓ DESENVOLVIMENTO: roda um trecho de Python no editor do laboratório e devolve a variável `resultado`.
     O núcleo nunca usa esta operação."""

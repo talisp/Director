@@ -93,8 +93,11 @@ def executar(eid, arquivo, editor, raiz=None):
         registro.update({"fim": _agora(), "segundos": round(time.monotonic() - t0, 3),
                          "antes": antes, "depois": depois,
                          "limite": "inventario nao prova colisao, aparencia nem efeitos fora do level"})
+        if hasattr(editor, 'diagnosticos'):
+            from .diagnosticos import resumo
+            registro['diagnosticos'] = resumo(editor.diagnosticos)
         _gravar(run / "resultado.json", registro)
-    return {k: registro[k] for k in ("ok", "executado", "sha256", "segundos", "mudancas", "erro", "aviso_retorno") if k in registro} | {
+    return {k: registro[k] for k in ("ok", "executado", "sha256", "segundos", "mudancas", "erro", "aviso_retorno", "diagnosticos") if k in registro} | {
         "registro": str(run / "resultado.json"), "retorno": registro.get("retorno")}
 
 
@@ -122,5 +125,8 @@ def cli(args):
     if args[0] == "executar" and len(args) == 3:
         from .ponte import Ponte
         with Ponte("ensaio-" + args[1]) as p:
-            return executar(args[1], args[2], p)
+            r = executar(args[1], args[2], p)
+            from .diagnosticos import resumo
+            r['diagnosticos'] = resumo(p.diagnosticos)
+            return r
     raise ValueError("uso: ensaio criar NOME PEDIDO.txt | executar ID SCRIPT.py | listar [ID]")
