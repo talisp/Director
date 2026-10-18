@@ -23,4 +23,14 @@ sessao SSH sem encaminhamento do endpoint nao e redundancia do modelo; duas pont
 na mesma porta/endereco tambem nao ficam escutando ao mesmo tempo. #17 permanece aberta
 ate conferir os caminhos pretendidos e a recuperacao persistente.
 
+## Atualizacao operacional
+
+O processo temporario foi substituido pela tarefa nativa `Director_Qwen_Tunel_8082`.
+Disparo no login do usuario e repeticao a cada minuto, instancia unica; iniciador escondido
+acompanha a vida do SSH. `RestartOnFailure` sozinho nao se confirmou no ensaio; a repeticao
+nativa recuperou o listener 47,1 s apos encerrar seu SSH, com novo PID e /health ok.
+Isso elimina a dependencia do terminal do Codex, mas ainda nao prova reinicio real do
+Windows/login nem redundancia. Detalhes, cuidado ao parar a tarefa e prova em
+operador-publicado.md. Os outros tuneis e perfis foram preservados.
+
 Aliases pessoais, enderecos remotos, credenciais e config.yaml bruto nao sao publicados.
