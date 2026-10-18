@@ -63,13 +63,26 @@ class Esperas(unittest.TestCase):
 
     def test_process_wait_limitado_a_60(self):
         r = G._antes_da_ferramenta("process", {"action": "wait", "session_id": "p1", "timeout_seconds": 120})
-        self.assertEqual(r, {"action": "modify", "args": {"action": "wait", "session_id": "p1", "timeout_seconds": 60}})
-        self.assertIsNone(G._antes_da_ferramenta("process", {"action": "wait", "session_id": "p1", "timeout_seconds": 45}))
+        self.assertEqual(r, {"action": "modify", "args": {"action": "wait", "session_id": "p1", "timeout": 60}})
+        self.assertIsNone(G._antes_da_ferramenta("process_manage", {"action": "wait", "session_id": "p1", "timeout": 45}))
         self.assertIsNone(G._antes_da_ferramenta("process", {"action": "poll", "session_id": "p1"}))
+
+    def test_timeout_atual_prevalece_e_alias_e_removido(self):
+        for args in ({"timeout": 300}, {"timeout": 120, "timeout_seconds": 1}, {}):
+            r = G._antes_da_ferramenta("process_manage", {"action": "wait", **args})
+            self.assertEqual(r["args"]["timeout"], 60)
+            self.assertNotIn("timeout_seconds", r["args"])
+        r = G._antes_da_ferramenta("process_manage", {"action": "wait", "timeout_seconds": 3})
+        self.assertEqual(r["args"]["timeout"], 3)
+
+    def test_timeout_invalido_nao_derruba_hook(self):
+        for t in (0, -1, "abc", None, float("inf"), float("nan")):
+            r = G._antes_da_ferramenta("process_manage", {"action": "wait", "timeout": t})
+            self.assertEqual(r["action"], "block")
 
     def test_tool_call_embrulhado(self):
         r = G._antes_da_ferramenta("tool_call", {"calls": [{"name": "process_manage", "arguments": {"action": "wait", "session_id": "p", "timeout_seconds": 120}}]})
-        self.assertEqual(r["args"]["calls"][0]["arguments"]["timeout_seconds"], 60)
+        self.assertEqual(r["args"]["calls"][0]["arguments"]["timeout"], 60)
         r = G._antes_da_ferramenta("tool_call", {"calls": json.dumps([{"name": "terminal", "arguments": {"command": "sleep 240"}}])})
         self.assertEqual(r["action"], "block")
 
