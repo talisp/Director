@@ -3,6 +3,20 @@ from director.catalogo import consultar
 
 
 class Catalogo(unittest.TestCase):
+    def test_busca_humana_nao_casa_com_aviso_generico_nem_preposicoes(self):
+        from director.catalogo import AVISO_CENA
+        itens=[{'nome':n,'origem':'cena','descricao':AVISO_CENA,'categoria':[]} for n in ('DirectionalLight','ExponentialHeightFog')]
+        itens.append({'nome':'bedSingle','origem':'offline','categoria':['cama'],'sinonimos':['single bed']})
+        for texto in ('cama de solteiro','uma cama para o quarto','bed for a room'):
+            r=consultar({'itens':itens},{'texto':texto})
+            self.assertEqual([x['nome'] for x in r['resultados']],['bedSingle'],texto)
+        self.assertEqual(consultar({'itens':itens},{'texto':'de da the'})['total'],0)
+        self.assertEqual(consultar({'itens':itens},{'texto':'conferir antes de usar'})['total'],0)
+
+    def test_descricao_real_continua_pesquisavel(self):
+        item={'nome':'modelo_01','origem':'offline','descricao':'refrigerador industrial'}
+        self.assertEqual(consultar({'itens':[item]},{'texto':'refrigerador'})['total'],1)
+
     def test_nome_composto_nao_vira_cama_nem_roupeiro(self):
         from director.catalogo import _aliases
         self.assertEqual(_aliases('cabinetBed')[0],['criado_mudo'])
