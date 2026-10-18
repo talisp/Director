@@ -2,7 +2,7 @@
 import math
 import os
 
-from .nucleo import derivar as D, pecas as P, plano as PN, planta as PL
+from .nucleo import derivar as D, pecas as P, plano as PN, planta as PL, operacoes as OP
 
 
 def _nivel(cena, editor, raiz_cenas):
@@ -46,6 +46,7 @@ def observar(cena, editor, raiz_cenas, ids=()):
         objetos[oid] = {"tipo": desejados[oid]["tipo"],
                         "planejado": {k: v for k, v in desejados[oid].items() if k != "tipo"}, "real": r}
     return {"ok": True, "cena": cena, "existe": True, "revisao": p["revisao"], "unidades": "centimetros e graus",
+            "avisos": OP.avisos(p),
             "objetos": objetos, "diferencas": PN.diferencas(D.derivar(p), inv["controlados"]),
             "navegacao": editor.chamar("measure", consultas=[{"tipo": "nav"}])["medidas"][0],
             "outros_atores": len(inv["fora"]), "por_salvar": inv["por_salvar"],

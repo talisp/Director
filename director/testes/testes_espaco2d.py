@@ -3,6 +3,18 @@ from director.espaco2d import avaliar
 
 @unittest.skipUnless(importlib.util.find_spec('shapely'),'Shapely opcional')
 class Espaco2d(unittest.TestCase):
+    def test_janela_compartilhada_e_permitida_mas_avisada(self):
+        from director.nucleo import planta as PL,operacoes as O
+        p,_=O.aplicar_ficha(PL.nova('teste'),{'operacoes':[
+            {'operacao':'criar_sala','id':'a','largura_m':4,'comprimento_m':4},
+            {'operacao':'criar_sala','id':'b','largura_m':4,'comprimento_m':4,'x_m':4.15},
+            {'operacao':'colocar','tipo':'janela','id':'j','sala':'a','parede':'leste'}]})
+        aviso=O.avisos(p)
+        self.assertEqual(len(aviso),1)
+        self.assertEqual(aviso[0]['objeto'],'j')
+        self.assertEqual(aviso[0]['salas'],['a','b'])
+        p,_=O.aplicar_ficha(p,{'operacoes':[{'operacao':'mudar','id':'j','parede':'oeste'}]})
+        self.assertEqual(O.avisos(p),[])
     def objeto(self,oid,x,y,w,d,h=180):return {'id':oid,'x':x,'y':y,'largura':w,'profundidade':d,'altura':h}
     def test_porta_e_janela_respeitam_altura(self):
         q={'dimensoes_cm':[400,400],'objetos':[self.objeto('armario',200,360,100,60)],
@@ -57,7 +69,7 @@ class FolhaDaPorta(unittest.TestCase):
         from director.espaco2d import folha
         porta={'id':'p','tipo':'porta','parede':'oeste','posicao':100,'largura':90,'altura':210,'angulo':90}
         f=folha(porta,260,350).bounds
-        self.assertAlmostEqual(f[0],0);self.assertAlmostEqual(f[2],90);self.assertAlmostEqual((f[1]+f[3])/2,145)
+        self.assertAlmostEqual(f[0],0);self.assertAlmostEqual(f[2],90);self.assertAlmostEqual((f[1]+f[3])/2,147)
         cama={'id':'cama','x':195,'y':245,'largura':100,'profundidade':200,'altura':80}
         q={'dimensoes_cm':[300,350],'objetos':[cama],'aberturas':[porta],'alvos':[{'id':'canto','caixa':[5,250,90,345]}]}
         self.assertFalse(avaliar(q)['aprovado'])           # folha ate x 90, cama de 145 a 245 e de 245 a 300: 55 cm

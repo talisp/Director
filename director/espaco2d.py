@@ -24,13 +24,9 @@ def zona(a,W,H):
 def folha(a,W,H):
     """Folha da porta aberta, como derivar.py a monta: dobradica na ponta do fim (norte/oeste) ou do inicio
     (sul/leste) do vao, abrindo para dentro. Angulo 0 (fechada) conta como 90: para passar, ela abre."""
-    from shapely.geometry import LineString
-    ini,fim=a['posicao']-a['largura']/2,a['posicao']+a['largura']/2
-    (hx,hy),(d0x,d0y),(nx,ny)={'oeste':((0,fim),(0,-1),(1,0)),'leste':((W,ini),(0,1),(-1,0)),
-        'sul':((ini,0),(1,0),(0,1)),'norte':((fim,H),(-1,0),(0,-1))}[a['parede']]
-    t=math.radians(a.get('angulo') or 90)
-    dx,dy=d0x*math.cos(t)+nx*math.sin(t),d0y*math.cos(t)+ny*math.sin(t)
-    return LineString([(hx,hy),(hx+dx*a['largura'],hy+dy*a['largura'])]).buffer(2,cap_style='flat')
+    from shapely.geometry import Polygon
+    from .nucleo import portas
+    return Polygon(portas.vertices(a,W,H,angulo=a.get('angulo') or 90))
 
 
 def avaliar(pedido):
@@ -65,6 +61,12 @@ def avaliar(pedido):
             b=inter.bounds;eixo=1 if a['parede'] in ('sul','norte') else 0
             violacoes.append({'objeto':o['id'],'abertura':a['id'],'tipo':'area_livre_'+a['tipo'],
                 'invasao_cm':round(b[eixo+2]-b[eixo],3),'area_cm2':round(inter.area,3)})
+        if a['tipo']=='porta':
+            f=folha(a,W,H)
+            for o,p in polys:
+                if o.get('z',0)>=a['altura'] or o.get('z',0)+o['altura']<=0:continue
+                area=f.intersection(p).area
+                if area>1e-6:violacoes.append({'objeto':o['id'],'abertura':a['id'],'tipo':'folha_porta','area_cm2':round(area,3)})
     # Acesso: da porta tem de dar para chegar a cada area de uso pedida. Bolsao sem alvo nao reprova.
     alvos=list(pedido.get('alvos',[]))
     portas=[a for a in pedido.get('aberturas',[]) if a['tipo']=='porta']
@@ -105,7 +107,7 @@ def na_planta(planta,sid,extras=None):
     for oid,o in planta['objetos'].items():
         if o.get('sala')!=sid:continue
         if o['tipo'] in OP.MOVEIS and not o.get('sobre'):objetos.append({**o,'id':oid,'x':o['x']-s['x'],'y':o['y']-s['y'],'z':o.get('z',s['z'])-s['z']})
-        elif o['tipo'] in OP.VAOS:aberturas.append({**o,'id':oid})
+        elif o['tipo'] in OP.VAOS:aberturas.append({**o,'id':oid,'espessura_parede':s['parede']})
     return {'dimensoes_cm':[s['largura'],s['comprimento']],'objetos':objetos+(extras or []),'aberturas':aberturas}
 
 
@@ -123,7 +125,7 @@ def cli(args):
     p=PL.carregar(C.CENAS,args[0]);sid=args[1]
     if sid not in p['objetos'] or p['objetos'][sid]['tipo']!='sala':raise ValueError('informe sala existente')
     q=na_planta(p,sid)
-    return {'cena':args[0],'sala':sid,**executar(q)}
+    return {'cena':args[0],'sala':sid,'avisos':OP.avisos(p),**executar(q)}
 
 
 if __name__=='__main__':print(json.dumps(avaliar(json.loads(sys.stdin.buffer.read())),ensure_ascii=True))

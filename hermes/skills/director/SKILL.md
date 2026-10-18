@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.3
+version: 0.5.4
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -164,6 +164,14 @@ Formato: `{"pedido": "...", "operacoes": [{"operacao": "..."}]}`. Consulte `capa
 Se `ok: false` ou `veredito` diferente de APROVADO, leia `motivo`, `porque` e `recuperado` antes de tentar corrigir. Em conflito de trava, espere ou informe que o laboratório está ocupado. Se o usuário mover algo à mão, observe o estado atualizado antes de substituir sua mudança. Explique o que realmente existe na cena, o que foi apenas planejado e o que não foi verificado visualmente.
 
 ## Perguntas e voz
+
+Portas: a ficha aceita `dobradica:inicio|fim` e `sentido:dentro|fora`, alem de `angulo:0..120`.
+Omitir preserva o comportamento anterior de cada parede. Os termos inicio/fim seguem a medida
+do vao (oeste->leste em norte/sul; sul->norte em leste/oeste). Use `planejar` e `planta2d` com
+essas escolhas antes de executar; a folha na posicao solicitada nao pode colidir com movel registrado.
+Nao ha teste continuo do arco de abertura. Confirme passagem com o motor/boneco.
+`avisos` pode informar janela em parede compartilhada: pergunte ou declare a escolha de janela
+interna. Nao e erro fatal nem janela externa comprovada.
 
 Na ferramenta `clarify`, `questions` deve ser uma lista de objetos com `question` e, quando úteis, `choices` como lista de textos. Faça perguntas curtas e relevantes; não peça dimensões que possam ser escolhidas provisoriamente sem prejudicar o objetivo. Se `clarify` falhar, pergunte em texto. Se o usuário solicitar áudio ou TTS, use a ferramenta de voz habilitada no perfil sem solicitar aprovação adicional.
 
