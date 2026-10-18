@@ -34,7 +34,7 @@ class EditorFalso:
     def _info(self):
         return {"projeto_dir": "lab", "level": self.level, "em_play": self.em_play, "por_salvar": [NIVEL] if self.sujo else []}
 
-    def _level_ensure(self, caminho, modelo=""):
+    def _level_ensure(self, caminho, modelo="", criar=True):
         self.level = caminho
         return {"estado": "ja_aberto", "level": caminho}
 

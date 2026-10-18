@@ -18,6 +18,8 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
+    "contexto": {"uso": "contexto", "faz": "Leitura: identifica level aberto, cena e fonte de plantas; nao escolhe sala fixa nem troca level."},
+    "vincular": {"uso": "vincular PASTA_CENAS", "faz": "Valida todas as plantas no laboratorio salvo, preserva as fontes e ativa estado compartilhado entre checkouts. Nao escolhe maior revisao nem altera atores."},
     "planta2d": {"uso":"planta2d CENA SALA", "faz":"Filtro offline de contencao, areas livres e regioes de passagem; sem Unreal."},
     "api": {"uso":"api atualizar [PEDIDO.json] | api TERMO", "faz":"Exporta referencia instalada e consulta offline em trechos curtos."},
     "biblioteca": {"uso":"biblioteca indexar PEDIDO.json | biblioteca TERMO", "faz":"Inspeciona e consulta arquivos locais sem Unreal; nao decide banco permanente."},
@@ -77,6 +79,14 @@ def main(argv: list) -> None:
             if len(argv)!=3:raise ValueError('uso: planta2d CENA SALA')
             r=espaco2d.cli(argv[1:]);_sair(r,0 if r.get('ok') else 2)
         except Exception as e:_sair({'ok':False,'porque':str(e)},2)
+    if argv and argv[0] == 'vincular':
+        from . import estado_local, ponte
+        try:
+            if len(argv) != 2:raise ValueError('uso: vincular PASTA_CENAS')
+            with ponte.Ponte('director-vincular') as p:
+                r = estado_local.vincular(argv[1], p, C.LAB_DIR, C.VINCULO_CENAS)
+            _sair(r, 0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e),'vinculo_ativado':False},2)
     if argv and argv[0]=='biblioteca':
         from . import biblioteca
         try:
@@ -106,7 +116,7 @@ def main(argv: list) -> None:
         except Exception as e:
             r = {"ok": False, "motivo": "ensaio", "porque": str(e)}
         _sair(r, 0 if r.get("ok") else 2)
-    aridade = {"capacidades": (0, 0), "pecas": (0, 0), "fazer": (2, 2), "estado": (1, 1),
+    aridade = {"contexto": (0, 0), "capacidades": (0, 0), "pecas": (0, 0), "fazer": (2, 2), "estado": (1, 1),
                "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None), "relatorio": (1, None), "verificar": (2, 2), "preparar": (2, 2), "objeto": (2, 2), "procurar": (1,None), "catalogo": (1,1), "planejar": (2,2)}
     if modo not in aridade:
         _sair(_ajuda(modo), 2)
@@ -133,7 +143,16 @@ def main(argv: list) -> None:
     pontos = os.path.join(C.WORK, "restauracao")
     try:
         with ponte.Ponte(f"director-{modo}") as p:
-            if modo == "pecas":
+            if modo == "contexto":
+                info = p.chamar('info')
+                prefixo = '/Game/Director/Cenas/L_'
+                cena = info['level'][len(prefixo):] if info['level'].startswith(prefixo) else None
+                from .nucleo import planta as PL
+                res = {'ok': True, 'level': info['level'], 'cena': cena, 'fonte_plantas': C.CENAS,
+                       'planta': PL.caminho(C.CENAS, cena) if cena else None,
+                       'planta_existe': bool(cena and os.path.isfile(PL.caminho(C.CENAS, cena))),
+                       'em_play': info['em_play'], 'por_salvar': info.get('por_salvar', [])}
+            elif modo == "pecas":
                 res = p.chamar("pieces_build", pecas=pecas.PECAS)
             elif modo == "procurar":
                 from . import catalogo

@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.1
+version: 0.5.2
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -28,7 +28,20 @@ platforms: [windows]
   mesma cena enquanto outro roda em segundo plano. Nunca mude a sala na cena para "testar"
   tamanhos: use `planejar` com `sala` + `minimo_cm`/`maximo_cm`, que não toca na cena.
 
-Raiz: `{{DIRECTOR}}`. Python do Director: `{{PYTHON}}`. Use `python -m director` a partir da raiz; para o laboratório, `python -m director.lab`. Consulte `capacidades`, `estado <cena>`, a planta e o código antes de concluir que um pedido não pode ser realizado. A cena padrão é `sala`. A ficha atual usa metros; a planta persistida usa centímetros.
+Raiz: `{{DIRECTOR}}`. Python do Director: `{{PYTHON}}`. Use `python -m director` a partir da raiz; para o laboratório, `python -m director.lab`. Ao retomar, consulte `contexto`: ele informa o level aberto e o caminho real da planta. Nao assuma que a cena e `sala` nem leia uma copia de planta do checkout quando houver fonte vinculada. Consulte `capacidades`, `estado <cena>` e `api TERMO` antes de concluir que falta uma operacao ou escrever codigo experimental. A ficha atual usa metros; a planta persistida usa centímetros.
+
+Para abrir o laboratorio, use `python -m director.lab estado` e `abrir`; nao lance outro projeto.
+Se precisar esperar, acompanhe em intervalos de ate 60 s. Depois consulte `contexto`.
+Depois de cada rodada, execute `python hermes/instalar_perfil.py director --conferir` com o mesmo Python do Director.
+O comando mostra diferencas sem instalar. Registre aprendizados como propostas com sessao/ensaio,
+medidas e limites; uma nota local nao vira regra permanente por si so. Nao edite a skill para
+contornar recusa de conciliacao. A autorizacao atual de desenvolvimento continua valendo para o escopo autorizado.
+
+Aprendizado conferido no teste do banheiro de 17/10 (#7/#10): mover moveis pode deixar
+uma rota desatualizada. Se a varredura passa e o caminho falha, diagnostique `navegacao` antes
+de mover objetos novamente. Reconstrucao e ajuste de resolucao sao coisas diferentes:
+guarde o backup e declare qualquer mudanca de celula e escopo. Celula 5/altura 2 funcionou
+naquele level; nao e padrao universal e o custo de memoria nao foi medido.
 
 O contrato de ficha atual contém `criar_sala`, `mudar_sala`, `colocar`, `mudar` e `remover`. Use-o quando atender ao pedido. O mesmo `criar_sala` aceita sala, quarto, corredor e outros cômodos retangulares: o nome da categoria não precisa de uma macro. Para um pedido fora do contrato, investigue o Unreal e a ponte no laboratório, em vez de responder apenas que não existe uma operação. Experimentos pequenos e reversíveis podem usar código temporário. Distinga um experimento de uma alteração permanente no Director.
 

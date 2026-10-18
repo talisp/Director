@@ -13,6 +13,10 @@ import os
 import shutil
 import sys
 import time
+import difflib
+import hashlib
+import json
+from pathlib import Path
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
@@ -30,6 +34,12 @@ def preencher(texto: str) -> str:
 
 
 def main(argv: list) -> int:
+    if "--conferir" in argv:
+        nomes = [a for a in argv if a != "--conferir"]
+        perfil = pasta_do_perfil(nomes[0] if nomes else "director")
+        resultado = conferir(perfil)
+        print(json.dumps(resultado, ensure_ascii=True))
+        return 0 if resultado["igual"] else 1
     perfil = pasta_do_perfil(argv[0] if argv else "director")
     if not os.path.isdir(perfil):
         print(f"perfil não encontrado: {perfil}\ncrie antes: hermes profile create director --no-skills")
@@ -59,6 +69,23 @@ def main(argv: list) -> int:
     # (17/10: a guarda nova so funcionou depois disto).
     print("reinicie o gateway para valer: hermes gateway restart")
     return 0
+
+
+def conferir(perfil: str) -> dict:
+    """Somente leitura: compara os templates preenchidos sem reinstalar nem apagar notas locais."""
+    arquivos = []
+    for rel in ARQUIVOS:
+        esperado = preencher(Path(AQUI, rel).read_text(encoding="utf-8"))
+        caminho = os.path.join(perfil, rel)
+        existente = os.path.isfile(caminho)
+        atual = Path(caminho).read_text(encoding="utf-8") if existente else ""
+        arquivos.append({"arquivo": rel, "existe": existente, "igual": existente and esperado == atual,
+            "sha256_esperado": hashlib.sha256(esperado.encode()).hexdigest(),
+            "sha256_instalado": hashlib.sha256(atual.encode()).hexdigest() if existente else None,
+            "diff": "".join(difflib.unified_diff(esperado.splitlines(True), atual.splitlines(True),
+                                                 fromfile="repositorio/" + rel, tofile="perfil/" + rel))})
+    return {"ok": True, "igual": all(a["igual"] for a in arquivos), "arquivos": arquivos,
+            "politica": "divergencia e proposta para revisao; nao prova erro e nao autoriza sobrescrita"}
 
 
 if __name__ == "__main__":
