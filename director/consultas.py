@@ -43,9 +43,14 @@ def observar(cena, editor, raiz_cenas, ids=()):
             r.update({k: a[k] for k in ("loc", "rot", "pontos") if k in a})
         if ids:
             r["detalhes"] = reais
+        if desejados[oid]['tipo'] in OP.MOVEIS and r['caixa'] is not None:
+            from .verificacao import contencao
+            r['contencao']=contencao(r['caixa'],p['objetos'][desejados[oid]['sala']])
         objetos[oid] = {"tipo": desejados[oid]["tipo"],
                         "planejado": {k: v for k, v in desejados[oid].items() if k != "tipo"}, "real": r}
     return {"ok": True, "cena": cena, "existe": True, "revisao": p["revisao"], "unidades": "centimetros e graus",
+            "convencoes": {"sala":"x/y sao canto sudoeste interno; largura/comprimento sao medidas INTERNAS, nao desconte paredes",
+                           "movel":"x/y sao centro no mundo; z e base; giro em graus; sobre indica apoio"},
             "avisos": OP.avisos(p),
             "objetos": objetos, "diferencas": PN.diferencas(D.derivar(p), inv["controlados"]),
             "navegacao": editor.chamar("measure", consultas=[{"tipo": "nav"}])["medidas"][0],

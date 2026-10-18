@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.4
+version: 0.5.5
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -76,6 +76,10 @@ Na raiz, use `{{PYTHON}} -m director ...` (caminhos com espaços exigem aspas co
 - `fazer CENA FICHA.json`: **cria automaticamente uma cena nova**, se ela não existir. Não existe etapa anterior obrigatória de criar cena. A ficha também pode vir pelo stdin com `fazer CENA -`.
 - `observar CENA`: resumo da planta e da geometria real. `existe: false` informa como criar a cena. Uma cena existente precisa estar aberta; observar não troca de level.
 - `observar CENA ID ...`: observe só os objetos relevantes. Selecionar uma sala inclui seu conteúdo e detalhes das peças. `planejado` vem da planta; `real` vem do motor. Caixas envolventes não são medidas de passagem livre.
+- `observar CENA --texto SALA`: desenho compacto da planta, escala declarada, norte em cima,
+  legenda por id, dobradica/folha e zonas reservadas. Use antes de propor ou depois de mudar
+  disposicao quando ajudar; nao releia em toda consulta. E plano desejado, nao foto nem leitura
+  do editor: combine com estado/medidas e nao declare uma zona livre so por estar desenhada.
 - `assets cadeira chair seat`: busca nomes e caminhos já presentes em `/Game`. Experimente sinônimos; nenhum resultado por nome não prova ausência semântica. Isso não consulta a biblioteca externa do Fab.
 - `procurar cadeira`: consulta unica atualizada, cena primeiro, depois projeto e indice offline. Retorna ate oito candidatos; categorias sugeridas por sinonimos nao sao prova de equivalencia. O nome anterior de um objeto adotado permanece como apelido. `catalogo atualizar` apenas refaz o indice local. Para filtros, `procurar consultar PEDIDO.json` aceita `{"texto":"chair","maximo_cm":[60,60,100],"limite":5}`; dimensao desconhecida nao satisfaz filtro numerico.
 - `medir CENA CONSULTAS.json`: consulta raios, varreduras de cápsula, caminhos e estado da navegação. A entrada é uma lista ou `{"consultas": [...], "mundo": "editor"}`. Use `mundo: jogo` somente durante o Play. Coordenadas das consultas em **centímetros**; fichas em **metros**.
