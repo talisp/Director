@@ -24,7 +24,7 @@ COMANDOS = {
     "api": {"uso":"api atualizar [PEDIDO.json] | api TERMO", "faz":"Exporta referencia instalada e consulta offline em trechos curtos."},
     "biblioteca": {"uso":"biblioteca indexar PEDIDO.json | biblioteca TERMO", "faz":"Inspeciona e consulta arquivos locais sem Unreal; nao decide banco permanente."},
     "navegacao": {"uso":"navegacao [PEDIDO.json]", "faz":"Diagnostica, ajusta com escopo e backup, restaura; pronta nao prova chegada."},
-    "planejar": {"uso": "planejar CENA PEDIDO.json", "faz": "Propoe mobiliario com CP-SAT, contencao, areas de uso e reservas; nao altera o editor."},
+    "planejar": {"uso": "planejar CENA PEDIDO.json", "faz": "Propoe mobiliario ou salas retangulares com adjacencias no mesmo CP-SAT; devolve ficha_salas sem alterar o editor."},
     "procurar": {"uso": "procurar TERMO [TERMO ...] | procurar consultar PEDIDO.json", "faz": "Atualiza e consulta cena, projeto e indice offline com sinonimos PT/EN; poucos candidatos e cena primeiro."},
     "catalogo": {"uso": "catalogo atualizar", "faz": "Gera indice local dos metadados atuais sem imprimir todo o catalogo."},
     "objeto": {"uso": "objeto CENA PEDIDO.json", "faz": "Adota, duplica, compoe ou coloca StaticMesh com identidade na planta e perfil fisico ajustavel."},

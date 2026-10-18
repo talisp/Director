@@ -35,9 +35,14 @@ def observar(cena, editor, raiz_cenas, ids=()):
     selecionados = set(ids) if ids else set(desejados)
     selecionados.update(i for i, o in desejados.items() if o.get("sala") in selecionados)
     objetos = {}
+    derivadas=D.derivar(p)
     for oid in sorted(selecionados):
         reais = {pid: a for pid, a in inv["controlados"].items() if D.dono(p, pid) == oid and a["tipo"] != "nav"}
         r = {"caixa": _caixa(reais.values()), "atores": sorted(reais)}
+        if desejados[oid]['tipo']=='passagem':
+            r['paredes_associadas']={pid:inv['controlados'][pid]['params'] for pid,d in derivadas.items()
+                                      if d.get('passagem')==oid and pid in inv['controlados']}
+            r['efeito']='passagem nao tem folha nem ator proprio; parametros reais das paredes, medir confirma abertura livre'
         if len(reais) == 1:
             a = next(iter(reais.values()))
             r.update({k: a[k] for k in ("loc", "rot", "pontos") if k in a})

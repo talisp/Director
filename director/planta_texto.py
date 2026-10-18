@@ -45,7 +45,7 @@ def renderizar(planta,sala=None,escala_cm=None):
     for s in salas.values():retangulo(s['x'],s['y'],s['x']+s['largura'],s['y']+s['comprimento'],'.')
     # Zonas reservadas, nao declaradas livres: moveis/folhas podem ocupa-las.
     for o in vaos.values():
-        s=salas[o['sala']];p=o['posicao'];w=o['largura'];d=80 if o['tipo']=='porta' else 50;W,H=s['largura'],s['comprimento']
+        s=salas[o['sala']];p=o['posicao'];w=o['largura'];d=80 if o['tipo'] in ('porta','passagem') else 50;W,H=s['largura'],s['comprimento']
         a,b,c,e={'sul':(p-w/2,0,p+w/2,d),'norte':(p-w/2,H-d,p+w/2,H),
                  'oeste':(0,p-w/2,d,p+w/2),'leste':(W-d,p-w/2,W,p+w/2)}[o['parede']]
         retangulo(s['x']+a,s['y']+b,s['x']+c,s['y']+e,':')
@@ -59,7 +59,7 @@ def renderizar(planta,sala=None,escala_cm=None):
         pos={'sul':(s['x']+p,s['y']-t),'norte':(s['x']+p,s['y']+s['comprimento']+t),
              'oeste':(s['x']-t,s['y']+p),'leste':(s['x']+s['largura']+t,s['y']+p)}[o['parede']]
         dx,dy=(1,0) if o['parede'] in ('sul','norte') else (0,1)
-        simbolo='+' if o['tipo']=='porta' else '='
+        simbolo='=' if o['tipo']=='janela' else '+'
         linha((pos[0]-dx*w/2,pos[1]-dy*w/2),(pos[0]+dx*w/2,pos[1]+dy*w/2),simbolo)
         entry={'simbolo':simbolo,'id':oid,'tipo':o['tipo'],'sala':o['sala'],'parede':o['parede'],'largura_cm':w}
         if o['tipo']=='porta':
@@ -88,7 +88,7 @@ def renderizar(planta,sala=None,escala_cm=None):
     return {'ok':True,'cena':planta['cena'],'revisao':planta['revisao'],'fonte':'planta_desejada',
             'escala_cm':escala,'orientacao':'norte em cima; leste a direita','origem_grade_cm':[x0,norte],
             'texto':'\n'.join(''.join(row).rstrip() for row in grade),'legenda':legenda,
-            'simbolos':{'#':'parede','+':'vao de porta','=':'janela','/':'folha','o':'dobradica',':':'zona reservada','.':'chao',' ':'fora'},
+            'simbolos':{'#':'parede','+':'vao de porta/passagem','=':'janela','/':'folha','o':'dobradica',':':'zona reservada','.':'chao',' ':'fora'},
             'salas':{i:{'interno_cm':[s['largura'],s['comprimento']],'sudoeste_cm':[s['x'],s['y']]} for i,s in salas.items()},
             'paredes_compartilhadas':[a for a in compartilhadas(planta) if any(i in salas for i in a['salas'])],
             'centros_grade':centros,'avisos':OP.avisos(planta),

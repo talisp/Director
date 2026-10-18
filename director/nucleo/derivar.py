@@ -62,6 +62,8 @@ def _paredes(planta: dict) -> dict:
             nome = base + (f"_{contagem[base]}" if contagem[base] > 1 else "")
             loc = (ini, meio) if dx else (meio, ini)
             saida[nome] = _peca("parede", (loc[0], loc[1], s["z"]), giro, params)
+            if v and v['tipo']=='passagem':
+                saida[nome]['passagem']=next(vid for vid in tr['vaos'] if objs[vid] is v)
     return saida
 
 
@@ -100,7 +102,7 @@ def derivar(planta: dict) -> dict:
             saida[f"{oid}.nav"] = _peca("nav", (o["x"] + o["largura"] / 2, o["y"] + o["comprimento"] / 2, o["z"] + o["altura"] / 2),
                                         0.0, {}, escala=[v / base for v in tam])
         elif t in VAOS:
-            saida[oid] = _vao(o, objs[o["sala"]])
+            if t!='passagem':saida[oid] = _vao(o, objs[o["sala"]])
         elif t == "asset":
             m=o["modelo"]; escala=[o[k]/m["tamanho"][i] for i,k in enumerate(("largura","profundidade","altura"))]
             cx,cy=[m["centro"][i]*escala[i] for i in (0,1)]
