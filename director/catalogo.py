@@ -17,6 +17,9 @@ SINONIMOS={
  'escrivaninha':['desk','estudos','study'],
  'mesa':['table'],'sofa':['couch','sofa'],
 }
+PALAVRAS_COMUNS=set('a o as os de da do das dos e em no na nos nas com para por um uma the of an and in on with to for'.split())
+AVISO_CENA='objeto da cena; categoria sugerida pelo nome, conferir antes de usar'
+AVISO_PROJETO='asset do projeto; dimensoes ainda nao inspecionadas'
 
 
 def normalizar(s):
@@ -55,11 +58,11 @@ def atualizar(editor,raiz=None):
         entries.append({'nome':a['rotulo'],'caminho':a['caminho'],'origem':'cena','estado':'importado',
             'id':a['id'],'na_planta':bool(o),'categoria':cats,'sinonimos':aliases+o.get('apelidos',[]),
             'dimensoes_cm':a.get('dimensoes_cm'),'assets':a['assets'],'classe':a['classe'],
-            'descricao':'objeto da cena; categoria sugerida pelo nome, conferir antes de usar'})
+            'aviso':AVISO_CENA})
     for a in snapshot['assets']:
         cats,aliases=_aliases(a['nome'])
         entries.append({**a,'origem':'projeto','estado':'importado','categoria':cats,'sinonimos':aliases,
-                        'dimensoes_cm':None,'descricao':'asset do projeto; dimensoes ainda nao inspecionadas'})
+                        'dimensoes_cm':None,'aviso':AVISO_PROJETO})
     bib=Path(C.BIBLIOTECA)/'indice.json'
     if bib.is_file():entries.extend(json.loads(bib.read_text(encoding='utf-8')).get('itens',[]))
     dados={'gerado_em':dt.datetime.now(dt.timezone.utc).isoformat(),'level':snapshot['level'],'motor':snapshot['motor'],'itens':entries}
@@ -68,7 +71,7 @@ def atualizar(editor,raiz=None):
 
 
 def consultar(dados,pedido):
-    busca=_palavras(pedido.get('texto',''))
+    busca=_palavras(pedido.get('texto',''))-PALAVRAS_COMUNS
     categorias_busca=set(_aliases(pedido.get('texto',''))[0])
     expandido=set(busca)
     for cat,terms in SINONIMOS.items():
@@ -76,8 +79,12 @@ def consultar(dados,pedido):
             for t in [cat,*terms]:expandido.update(_palavras(t))
     resultados=[]
     for a in dados['itens']:
+        if pedido.get('texto','').strip() and not busca:continue
         if categorias_busca and a.get('categoria') and not categorias_busca.intersection(a['categoria']):continue
-        texto=' '.join([a['nome'],a.get('descricao',''),a.get('classe',''),*a.get('categoria',[]),*a.get('sinonimos',[])])
+        descricao=a.get('descricao','')
+        # Compativel tambem com indices antigos: orientacao nao identifica o objeto.
+        if descricao in (AVISO_CENA,AVISO_PROJETO):descricao=''
+        texto=' '.join([a['nome'],descricao,a.get('classe',''),*a.get('categoria',[]),*a.get('sinonimos',[])])
         words=_palavras(texto)
         score=len(busca&words)*3+len(expandido&words)
         if busca and score==0:continue

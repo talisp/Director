@@ -54,6 +54,8 @@ class Esperas(unittest.TestCase):
             r = G._antes_da_ferramenta("terminal", {"command": cmd})
             self.assertEqual(r["action"], "block", cmd)
             self.assertIn("60 s", r["message"])
+            self.assertIn("timeout=60", r["message"])
+            self.assertNotIn("timeout_seconds", r["message"])
         for cmd in ("sleep 55", "sleep 60", "echo sleeping 300"):
             self.assertIsNone(G._antes_da_ferramenta("terminal", {"command": cmd}), cmd)
 
