@@ -7,6 +7,7 @@ Reaproveita do Antigo Director a trava (base/trava.py) e o cliente do servidor d
 - antes da primeira chamada, confere que o editor conectado é o projeto de laboratório. Se não for, recusa.
 """
 import json
+from . import diagnosticos
 import os
 import re
 
@@ -47,6 +48,8 @@ class Ponte:
         self.cliente = cliente or mcp_client.Client(url=self.url, timeout=120)
         self._toolset = None
         self._conferido = False
+        self.diagnosticos = []
+        self._log_flush = False
 
     def __enter__(self):
         os.makedirs(C.WORK, exist_ok=True)
@@ -76,9 +79,33 @@ class Ponte:
     def chamar(self, nome: str, **args) -> dict:
         """Chama uma operação do editor. Erro da operação vira exceção com o texto do editor."""
         if not self._conferido:
-            conferir_laboratorio(self._op("info", {}))
+            info = self._op("info", {})
+            conferir_laboratorio(info)
+            self._log_flush = 'logs_flush' in info.get('ops', [])
             self._conferido = True
-        res = self._op(nome, args)
+        # Nunca deixar falha de leitura do log substituir o resultado real da operacao.
+        try:marca = diagnosticos.iniciar(C.LAB_DIR)
+        except OSError:marca = None
+        try:
+            res = self._op(nome, args)
+        finally:
+            descarregado = False
+            if self._log_flush and nome != 'logs_flush':
+                try:descarregado = self._op('logs_flush', {}).get('solicitado') is True
+                except Exception:pass  # perda da ponte nao deve mascarar o erro original
+            if marca is not None:
+                try:
+                    mundo = args.get('mundo')
+                    if mundo is None and nome in ('info','inventory','apply','scene_geometry','save','catalog_snapshot'):
+                        mundo = 'editor'
+                    coleta = diagnosticos.concluir(marca,nome,mundo)
+                    if not descarregado and coleta['coleta'] == 'intervalo_lido':
+                        coleta['coleta'] = 'sem_flush_confirmado'
+                    self.diagnosticos.append(coleta)
+                except OSError:
+                    self.diagnosticos.append({'operacao':nome,'coleta':'erro_leitura','grupos':[]})
+            else:
+                self.diagnosticos.append({'operacao':nome,'coleta':'erro_leitura','grupos':[]})
         if not res.get("ok"):
             raise mcp_client.UnrealError(f"{nome}: {res.get('erro')}\n{res.get('rastro', '')}")
         return res
