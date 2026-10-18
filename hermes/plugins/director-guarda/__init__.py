@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from typing import Any, Optional
 
@@ -125,9 +126,19 @@ def _regra(nome: str, args: Any, rodando=None) -> Optional[dict]:
         novos = consertar_perguntas(args)
         return {"action": "modify", "args": novos} if novos else None
     if nome in ("process", "process_manage") and args.get("action") == "wait":
-        t = args.get("timeout_seconds") or args.get("timeout")
-        if t is None or float(t) > ESPERA_MAX_S:
-            return {"action": "modify", "args": {**args, "timeout_seconds": ESPERA_MAX_S}}
+        # Hermes instalado: PROCESS_SCHEMA e _SESSION_ACTIONS usam `timeout`.
+        # `timeout_seconds` era ignorado e deixava prevalecer o padrao de 180 s.
+        t = args.get("timeout", args.get("timeout_seconds", ESPERA_MAX_S))
+        try:
+            numero = float(t)
+        except (TypeError, ValueError):
+            numero = 0
+        if not math.isfinite(numero) or numero < 1:
+            return {"action": "block", "message": "Espera invalida: use process_manage wait com timeout inteiro entre 1 e 60 segundos."}
+        novos = {k: v for k, v in args.items() if k != "timeout_seconds"}
+        novos["timeout"] = min(int(numero), ESPERA_MAX_S)
+        if novos != args:
+            return {"action": "modify", "args": novos}
         return None
     texto = args.get("command") if nome == "terminal" else args.get("code") if nome == "execute_code" else None
     if not isinstance(texto, str):
@@ -137,7 +148,7 @@ def _regra(nome: str, args: Any, rodando=None) -> Optional[dict]:
         return {"action": "block", "message": (
             f"Bloqueado pela guarda do Director: espera fixa de {espera:g} s. Cada espera pode ter no máximo "
             f"{ESPERA_MAX_S} s (regra do Talis). Para acompanhar um processo em segundo plano, use "
-            f"process(action='wait', timeout_seconds={ESPERA_MAX_S}) e confira o resultado entre as esperas; "
+            f"process_manage(action='wait', timeout={ESPERA_MAX_S}) e confira o resultado entre as esperas; "
             "quando ele terminar antes, continue na hora. Antes de esperar, diga no chat o que está esperando.")}
     cenas = cenas_alteradas(texto)
     if cenas:
