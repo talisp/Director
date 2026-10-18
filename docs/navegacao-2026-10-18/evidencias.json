@@ -1,0 +1,1338 @@
+{
+  "data": "2026-10-18",
+  "motor": "5.8.3-58210709+++UE5+Release-5.8",
+  "base_codigo": "ccb4b6767de5ff72ce668a964dcbeec63588bf61",
+  "proveniencia": "Copias de mapas historicos, cenas locais de ensaio; sem Qwen/Hermes/Blender. Comportamento do modelo nao testado.",
+  "historicos": [
+    {
+      "origem": "/Game/Director/Cenas/L_ensaio_qwen_20261017",
+      "origem_sha256": "dba4cfed8c4ada5d99b22753e25a8be4bb40c9a7b51df0c041ba89c107efee4c",
+      "nav": {
+        "ok": true,
+        "malhas": [
+          {
+            "ator": "/Game/Director/Cenas/L_nav_hist_ew_20261018.L_nav_hist_ew_20261018:PersistentLevel.RecastNavMesh-Default",
+            "raio_cm": 35.0,
+            "tile_cm": 1000.0,
+            "resolucoes": [
+              {
+                "cell_size": 38.0,
+                "cell_height": 10.0,
+                "agent_max_step_height": 35.0
+              },
+              {
+                "cell_size": 19.0,
+                "cell_height": 10.0,
+                "agent_max_step_height": 35.0
+              },
+              {
+                "cell_size": 19.0,
+                "cell_height": 10.0,
+                "agent_max_step_height": 35.0
+              }
+            ]
+          }
+        ],
+        "level": "/Game/Director/Cenas/L_nav_hist_ew_20261018"
+      },
+      "apos_esperar": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": false,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": true,
+          "conectividade_verificada": false
+        },
+        {
+          "existe": false,
+          "parcial": false,
+          "comprimento": -1.0,
+          "pontos": []
+        },
+        {
+          "existe": false,
+          "parcial": false,
+          "comprimento": -1.0,
+          "pontos": []
+        },
+        {
+          "acertou": false
+        }
+      ],
+      "apos_rebuild": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": false,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": true,
+          "conectividade_verificada": false
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              200.0,
+              200.0,
+              11.0
+            ],
+            [
+              930.0,
+              200.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              930.0,
+              200.0,
+              11.0
+            ],
+            [
+              200.0,
+              200.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "acertou": false
+        }
+      ],
+      "apos_regional": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": false,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": true,
+          "conectividade_verificada": false
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              200.0,
+              200.0,
+              3.0
+            ],
+            [
+              930.0,
+              200.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              930.0,
+              200.0,
+              3.0
+            ],
+            [
+              200.0,
+              200.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "acertou": false
+        }
+      ],
+      "apos_global5": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": false,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": true,
+          "conectividade_verificada": false
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              200.0,
+              200.0,
+              3.0
+            ],
+            [
+              930.0,
+              200.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              930.0,
+              200.0,
+              3.0
+            ],
+            [
+              200.0,
+              200.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "acertou": false
+        }
+      ]
+    },
+    {
+      "origem": "/Game/Director/Cenas/L_ensaio_codex_20261017_a",
+      "origem_sha256": "8ce97ea2cd49fd7d3a96db1731cef194d02e3fa20a531cf48aff0933ab6bd002",
+      "nav": {
+        "ok": true,
+        "malhas": [
+          {
+            "ator": "/Game/Director/Cenas/L_nav_hist_ns_20261018.L_nav_hist_ns_20261018:PersistentLevel.RecastNavMesh-Default",
+            "raio_cm": 35.0,
+            "tile_cm": 1000.0,
+            "resolucoes": [
+              {
+                "cell_size": 38.0,
+                "cell_height": 10.0,
+                "agent_max_step_height": 35.0
+              },
+              {
+                "cell_size": 19.0,
+                "cell_height": 10.0,
+                "agent_max_step_height": 35.0
+              },
+              {
+                "cell_size": 19.0,
+                "cell_height": 10.0,
+                "agent_max_step_height": 35.0
+              }
+            ]
+          }
+        ],
+        "level": "/Game/Director/Cenas/L_nav_hist_ns_20261018"
+      },
+      "apos_esperar": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": false,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": true,
+          "conectividade_verificada": false
+        },
+        {
+          "existe": true,
+          "parcial": true,
+          "comprimento": 384.1,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              11.0
+            ],
+            [
+              209.0,
+              684.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": true,
+          "comprimento": 279.4,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              11.0
+            ],
+            [
+              228.0,
+              760.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "acertou": false
+        }
+      ],
+      "apos_rebuild": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": false,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": true,
+          "conectividade_verificada": false
+        },
+        {
+          "existe": true,
+          "parcial": true,
+          "comprimento": 384.1,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              11.0
+            ],
+            [
+              209.0,
+              684.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": true,
+          "comprimento": 279.4,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              11.0
+            ],
+            [
+              228.0,
+              760.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "acertou": false
+        }
+      ],
+      "apos_regional": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": false,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": true,
+          "conectividade_verificada": false
+        },
+        {
+          "existe": true,
+          "parcial": true,
+          "comprimento": 702.9,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              3.0
+            ],
+            [
+              213.0,
+              738.0,
+              3.0
+            ],
+            [
+              300.0,
+              988.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": true,
+          "comprimento": 113.6,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              3.0
+            ],
+            [
+              200.0,
+              976.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "acertou": false
+        }
+      ],
+      "apos_global5": [
+        {
+          "disponivel": true,
+          "construindo": false,
+          "construindo_ou_bloqueada": false,
+          "malhas": [
+            "RecastNavMesh-Default"
+          ],
+          "pronta": true,
+          "conectividade_verificada": false
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.5,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              3.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              300.0,
+              1030.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.5,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              3.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              200.0,
+              300.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "acertou": false
+        }
+      ]
+    }
+  ],
+  "candidato": [
+    {
+      "caso": "historico_ew",
+      "antes": [
+        {
+          "existe": false,
+          "parcial": false,
+          "comprimento": -1.0,
+          "pontos": []
+        },
+        {
+          "existe": false,
+          "parcial": false,
+          "comprimento": -1.0,
+          "pontos": []
+        }
+      ],
+      "depois": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              200.0,
+              200.0,
+              11.0
+            ],
+            [
+              930.0,
+              200.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              930.0,
+              200.0,
+              11.0
+            ],
+            [
+              200.0,
+              200.0,
+              11.0
+            ]
+          ]
+        }
+      ],
+      "apos_reconstruir_reaberta": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              200.0,
+              200.0,
+              11.0
+            ],
+            [
+              930.0,
+              200.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 730.0,
+          "pontos": [
+            [
+              930.0,
+              200.0,
+              11.0
+            ],
+            [
+              200.0,
+              200.0,
+              11.0
+            ]
+          ]
+        }
+      ],
+      "geometria_identica": true,
+      "caminhadas": [
+        {
+          "nome": null,
+          "inicio": {
+            "ok": true,
+            "resposta": "REQUEST_SUCCESSFUL",
+            "partida": [
+              200.0,
+              200.0,
+              91.0
+            ],
+            "meia_altura": 88.0,
+            "raio": 34.0
+          },
+          "final": {
+            "ok": true,
+            "situacao": "IDLE",
+            "loc": [
+              922.683,
+              200.0,
+              91.0
+            ],
+            "vel": 0.0,
+            "distancia_chao": 7.3,
+            "n_amostras": 76,
+            "erro": null
+          },
+          "chegou": true
+        },
+        {
+          "nome": null,
+          "inicio": {
+            "ok": true,
+            "resposta": "REQUEST_SUCCESSFUL",
+            "partida": [
+              930.0,
+              200.0,
+              91.0
+            ],
+            "meia_altura": 88.0,
+            "raio": 34.0
+          },
+          "final": {
+            "ok": true,
+            "situacao": "IDLE",
+            "loc": [
+              206.732,
+              200.0,
+              91.0
+            ],
+            "vel": 0.0,
+            "distancia_chao": 6.7,
+            "n_amostras": 74,
+            "erro": null
+          },
+          "chegou": true
+        }
+      ]
+    },
+    {
+      "caso": "historico_ns",
+      "recusa_sem_alteracao": true,
+      "rotas": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              3.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              300.0,
+              1030.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              11.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              200.0,
+              300.0,
+              3.0
+            ]
+          ]
+        }
+      ],
+      "rotas_reaberta": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              3.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              300.0,
+              1030.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              11.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              200.0,
+              300.0,
+              3.0
+            ]
+          ]
+        }
+      ],
+      "geometria_identica": true,
+      "restauracao_integral": true,
+      "caminhadas": [
+        {
+          "nome": null,
+          "inicio": {
+            "ok": true,
+            "resposta": "REQUEST_SUCCESSFUL",
+            "partida": [
+              200.0,
+              300.0,
+              91.0
+            ],
+            "meia_altura": 88.0,
+            "raio": 34.0
+          },
+          "final": {
+            "ok": true,
+            "situacao": "IDLE",
+            "loc": [
+              297.824,
+              1022.87,
+              91.0
+            ],
+            "vel": 0.0,
+            "distancia_chao": 7.5,
+            "n_amostras": 75,
+            "erro": null
+          },
+          "chegou": true
+        },
+        {
+          "nome": null,
+          "inicio": {
+            "ok": true,
+            "resposta": "REQUEST_SUCCESSFUL",
+            "partida": [
+              300.0,
+              1030.0,
+              91.0
+            ],
+            "meia_altura": 88.0,
+            "raio": 34.0
+          },
+          "final": {
+            "ok": true,
+            "situacao": "IDLE",
+            "loc": [
+              200.154,
+              306.695,
+              91.0
+            ],
+            "vel": 0.0,
+            "distancia_chao": 6.7,
+            "n_amostras": 77,
+            "erro": null
+          },
+          "chegou": true
+        }
+      ],
+      "configuracao_aplicada": [
+        {
+          "ator": "/Game/Director/Cenas/L_nav_hist_ns_20261018.L_nav_hist_ns_20261018:PersistentLevel.RecastNavMesh-Default",
+          "raio_cm": 35.0,
+          "tile_cm": 950.0,
+          "resolucoes": [
+            {
+              "cell_size": 38.0,
+              "cell_height": 10.0,
+              "agent_max_step_height": 35.0
+            },
+            {
+              "cell_size": 19.0,
+              "cell_height": 10.0,
+              "agent_max_step_height": 35.0
+            },
+            {
+              "cell_size": 5.0,
+              "cell_height": 2.0,
+              "agent_max_step_height": 35.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caso": "variacao_a",
+      "rotas": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              3.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              300.0,
+              1030.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              11.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              200.0,
+              300.0,
+              3.0
+            ]
+          ]
+        }
+      ],
+      "rotas_modificada": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              3.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              300.0,
+              1030.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              11.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              200.0,
+              300.0,
+              3.0
+            ]
+          ]
+        }
+      ],
+      "rotas_reaberta": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              200.0,
+              300.0,
+              3.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              300.0,
+              1030.0,
+              11.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 743.6,
+          "pontos": [
+            [
+              300.0,
+              1030.0,
+              11.0
+            ],
+            [
+              210.0,
+              735.0,
+              3.0
+            ],
+            [
+              200.0,
+              300.0,
+              3.0
+            ]
+          ]
+        }
+      ],
+      "atores_mantidos": true,
+      "demais_logicos_identicos": true,
+      "mesas_identicas": true,
+      "capsula": {
+        "acertou": false
+      },
+      "porta_fechada": {
+        "acertou": true,
+        "id": "porta_b",
+        "tipo": "porta",
+        "rotulo": "porta_b",
+        "componente": "Folha",
+        "distancia": 348.5,
+        "ponto": [
+          200.0,
+          722.5,
+          96.755
+        ]
+      },
+      "configuracao_aplicada": [
+        {
+          "ator": "/Game/Director/Cenas/L_nav_valido_a_20261018.L_nav_valido_a_20261018:PersistentLevel.RecastNavMesh-Default",
+          "raio_cm": 35.0,
+          "tile_cm": 950.0,
+          "resolucoes": [
+            {
+              "cell_size": 38.0,
+              "cell_height": 10.0,
+              "agent_max_step_height": 35.0
+            },
+            {
+              "cell_size": 19.0,
+              "cell_height": 10.0,
+              "agent_max_step_height": 35.0
+            },
+            {
+              "cell_size": 5.0,
+              "cell_height": 2.0,
+              "agent_max_step_height": 35.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "caso": "variacao_b",
+      "rotas": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 641.5,
+          "pontos": [
+            [
+              1200.0,
+              -400.0,
+              3.0
+            ],
+            [
+              1235.0,
+              -310.0,
+              3.0
+            ],
+            [
+              1260.0,
+              35.0,
+              3.0
+            ],
+            [
+              1300.0,
+              230.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 641.5,
+          "pontos": [
+            [
+              1300.0,
+              230.0,
+              3.0
+            ],
+            [
+              1260.0,
+              35.0,
+              3.0
+            ],
+            [
+              1235.0,
+              -310.0,
+              3.0
+            ],
+            [
+              1200.0,
+              -400.0,
+              3.0
+            ]
+          ]
+        }
+      ],
+      "rotas_modificada": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 641.5,
+          "pontos": [
+            [
+              1200.0,
+              -400.0,
+              3.0
+            ],
+            [
+              1235.0,
+              -310.0,
+              3.0
+            ],
+            [
+              1260.0,
+              35.0,
+              3.0
+            ],
+            [
+              1300.0,
+              230.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 641.5,
+          "pontos": [
+            [
+              1300.0,
+              230.0,
+              3.0
+            ],
+            [
+              1260.0,
+              35.0,
+              3.0
+            ],
+            [
+              1235.0,
+              -310.0,
+              3.0
+            ],
+            [
+              1200.0,
+              -400.0,
+              3.0
+            ]
+          ]
+        }
+      ],
+      "rotas_reaberta": [
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 641.5,
+          "pontos": [
+            [
+              1200.0,
+              -400.0,
+              3.0
+            ],
+            [
+              1235.0,
+              -310.0,
+              3.0
+            ],
+            [
+              1260.0,
+              35.0,
+              3.0
+            ],
+            [
+              1300.0,
+              230.0,
+              3.0
+            ]
+          ]
+        },
+        {
+          "existe": true,
+          "parcial": false,
+          "comprimento": 641.5,
+          "pontos": [
+            [
+              1300.0,
+              230.0,
+              3.0
+            ],
+            [
+              1260.0,
+              35.0,
+              3.0
+            ],
+            [
+              1235.0,
+              -310.0,
+              3.0
+            ],
+            [
+              1200.0,
+              -400.0,
+              3.0
+            ]
+          ]
+        }
+      ],
+      "atores_mantidos": true,
+      "demais_logicos_identicos": true,
+      "mesas_identicas": true,
+      "capsula": {
+        "acertou": false
+      },
+      "porta_fechada": {
+        "acertou": true,
+        "id": "porta_b",
+        "tipo": "porta",
+        "rotulo": "porta_b",
+        "componente": "Folha",
+        "distancia": 348.5,
+        "ponto": [
+          1250.0,
+          22.5,
+          96.755
+        ]
+      },
+      "configuracao_aplicada": [
+        {
+          "ator": "/Game/Director/Cenas/L_nav_valido_b_20261018.L_nav_valido_b_20261018:PersistentLevel.RecastNavMesh-Default",
+          "raio_cm": 35.0,
+          "tile_cm": 950.0,
+          "resolucoes": [
+            {
+              "cell_size": 38.0,
+              "cell_height": 10.0,
+              "agent_max_step_height": 35.0
+            },
+            {
+              "cell_size": 19.0,
+              "cell_height": 10.0,
+              "agent_max_step_height": 35.0
+            },
+            {
+              "cell_size": 5.0,
+              "cell_height": 2.0,
+              "agent_max_step_height": 35.0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variacao_ew": {
+    "rotas": [
+      {
+        "existe": true,
+        "parcial": false,
+        "comprimento": 730.0,
+        "pontos": [
+          [
+            200.0,
+            200.0,
+            3.0
+          ],
+          [
+            930.0,
+            200.0,
+            3.0
+          ]
+        ]
+      },
+      {
+        "existe": true,
+        "parcial": false,
+        "comprimento": 730.0,
+        "pontos": [
+          [
+            930.0,
+            200.0,
+            3.0
+          ],
+          [
+            200.0,
+            200.0,
+            3.0
+          ]
+        ]
+      }
+    ],
+    "rotas_modificada": [
+      {
+        "existe": true,
+        "parcial": false,
+        "comprimento": 730.0,
+        "pontos": [
+          [
+            200.0,
+            200.0,
+            3.0
+          ],
+          [
+            930.0,
+            200.0,
+            3.0
+          ]
+        ]
+      },
+      {
+        "existe": true,
+        "parcial": false,
+        "comprimento": 730.0,
+        "pontos": [
+          [
+            930.0,
+            200.0,
+            3.0
+          ],
+          [
+            200.0,
+            200.0,
+            3.0
+          ]
+        ]
+      }
+    ],
+    "atores_mantidos": true,
+    "demais_logicos_identicos": true,
+    "mesas_identicas": true,
+    "largura_real": [
+      {
+        "acertou": true,
+        "id": "corredor.parede_sul",
+        "tipo": "parede",
+        "rotulo": "corredor.parede_sul",
+        "componente": "Dir",
+        "distancia": 90.0,
+        "ponto": [
+          565.0,
+          125.0,
+          135.0
+        ]
+      },
+      {
+        "acertou": true,
+        "id": "corredor.parede_norte",
+        "tipo": "parede",
+        "rotulo": "corredor.parede_norte",
+        "componente": "Dir",
+        "distancia": 90.0,
+        "ponto": [
+          565.0,
+          305.0,
+          135.0
+        ]
+      }
+    ],
+    "capsula": {
+      "acertou": false
+    },
+    "rotas_reaberta": [
+      {
+        "existe": true,
+        "parcial": false,
+        "comprimento": 730.0,
+        "pontos": [
+          [
+            200.0,
+            200.0,
+            3.0
+          ],
+          [
+            930.0,
+            200.0,
+            3.0
+          ]
+        ]
+      },
+      {
+        "existe": true,
+        "parcial": false,
+        "comprimento": 730.0,
+        "pontos": [
+          [
+            930.0,
+            200.0,
+            3.0
+          ],
+          [
+            200.0,
+            200.0,
+            3.0
+          ]
+        ]
+      }
+    ],
+    "original_preservado": true
+  },
+  "originais_preservados": true,
+  "limites": [
+    "Sem validacao do operador Hermes ou PA conversacional",
+    "Memoria e FPS nao medidos",
+    "Refino regional altera perfil HIGH; tile explicito afeta a grade do level",
+    "Reconstruir e operacao explicita; observar/estado nao passam a alterar a cena",
+    "Candidato nao instalado no operador publicado"
+  ]
+}
