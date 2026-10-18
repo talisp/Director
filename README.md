@@ -1,5 +1,8 @@
 # Director
 
+Execucao ordenada das correcoes: [pipeline de 18/10](docs/pipeline-2026-10-18.md).
+Retomada entre checkouts: [estado local vinculado ao laboratorio](docs/estado-local.md).
+
 **Revisão da porta (18/10):** [causa da demora, recuperação local e correções testadas](docs/revisao-porta-2026-10-18.md). Diagnóstico de planta/editor, consulta Windows sem dependência de codificação e skill 0.5.1; 104 testes Director e 11 da guarda.
 
 **Teste integrado da cozinha:** [resultado, correções pontuais e limites](docs/teste-cozinha-2026-10-17/README.md). Hermes criou uma cozinha anexa e ampliou a mesa; o teste revelou e corrigiu o envelope de marcadores do editor e a exigência indevida de simulação dinâmica da mesa fixa. 100 testes Director e 11 da guarda passaram; as pendências maiores continuam abertas.

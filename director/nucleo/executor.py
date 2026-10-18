@@ -229,10 +229,11 @@ def estado(cena: str, editor, raiz_cenas: str) -> dict:
     """Só leitura: a planta, o que alguém mudou à mão e o que difere entre a planta e o Unreal."""
     planta0 = PL.carregar(raiz_cenas, cena)
     if editor.chamar("info")["level"] != planta0["nivel"]:
-        return {"cena": cena, "planta": PL.caminho(raiz_cenas,cena), "nivel": planta0["nivel"], "revisao": planta0["revisao"], "level_aberto": False, "objetos": sorted(planta0["objetos"])}
+        return {"cena": cena, "planta": PL.caminho(raiz_cenas,cena), "nivel": planta0["nivel"], "revisao": planta0["revisao"], "level_aberto": False, "objetos_registrados": len(planta0["objetos"]), "objetos": sorted(planta0["objetos"])}
     inv = _inventario(editor)
     _, rel = PN.conciliar(planta0, inv["controlados"])
     return {"cena": cena, "planta": PL.caminho(raiz_cenas,cena), "nivel": planta0["nivel"], "revisao": planta0["revisao"], "level_aberto": True, "objetos": sorted(planta0["objetos"]),
+            "objetos_registrados": len(planta0["objetos"]),
             "pecas_no_unreal": len(inv["controlados"]), "outros_atores": len(inv["fora"]),
             "diferencas": PN.diferencas(D.derivar(planta0), inv["controlados"]), "conciliacao": rel,
             "por_salvar": inv["por_salvar"]}

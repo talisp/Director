@@ -236,7 +236,7 @@ def pieces_build(pecas: dict, refazer: bool = False):
 # ----------------------------------------------------------------------------------------------------------- level
 
 @op
-def level_ensure(caminho: str, modelo: str = "/Engine/Maps/Templates/Template_Default"):
+def level_ensure(caminho: str, modelo: str = "/Engine/Maps/Templates/Template_Default", criar: bool = True):
     """Abre o level da cena; se ele não existe, cria a partir do modelo do motor (chão e luz) e salva."""
     if not caminho.startswith(PASTA + "/"):
         raise RuntimeError(f"o level da cena tem de ficar em {PASTA}")
@@ -250,6 +250,8 @@ def level_ensure(caminho: str, modelo: str = "/Engine/Maps/Templates/Template_De
     if U.EditorAssetLibrary.does_asset_exist(caminho):
         ok, estado = _les().load_level(caminho), "carregado"
     else:
+        if not criar:
+            raise ValueError(f"level inexistente; criacao nao autorizada nesta consulta: {caminho}")
         ok, estado = _les().new_level_from_template(caminho, modelo), "criado"
     if not ok or _level() != caminho:
         raise RuntimeError(f"não consegui abrir {caminho} (level atual: {_level()})")

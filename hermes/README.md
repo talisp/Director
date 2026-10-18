@@ -14,6 +14,14 @@ O repositório é a fonte destas instruções. O perfil do Hermes é gerado a pa
 | `testes_guarda.py` | Testes do complemento, sem Hermes e sem Unreal: `python -m unittest hermes.testes_guarda`. |
 
 ## Montar o perfil
+
+### Conferir antes de reinstalar
+
+`python hermes/instalar_perfil.py director --conferir` compara SOUL e skill com os templates
+preenchidos e mostra diff e hashes, sem escrever no perfil. Execute com o mesmo Python usado
+na instalacao. Codigo 1 indica diferenca, nao falha de ferramenta: revise notas com sua
+procedencia antes de reinstalar. A comparacao nao classifica automaticamente a nota como correta.
+
 1. `hermes profile create director --no-skills`
 2. Copie `config.exemplo.yaml` para o `config.yaml` do perfil e troque `<pasta do Director>`. Ponha a chave do servidor do modelo no `.env` do perfil.
 3. Use os toolsets e `approvals.mode: "off"` do `config.exemplo.yaml`. O TTS aponta para o serviço local Kokoro na porta 8880; esse serviço precisa estar em execução para gerar áudio.

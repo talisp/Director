@@ -1,6 +1,7 @@
 """Endereços do Director. O laboratório é um projeto do Unreal separado do projeto do filme, com porta própria.
 Tudo pode ser trocado por variável de ambiente; nada aqui depende da máquina."""
 import os
+from .estado_local import resolver
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -13,9 +14,11 @@ EDITOR_EXE = os.environ.get("DIRECTOR_EDITOR_EXE", r"C:\Program Files\Epic Games
 EDITOR_PYTHON = os.path.join(RAIZ, "director", "editor")  # vai no UE_PYTHONPATH só do processo do laboratório
 
 WORK = os.path.join(RAIZ, "work")  # fora do git: trava, estado do laboratório, pontos de restauração, medidas
-TRAVA = os.path.join(WORK, "unreal_lab.trava")  # um operador por vez no laboratório
-TRAVA_LOG = os.path.join(WORK, "trava.jsonl")
+ESTADO_DIR = os.path.join(LAB_DIR, "Saved", "Director")
+VINCULO_CENAS = os.path.join(ESTADO_DIR, "vinculo.json")
+TRAVA = os.path.join(ESTADO_DIR, "unreal_lab.trava")  # mesma trava entre checkouts atualizados
+TRAVA_LOG = os.path.join(ESTADO_DIR, "trava.jsonl")
 LAB_ESTADO = os.path.join(WORK, "lab_editor.json")
-CENAS = os.path.join(RAIZ, "director", "cenas")  # plantas (texto, versionadas no git)
+CENAS = resolver(LAB_DIR, os.path.join(RAIZ, "director", "cenas"), VINCULO_CENAS)
 
 PASTA_UNREAL = "/Game/Director"  # o único lugar do projeto em que o Director grava

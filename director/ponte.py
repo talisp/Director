@@ -50,6 +50,7 @@ class Ponte:
 
     def __enter__(self):
         os.makedirs(C.WORK, exist_ok=True)
+        os.makedirs(os.path.dirname(C.TRAVA), exist_ok=True)
         trava.pegar(C.TRAVA, self.nome, C.TRAVA_LOG)
         return self
 
