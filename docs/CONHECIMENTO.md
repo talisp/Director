@@ -1,3 +1,47 @@
+# Director: como retomar o trabalho
+
+Atualizado em 18/10/2026. Leia primeiro o [objetivo](OBJETIVO.md), o [README](../README.md)
+e o [pipeline autorizado](pipeline-2026-10-18.md). O pipeline define a ordem; encontrar
+um problema novo não autoriza trocar de frente sem registrar causa, dependência e prioridade.
+
+## Procedimento atual
+
+1. Confira branch/commit, alterações locais e a issue do bloco. Preserve o trabalho de outros
+   agentes. A instalação do operador usa código publicado; desenvolvimento ocorre em outra pasta.
+2. Consulte `python -m director --help` e `capacidades`, que não conectam ao Unreal.
+   Use `contexto` para identificar o level e a fonte real da planta quando precisar do editor.
+3. Plantas, biblioteca e trava ficam na fonte compartilhada do laboratório, configurada por
+   `director/config.py`/`estado_local.py`. Não escolher uma planta só por ter revisão maior.
+   [Procedimento de vínculo](estado-local.md); [instalação publicada](operador-publicado.md).
+4. O núcleo usa biblioteca padrão; os testes completos também precisam das dependências de
+   `requirements-planejamento.txt`. Execute a suíte pertinente ao risco da mudança. Última
+   suíte completa comprovada: 132 testes Director e 13 guarda. Isso não é taxa de PA.
+5. Para trabalho autorizado no editor, consulte `python -m director.lab estado` antes de
+   `abrir`. Use somente o laboratório; a ponte recusa o projeto cinematográfico/porta 8001.
+   `pecas`, criação de laboratório e demonstrações alteram estado: não executá-los como rotina
+   de leitura. Não interromper uma sessão de outro operador.
+6. Antes de Python experimental, procure capacidade pronta e consulte `api TERMO`; use o
+   mecanismo de ensaio e a trava. Declare hipótese, evidência, limites e recuperação. Código
+   permanente depende da autorização de desenvolvimento recebida; pedido de cena não basta.
+7. Compare intenção, planta e medidas nativas. Preserve identidades e partes corretas. Registre
+   a prova e as limitações na própria issue; publique antes de atualizar a instalação do operador.
+
+## Evidências atuais
+
+- [Composição de salas e passagens](composicao-salas.md); [portas e verificação 2D](portas-e-2d.md).
+- [Biblioteca](biblioteca-piloto.md); [observação](observacao-textual.md); [diagnósticos](diagnosticos.md).
+- [Espera no Hermes](esperas-hermes.md); [causa da demora da porta](revisao-porta-2026-10-18.md).
+- [Pesquisa dirigida proposta](pesquisa-dirigida-director.md); pendências na [#48](https://github.com/talisp/Director/issues/48).
+
+## Registro histórico de 13/10/2026
+
+O conteúdo abaixo preserva as descobertas da primeira entrega. Números de testes, caminhos
+de trava, roteiro e hipóteses são históricos, não o estado atual nem uma ordem de execução.
+A evolução comprovada e as pendências atuais estão nos links acima.
+
+<details>
+<summary>Abrir anotações da primeira entrega</summary>
+
 # Director: o que se sabe e como retomar
 
 > Documento técnico curto para **qualquer agente ou pessoa** continuar sem depender de conversa anterior. Estado em 13/10/2026. Números da primeira entrega: [entrega1](entrega1/README.md).
@@ -90,3 +134,5 @@ Na raiz deste repositório, com um Python 3.11 ou mais novo (o núcleo usa só a
 5. Mais de uma sala; parede em comum.
 6. Ligação com um agente (que só precisa chamar `python -m director`), sem mudar o núcleo.
 7. Decidir como versionar os arquivos do Unreal.
+
+</details>
