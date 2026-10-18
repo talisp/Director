@@ -93,9 +93,13 @@ def _efetivar(editor, raiz_cenas: str, planta0: dict, planta2: dict, inv0: dict,
         nav_pronta = _esperar_nav(editor, pausa)
     else:
         nav_pronta = editor.chamar("measure", consultas=[{"tipo": "nav"}])["medidas"][0].get("pronta") is True
-    inv1 = _inventario(editor)
+    try:
+        inv1 = _inventario(editor)
+    except Exception as exc:
+        return _recuperar(editor, inv0, "erro_ao_conferir", erro=str(exc), ponto_de_restauracao=ponto)
     difs = PN.diferencas(alvo, inv1["controlados"])
-    fora_igual = inv1["fora"] == inv0["fora"]
+    incorporados={a["objeto"]["adotar"] for a in acoes if a.get("objeto",{}).get("adotar")}
+    fora_igual = inv1["fora"] == [a for a in inv0["fora"] if a["caminho"] not in incorporados]
     if difs or not fora_igual:
         return _recuperar(editor, inv0, "conferencia_falhou", diferencas=difs[:10], resto_da_cena_igual=fora_igual,
                           ponto_de_restauracao=ponto)
@@ -149,11 +153,19 @@ def executar(cena: str, ficha: dict, editor, raiz_cenas: str, lab_dir: str = "",
                 res = {"ok": False, "motivo": "recusado", "porque": str(e), "tocou_na_cena": False}
             else:
                 res = _efetivar(editor, raiz_cenas, planta0, planta2, inv0, rel, resumo, lab_dir, pasta_pontos, pausa)
+                if res.get("ok"):
+                    from director import relatorio
+                    alterados = [i for i, o in planta2["objetos"].items() if o != planta0["objetos"].get(i)]
+                    res["resultado"] = relatorio.medir(planta2, editor, alterados, solicitado=entrada_publica(ficha))
     except Exception as e:  # noqa: BLE001
         PL.registrar(raiz_cenas, cena, {"evento": "fim", "ok": False, "motivo": "erro", "erro": f"{type(e).__name__}: {e}"[:500]})
         raise
     PL.registrar(raiz_cenas, cena, {"evento": "fim", **{k: v for k, v in res.items() if k != "atores_mantidos"}})
     return res
+
+
+def entrada_publica(ficha):
+    return {"pedido": ficha.get("pedido"), "operacoes": ficha.get("operacoes", [])}
 
 
 def incorporar(cena: str, editor, raiz_cenas: str, lab_dir: str = "", pasta_pontos: str = "", ids=None, pausa=time.sleep) -> dict:
@@ -188,6 +200,13 @@ def incorporar(cena: str, editor, raiz_cenas: str, lab_dir: str = "", pasta_pont
                         if not OP._na_mesa(mesa, o["x"], o["y"], 0.0) or abs(o["z"] - o["altura"] / 2 - topo) > 2.0:
                             resumo.append(f"{oid} não está mais sobre {o['sobre']}")
                             o["sobre"] = None
+            elif o["tipo"] == "asset":
+                import math
+                m=o['modelo'];es=[o[k]/m['tamanho'][j] for j,k in enumerate(('largura','profundidade','altura'))]
+                g=math.radians(s['rot'][1]);cx=m['centro'][0]*es[0];cy=m['centro'][1]*es[1]
+                o.update(x=s['loc'][0]+cx*math.cos(g)-cy*math.sin(g),y=s['loc'][1]+cx*math.sin(g)+cy*math.cos(g),
+                         z=s['loc'][2]+m['min_z']*es[2],giro=s['rot'][1])
+                resumo.append(oid+' incorporado do Play (posicao e giro vertical)')
             elif o["tipo"] == "porta" and "angulo" in s and abs(s["angulo"] - o["angulo"]) > PN.TOL_GRAUS:
                 o["angulo"] = s["angulo"]
                 resumo.append(f"{oid} incorporada com {s['angulo']:g} graus")

@@ -8,6 +8,7 @@ Medidas na ficha: metros e graus (o que uma pessoa diz). Na planta: centímetros
 """
 import copy
 import math
+import json
 
 LADOS = ("sul", "norte", "leste", "oeste")
 OPOSTA = {"sul": "norte", "norte": "sul", "leste": "oeste", "oeste": "leste"}
@@ -25,7 +26,7 @@ PADROES = {
     "copo": {"diametro": 8.0, "altura": 10.0},
 }
 VAOS = ("porta", "janela")
-MOVEIS = ("mesa",)
+MOVEIS = ("mesa", "asset")
 OBJETOS = ("prato", "copo")
 # onde o próximo objeto vai sobre o tampo, em fração da meia largura e da meia profundidade
 VAGAS = ((-0.5, 0.0), (0.5, 0.0), (0.0, 0.0), (-0.5, -0.5), (0.5, -0.5), (-0.5, 0.5), (0.5, 0.5), (0.0, -0.5), (0.0, 0.5))
@@ -38,6 +39,10 @@ class Invalida(ValueError):
 NUM, TXT = "numero", "texto"
 # campo -> (tipo, obrigatório, explicação). É isto que o agente lê em `capacidades`.
 OPERACOES: dict = {
+    "registrar_objeto": {
+        "descricao": "Modelo medido pelo comando objeto: adotar, duplicar, colocar asset ou compor, com identidade na planta.",
+        "campos": {"id": (TXT, True, "identidade logica"), "modelo_json": (TXT, True, "gerado por objeto; descreve geometria, origem e fisica")},
+    },
     "criar_sala": {
         "descricao": "Cria uma sala retangular (piso, quatro paredes e área onde um personagem pode andar). Cômodo é sala: "
                      "corredor, quarto, banheiro, armário. Para encostar numa sala que já existe, deixe 0,15 m (uma "
@@ -278,6 +283,7 @@ def _da_mesa_para_o_mundo(mesa: dict, lx: float, ly: float) -> tuple:
 
 def _colocar(planta: dict, d: dict) -> str:
     tipo = d["tipo"]
+    if tipo == "asset": raise Invalida("use o comando objeto para inspecionar e registrar um asset")
     if tipo not in VAOS + MOVEIS + OBJETOS:
         raise Invalida(f"tipo desconhecido: {tipo!r}. Existem: {', '.join(VAOS + MOVEIS + OBJETOS)}")
     oid = _id_livre(planta, d, tipo)
@@ -332,6 +338,7 @@ def _mudar(planta: dict, d: dict) -> str:
     aceitos = {"porta": ("parede", "posicao_m", "largura_m", "altura_m", "angulo"),
                "janela": ("parede", "posicao_m", "largura_m", "altura_m", "peitoril_m"),
                "mesa": ("x_m", "y_m", "giro", "largura_m", "profundidade_m", "altura_m"),
+               "asset": ("x_m", "y_m", "giro", "largura_m", "profundidade_m", "altura_m"),
                "prato": ("diametro_m", "altura_m"), "copo": ("diametro_m", "altura_m")}[tipo]
     for campo in d:
         if campo != "id" and campo not in aceitos:
@@ -384,8 +391,11 @@ def levar_junto(planta: dict, mesa_id: str, antes: dict, depois: dict) -> list:
         lx, ly = dx * math.cos(g0) + dy * math.sin(g0), -dx * math.sin(g0) + dy * math.cos(g0)
         o["x"] = depois["x"] + lx * math.cos(g1) - ly * math.sin(g1)
         o["y"] = depois["y"] + lx * math.sin(g1) + ly * math.cos(g1)
-        o["z"] += depois["altura"] - antes["altura"]
-        o["rot"] = [o["rot"][0], o["rot"][1] + depois["giro"] - antes["giro"], o["rot"][2]]
+        o["z"] += depois.get("z", 0) + depois["altura"] - antes.get("z", 0) - antes["altura"]
+        if "rot" in o:
+            o["rot"] = [o["rot"][0], o["rot"][1] + depois["giro"] - antes["giro"], o["rot"][2]]
+        else:  # asset apoiado: gira junto
+            o["giro"] += depois["giro"] - antes["giro"]
         levados.append(oid)
     return levados
 
@@ -401,7 +411,29 @@ def _remover(planta: dict, d: dict) -> str:
     return f"{oid} removid{'a' if oid.startswith(('sala', 'porta', 'janela', 'mesa')) else 'o'}"
 
 
-_FUNCOES = {"criar_sala": _criar_sala, "mudar_sala": _mudar_sala, "colocar": _colocar, "mudar": _mudar, "remover": _remover}
+def _registrar_objeto(planta, d):
+    oid = _id_livre(planta,d,"asset")
+    try: o=json.loads(d["modelo_json"])
+    except (ValueError,TypeError): raise Invalida("modelo_json invalido") from None
+    if o.get("tipo")!="asset" or o.get("sala") not in planta["objetos"] or planta["objetos"][o["sala"]]["tipo"]!="sala":
+        raise Invalida("objeto precisa de tipo asset e sala existente")
+    for k in ("x","y","z","giro","largura","profundidade","altura"):
+        if isinstance(o.get(k),bool) or not isinstance(o.get(k),(float,int)) or not math.isfinite(o[k]): raise Invalida("modelo sem numero finito: "+k)
+    if not isinstance(o.get("modelo"),dict) or not o["modelo"].get("asset"): raise Invalida("modelo sem asset")
+    m=o['modelo']
+    for k in ('tamanho','centro'):
+        if not isinstance(m.get(k),list) or len(m[k])!=3 or any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in m[k]):raise Invalida('geometria invalida: '+k)
+    if min(m['tamanho'])<=0 or not isinstance(m.get('min_z'),(int,float)) or not math.isfinite(m['min_z']):raise Invalida('geometria precisa de dimensoes positivas')
+    f=o.get('fisica',{})
+    if not isinstance(f.get('simular'),bool) or not isinstance(f.get('subir'),bool):raise Invalida('fisica requer simular/subir booleanos')
+    for k in ('massa_kg','amortecimento_linear','amortecimento_angular'):
+        v=f.get(k)
+        if isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) or v<0 or (k=='massa_kg' and v==0):raise Invalida('fisica invalida: '+k)
+    planta["objetos"][oid]=o
+    return "objeto "+oid+" registrado na planta"
+
+
+_FUNCOES = {"criar_sala": _criar_sala, "mudar_sala": _mudar_sala, "colocar": _colocar, "mudar": _mudar, "remover": _remover, "registrar_objeto": _registrar_objeto}
 
 
 # ------------------------------------------------------------------------------------------------------- conferir a planta
@@ -482,15 +514,36 @@ def conferir(planta: dict, final: bool = True) -> None:
         g = math.radians(o["giro"])
         mx = (abs(o["largura"] * math.cos(g)) + abs(o["profundidade"] * math.sin(g))) / 2
         my = (abs(o["largura"] * math.sin(g)) + abs(o["profundidade"] * math.cos(g))) / 2
-        if (o["x"] - mx < s["x"] + FOLGA_MOVEL - 1e-6 or o["x"] + mx > s["x"] + s["largura"] - FOLGA_MOVEL + 1e-6
-                or o["y"] - my < s["y"] + FOLGA_MOVEL - 1e-6 or o["y"] + my > s["y"] + s["comprimento"] - FOLGA_MOVEL + 1e-6):
+        folga = 0 if o["tipo"]=="asset" else FOLGA_MOVEL
+        if final and (o["x"] - mx < s["x"] + folga - 1e-6 or o["x"] + mx > s["x"] + s["largura"] - folga + 1e-6
+                or o["y"] - my < s["y"] + folga - 1e-6 or o["y"] + my > s["y"] + s["comprimento"] - folga + 1e-6):
             raise Invalida(f"{oid} ficaria fora de {o['sala']} (ou encostada na parede)")
-        if o["altura"] > s["altura"] - 20.0 or min(o["largura"], o["profundidade"]) < 30.0 or o["altura"] < 20.0:
+        if o["tipo"]=="asset":
+            invalido=min(o["largura"],o["profundidade"],o["altura"])<=0 or o["altura"]>s["altura"]
+        else:
+            invalido=o["altura"] > s["altura"] - 20.0 or min(o["largura"], o["profundidade"]) < 30.0 or o["altura"] < 20.0
+        if invalido:
             raise Invalida(f"{oid}: medidas fora do aceito")
-        for outro_id, (ox, oy, omx, omy) in caixas.items():
-            if abs(o["x"] - ox) < mx + omx and abs(o["y"] - oy) < my + omy:
+        # Compara so quem esta no mesmo apoio: o chao, ou o mesmo movel (travesseiro sobre a cama).
+        apoio = o.get("sobre")
+        # Entre operacoes da mesma ficha os moveis podem se cruzar (rearrumar um comodo); so o fim conta.
+        for outro_id, (ox, oy, omx, omy, oapoio) in (caixas.items() if final else ()):
+            # 0,01 cm de tolerancia: moveis encostados (cadeira na mesa) com medidas como 55,00000000000001
+            if oapoio == apoio and abs(o["x"] - ox) < mx + omx - .01 and abs(o["y"] - oy) < my + omy - .01:
                 raise Invalida(f"{oid} e {outro_id} ficariam um em cima do outro")
-        caixas[oid] = (o["x"], o["y"], mx, my)
+        caixas[oid] = (o["x"], o["y"], mx, my, apoio)
+    for oid, o in objs.items():
+        if o["tipo"] != "asset" or not o.get("sobre"):
+            continue
+        b = objs.get(o["sobre"])
+        if not b or b["tipo"] not in MOVEIS or b.get("sobre"):
+            raise Invalida(f"{oid}: o apoio {o['sobre']} precisa ser um movel no chao")
+        x, y, mx, my, _ = caixas[oid]
+        bx, by, bmx, bmy, _ = caixas[o["sobre"]]
+        if x - mx < bx - bmx - 1e-6 or x + mx > bx + bmx + 1e-6 or y - my < by - bmy - 1e-6 or y + my > by + bmy + 1e-6:
+            raise Invalida(f"{oid} sairia para fora de {o['sobre']}: coloque dentro do tampo ou diminua")
+        if o["z"] + o["altura"] > objs[o["sala"]]["z"] + objs[o["sala"]]["altura"]:
+            raise Invalida(f"{oid} sobre {o['sobre']} passaria do teto")
     for oid, o in objs.items():
         if o["tipo"] not in OBJETOS:
             continue

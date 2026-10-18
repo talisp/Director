@@ -1,0 +1,65 @@
+{
+  "dimensoes_cm": [
+    260.0,
+    350.0
+  ],
+  "objetos": [
+    {
+      "id": "SOL_CamaSolteiro",
+      "x": 55.0,
+      "y": 109.99999999999994,
+      "z": 0.0,
+      "largura": 100.0,
+      "profundidade": 200.0,
+      "altura": 82.0
+    },
+    {
+      "id": "SOL_CriadoMudo",
+      "x": 130.0,
+      "y": 30.499999999999943,
+      "z": 0.0,
+      "largura": 40.0,
+      "profundidade": 41.0,
+      "altura": 44.0
+    },
+    {
+      "id": "SOL_GuardaRoupa",
+      "x": 55.0,
+      "y": 318.99999999999994,
+      "z": 0.0,
+      "largura": 100.0,
+      "profundidade": 62.0,
+      "altura": 200.0
+    },
+    {
+      "id": "SOL_Escrivaninha",
+      "x": 205.0,
+      "y": 322.49999999999994,
+      "z": 0.0,
+      "largura": 100.0,
+      "profundidade": 55.0,
+      "altura": 75.0
+    },
+    {
+      "id": "SOL_Cadeira",
+      "x": 205.0,
+      "y": 254.99999999999994,
+      "z": 0.0,
+      "largura": 50.0,
+      "profundidade": 50.0,
+      "altura": 83.0
+    }
+  ],
+  "aberturas": [
+    {
+      "altura": 210.0,
+      "angulo": 90.0,
+      "largura": 100.0,
+      "parede": "leste",
+      "posicao": 100.0,
+      "sala": "quarto_sol",
+      "tipo": "porta",
+      "id": "porta_quarto_sol"
+    }
+  ]
+}

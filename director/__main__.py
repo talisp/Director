@@ -18,6 +18,18 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
+    "planta2d": {"uso":"planta2d CENA SALA", "faz":"Filtro offline de contencao, areas livres e regioes de passagem; sem Unreal."},
+    "api": {"uso":"api atualizar [PEDIDO.json] | api TERMO", "faz":"Exporta referencia instalada e consulta offline em trechos curtos."},
+    "biblioteca": {"uso":"biblioteca indexar PEDIDO.json | biblioteca TERMO", "faz":"Inspeciona e consulta arquivos locais sem Unreal; nao decide banco permanente."},
+    "navegacao": {"uso":"navegacao [PEDIDO.json]", "faz":"Diagnostica, ajusta com escopo e backup, restaura; pronta nao prova chegada."},
+    "planejar": {"uso": "planejar CENA PEDIDO.json", "faz": "Propoe mobiliario com CP-SAT, contencao, areas de uso e reservas; nao altera o editor."},
+    "procurar": {"uso": "procurar TERMO [TERMO ...] | procurar consultar PEDIDO.json", "faz": "Atualiza e consulta cena, projeto e indice offline com sinonimos PT/EN; poucos candidatos e cena primeiro."},
+    "catalogo": {"uso": "catalogo atualizar", "faz": "Gera indice local dos metadados atuais sem imprimir todo o catalogo."},
+    "objeto": {"uso": "objeto CENA PEDIDO.json", "faz": "Adota, duplica, compoe ou coloca StaticMesh com identidade na planta e perfil fisico ajustavel."},
+    "preparar": {"uso": "preparar CENA_NOVA PASTA_SNAPSHOT", "faz": "Prepara copia historica em novo level e planta; nao executa pedido do operador."},
+    "verificar": {"uso": "verificar CENA CONSULTAS.json", "faz": "Verifica contencao por geometria fisica, raios externos e rotas; informa limites e objetos fora da planta."},
+    "relatorio": {"uso": "relatorio CENA [ID ...]", "faz": "Separa plano e medidas internas reais por raios; nao abre outra cena."},
+    "ensaio": {"uso": "ensaio criar NOME PEDIDO.txt | executar ID SCRIPT.py | listar [ID]", "faz": "Registra pedido, copia exata/hash do script, resultado/erro e diferencas do inventario; usa a ponte e trava existentes."},
     "capacidades": {"uso": "capacidades", "faz": "Contrato das fichas, campos e padroes; sem Unreal."},
     "fazer": {"uso": "fazer CENA FICHA.json|-", "faz": "Cria a cena automaticamente se for nova; aplica, confere e salva a ficha."},
     "estado": {"uso": "estado CENA", "faz": "Resumo das diferencas entre planta e Unreal; somente leitura."},
@@ -55,13 +67,46 @@ def _sair(dados, codigo: int = 0) -> None:
 
 
 def main(argv: list) -> None:
+    if argv and any(a in ('--help','-h') for a in argv):
+        nome=argv[0] if argv[0] not in ('--help','-h') else None
+        r=_ajuda(nome);_sair(r,0 if r['ok'] else 2)
+    if argv and argv[0]=='planta2d':
+        from . import espaco2d
+        try:
+            if len(argv)!=3:raise ValueError('uso: planta2d CENA SALA')
+            r=espaco2d.cli(argv[1:]);_sair(r,0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e)},2)
+    if argv and argv[0]=='biblioteca':
+        from . import biblioteca
+        try:
+            r=biblioteca.cli(argv[1:]);_sair(r,0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e)},2)
+    if argv and argv[0]=='api':
+        from . import api
+        try:
+            r=api.cli(argv[1:]);_sair(r,0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e)},2)
+    if argv and argv[0]=='navegacao':
+        from . import navegacao,ponte
+        try:
+            pedido=_ler_json(argv[1]) if len(argv)==2 else {'acao':'diagnosticar'}
+            with ponte.Ponte('director-navegacao') as p:r=navegacao.executar(pedido,p)
+            _sair(r,0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e)},2)
     if argv and (argv[0] in ("ajuda", "--help", "-h") or any(a in ("--help", "-h") for a in argv[1:])):
         nome = (argv[1] if len(argv) > 1 else None) if argv[0] in ("ajuda", "--help", "-h") else argv[0]
         ajuda = _ajuda(nome)
         _sair(ajuda, 0 if ajuda["ok"] else 2)
     modo = argv[0] if argv else "capacidades"
+    if modo == "ensaio":
+        from . import ensaios
+        try:
+            r = ensaios.cli(argv[1:])
+        except Exception as e:
+            r = {"ok": False, "motivo": "ensaio", "porque": str(e)}
+        _sair(r, 0 if r.get("ok") else 2)
     aridade = {"capacidades": (0, 0), "pecas": (0, 0), "fazer": (2, 2), "estado": (1, 1),
-               "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None)}
+               "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None), "relatorio": (1, None), "verificar": (2, 2), "preparar": (2, 2), "objeto": (2, 2), "procurar": (1,None), "catalogo": (1,1), "planejar": (2,2)}
     if modo not in aridade:
         _sair(_ajuda(modo), 2)
     minimo, maximo = aridade[modo]
@@ -71,30 +116,68 @@ def main(argv: list) -> None:
     if modo == "capacidades":
         _sair({**operacoes.capacidades(), "comandos": COMANDOS})
     try:
-        entrada = _ler_json(argv[2]) if modo in ("fazer", "medir") else None
+        entrada = _ler_json(argv[2]) if modo in ("fazer", "medir", "verificar", "objeto", "planejar") else None
     except (ValueError, OSError) as e:
         _sair({"ok": False, "motivo": "entrada_invalida", "porque": str(e), "tocou_na_cena": False}, 2)
+    if modo == "planejar" and isinstance(entrada, dict) and (not entrada.get("sala") or any(
+            k in entrada for k in ("dimensoes_cm", "minimo_cm", "maximo_cm"))):
+        # Tamanho hipotetico: so a planta e o solver, sem abrir a ponte nem tocar na cena.
+        from . import planejamento, veredito
+        try:
+            res = planejamento.planejar(argv[1], entrada, None)
+        except Exception as e:
+            res = {"ok": False, "motivo": "erro", "porque": f"{type(e).__name__}: {e}"}
+        _sair(veredito.com_veredito(modo, res), 0 if res.get("ok") else 2)
     from . import ponte  # só aqui: `capacidades` roda sem o Unreal
     pontos = os.path.join(C.WORK, "restauracao")
     try:
         with ponte.Ponte(f"director-{modo}") as p:
             if modo == "pecas":
                 res = p.chamar("pieces_build", pecas=pecas.PECAS)
+            elif modo == "procurar":
+                from . import catalogo
+                res = catalogo.cli(argv[1:],p)
+            elif modo == "catalogo":
+                from . import catalogo
+                if argv[1]!='atualizar':raise ValueError('uso: catalogo atualizar')
+                res=catalogo.atualizar(p);res.pop('dados',None)
+            elif modo == "preparar":
+                from . import preparacao
+                res = preparacao.preparar(argv[1],argv[2],p)
             elif modo == "estado":
                 res = executor.estado(argv[1], p, C.CENAS)
             elif modo == "observar":
                 res = consultas.observar(argv[1], p, C.CENAS, argv[2:])
+            elif modo == "relatorio":
+                from . import relatorio
+                res = relatorio.consultar(argv[1], p, C.CENAS, argv[2:] or None)
             elif modo == "medir":
                 res = consultas.medir(argv[1], entrada, p, C.CENAS)
+            elif modo == "verificar":
+                from . import verificacao
+                res = verificacao.verificar(argv[1], entrada, p)
+            elif modo == "objeto":
+                from . import objetos
+                res = objetos.fazer(argv[1],entrada,p)
+            elif modo == "planejar":
+                from . import planejamento
+                res = planejamento.planejar(argv[1],entrada,p)
             elif modo == "assets":
                 res = p.chamar("assets_find", termos=argv[1:])
             elif modo == "fazer":
                 res = executor.executar(argv[1], entrada, p, C.CENAS, C.LAB_DIR, pontos)
             else:
                 res = executor.incorporar(argv[1], p, C.CENAS, C.LAB_DIR, pontos, ids=set(argv[2:]) or None)
+            if modo in ("planejar", "verificar"):
+                from . import veredito
+                res = veredito.com_veredito(modo, res)
             _sair(res, 0 if res.get("ok", True) else 2)
     except Exception as e:  # erro estruturado para o agente, sem confundir com sucesso ou com cena intacta
-        _sair({"ok": False, "motivo": "erro", "porque": f"{type(e).__name__}: {e}"}, 2)
+        res = {"ok": False, "motivo": "erro", "porque": f"{type(e).__name__}: {e}"}
+        if modo in ("planejar", "verificar"):
+            from . import veredito
+            res = veredito.com_veredito(modo, res)
+        _sair(res, 2)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,8 @@
+# Project-only defaults. Requires workspace trust; managed/app settings can override.
+# Network is enabled for the local laboratory bridge; this also permits outbound
+# network inside the sandbox. It is not a localhost-only firewall rule.
+sandbox_mode = "workspace-write"
+approval_policy = "never"
+
+[sandbox_workspace_write]
+network_access = true

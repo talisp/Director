@@ -267,6 +267,26 @@ def reload_level():
 
 
 @op
+def level_from_snapshot(arquivo: str, caminho: str):
+    """Importa copia historica e salva em novo level, sem sobrescrever a fonte."""
+    import os
+    import shutil
+    import uuid
+    if _mundo_jogo() is not None: raise RuntimeError("pare o Play antes")
+    if not caminho.startswith(PASTA+"/Cenas/") or U.EditorAssetLibrary.does_asset_exist(caminho):
+        raise ValueError("destino precisa ser um novo level em Director/Cenas")
+    if _sujos(): raise RuntimeError("salve alteracoes atuais antes de trocar de level")
+    pacote=PASTA+"/ImportacoesEnsaios/"+uuid.uuid4().hex+"/"+os.path.splitext(os.path.basename(arquivo))[0]
+    destino=os.path.join(U.Paths.project_content_dir(),*pacote.split('/')[2:])+'.umap'
+    os.makedirs(os.path.dirname(destino),exist_ok=True)
+    shutil.copy2(arquivo,destino)
+    U.AssetRegistryHelpers.get_asset_registry().scan_paths_synchronous([pacote.rsplit('/',1)[0]],True)
+    if not _les().new_level_from_template(caminho,pacote): raise RuntimeError("nao criou o novo level a partir da copia historica")
+    with open(arquivo,'rb') as f: digest=hashlib.sha256(f.read()).hexdigest()
+    return {"level":_level(),"origem_sha256":digest,"importacao":pacote}
+
+
+@op
 def save():
     """Salva só o que é do Director: o level da cena e os assets em /Game/Director."""
     util = U.EditorLoadingAndSavingUtils
@@ -322,6 +342,11 @@ def inventory(variaveis: dict, detalhes: bool = False):
         for nome in variaveis.get(tipo, []):
             d["params"][nome] = round(float(a.get_editor_property(nome)), 3)
         d["pontos"] = _pontos(a)
+        if tipo == "asset":
+            c=a.get_components_by_class(U.StaticMeshComponent)[0]
+            d["objeto"]={"asset":c.static_mesh.get_path_name().rsplit('.',1)[0],"simular":bool(c.is_simulating_physics()),
+                "massa_kg":_massa(c),"amortecimento_linear":float(c.get_linear_damping()),
+                "amortecimento_angular":float(c.get_angular_damping()),"subir":c.get_editor_property("can_character_step_up_on")==U.CanBeCharacterBase.ECB_YES}
         controlados[oid] = d
     return {"level": _level(), "controlados": controlados, "fora": sorted(fora, key=lambda x: x["caminho"]),
             "por_salvar": _sujos()}
@@ -347,6 +372,79 @@ def assets_find(termos: list, limite: int = 20):
             "escopo": "/Game; nomes e caminhos, nao busca semantica nem biblioteca do Fab"}
 
 
+@op
+def catalog_snapshot():
+    """Metadados da cena e AssetRegistry, sem carregar todas as malhas."""
+    atores=[]
+    for a in _eas().get_all_level_actors():
+        if a.get_class().get_name().startswith(IGNORAR):continue
+        d=_descrever(a);d['id'],d['tipo']=_etiquetas(a)
+        componentes=list(a.get_components_by_class(U.StaticMeshComponent))+list(a.get_components_by_class(U.DynamicMeshComponent))
+        caixas=[(_v(b[0]),_v(b[1])) for b in (U.SystemLibrary.get_component_bounds(c) for c in componentes)]
+        if caixas:
+            mn=[min(b[0][j]-b[1][j] for b in caixas) for j in range(3)]
+            mx=[max(b[0][j]+b[1][j] for b in caixas) for j in range(3)]
+            d['dimensoes_cm']=[round(mx[j]-mn[j],3) for j in range(3)]
+        d['assets']=[c.static_mesh.get_path_name().rsplit('.',1)[0] for c in componentes if isinstance(c,U.StaticMeshComponent) and c.static_mesh]
+        atores.append(d)
+    assets=[]
+    for a in U.AssetRegistryHelpers.get_asset_registry().get_assets_by_path('/Game',recursive=True):
+        assets.append({'nome':str(a.asset_name),'caminho':str(a.package_name),'classe':str(a.asset_class_path.asset_name)})
+    return {'level':_level(),'atores':atores,'assets':assets,'motor':U.SystemLibrary.get_engine_version()}
+
+
+def _massa(c):
+    """Massa sem chamar GetMass em corpo que nao simula (parede, piso): isso enchia o log de avisos (#37).
+    Sem simulacao, devolve a massa fixada no corpo, ou None quando nao ha."""
+    if c.is_simulating_physics():
+        return round(float(c.get_mass()), 3)
+    try:
+        corpo = c.get_editor_property("body_instance")
+        if corpo.get_editor_property("override_mass"):
+            return round(float(corpo.get_editor_property("mass_in_kg_override")), 3)
+    except Exception:
+        pass
+    return None
+
+
+@op
+def scene_geometry(mundo: str = "editor", colisoes: bool = False):
+    """Geometria de componentes fisicos; exclui billboards dos bounds de moveis."""
+    w = _mundo_jogo() if mundo == "jogo" else _mundo_editor()
+    atores = U.GameplayStatics.get_all_actors_of_class(w, U.Actor) if mundo == "jogo" else _eas().get_all_level_actors()
+    saida = []
+    for a in atores:
+        if a.get_class().get_name().startswith(IGNORAR):
+            continue
+        oid, tipo = _etiquetas(a)
+        partes = []
+        for c in list(a.get_components_by_class(U.StaticMeshComponent))+list(a.get_components_by_class(U.DynamicMeshComponent)):
+            mesh=c.static_mesh if isinstance(c,U.StaticMeshComponent) else None
+            if c.get_collision_enabled() == U.CollisionEnabled.NO_COLLISION or (isinstance(c,U.StaticMeshComponent) and mesh is None):
+                continue
+            centro, ext, _ = U.SystemLibrary.get_component_bounds(c)
+            v, av = c.get_physics_linear_velocity(), c.get_physics_angular_velocity_in_degrees()
+            parte={"nome": c.get_name(), "centro": _v(centro), "meia_extensao": _v(ext),
+                "asset": mesh.get_path_name() if mesh else None, "fisica": bool(c.is_simulating_physics()),
+                "massa_kg": _massa(c), "velocidade": _v(v), "velocidade_angular": _v(av),
+                "movel": c.get_editor_property("mobility") == U.ComponentMobility.MOVABLE}
+            if colisoes and parte["movel"]:
+                try:
+                    tipos=[getattr(U.ObjectTypeQuery,n) for n in dir(U.ObjectTypeQuery) if n.startswith("OBJECT_TYPE_QUERY")]
+                    tocados=U.SystemLibrary.component_overlap_actors(c,c.get_world_transform(),tipos,U.Actor,[a])
+                    parte["sobreposicoes_nativas"]=[b.get_path_name() for b in (tocados or [])]
+                except Exception as exc:
+                    parte["sobreposicoes_erro"]=str(exc)
+            partes.append(parte)
+        if partes:
+            d = _descrever(a)
+            d.update({"id": oid, "tipo": tipo, "componentes_fisicos": partes,
+                "min": [min(c["centro"][j]-c["meia_extensao"][j] for c in partes) for j in range(3)],
+                "max": [max(c["centro"][j]+c["meia_extensao"][j] for c in partes) for j in range(3)]})
+            saida.append(d)
+    return {"atores": saida, "mundo": mundo}
+
+
 def _uma(a: dict, idx: dict) -> str:
     acao, oid = a["acao"], a["id"]
     if acao == "remover":
@@ -359,7 +457,17 @@ def _uma(a: dict, idx: dict) -> str:
             raise RuntimeError(f"já existe: {oid}")
         classe = a["classe"]
         loc, rot = _vec(a["loc"]), _rot(a["rot"])
-        if classe.startswith("/Script/"):
+        origem=a.get("objeto",{}).get("adotar") or a.get("objeto",{}).get("duplicar")
+        if origem:
+            fonte=next((v for v in _eas().get_all_level_actors() if v.get_path_name()==origem),None)
+            if fonte is None: raise ValueError("ator de origem nao encontrado")
+            if a["objeto"].get("converter"):
+                ator=_eas().spawn_actor_from_class(U.StaticMeshActor,loc,rot)
+                if a["objeto"].get("adotar"): _eas().destroy_actor(fonte)
+            else:
+                ator=fonte if a["objeto"].get("adotar") else _eas().duplicate_actor(fonte)
+            ator.set_actor_location_and_rotation(loc,rot,False,True)
+        elif classe.startswith("/Script/"):
             cls = U.load_class(None, classe)
             if cls is None:
                 raise RuntimeError(f"classe desconhecida: {classe}")
@@ -388,11 +496,117 @@ def _uma(a: dict, idx: dict) -> str:
         ator.set_actor_scale3d(_vec(a["escala"]))
     for nome, v in (a.get("params") or {}).items():
         ator.set_editor_property(nome, float(v))  # mudar a variável faz o Unreal rodar o Construction Script de novo
+    if a.get("objeto"):
+        d=a["objeto"]
+        comps=ator.get_components_by_class(U.StaticMeshComponent)
+        if len(comps)!=1: raise ValueError("objeto precisa de um corpo de malha; use composicao para unir pecas")
+        c=comps[0]
+        mesh=U.load_asset(d["asset"])
+        if mesh is None: raise ValueError("malha do objeto nao encontrada")
+        if c.static_mesh!=mesh: c.set_static_mesh(mesh)
+        c.set_mobility(U.ComponentMobility.MOVABLE)
+        c.set_collision_profile_name("PhysicsActor")
+        c.set_collision_enabled(U.CollisionEnabled.QUERY_AND_PHYSICS)
+        c.set_mass_override_in_kg('',float(d["massa_kg"]),True)
+        c.set_linear_damping(float(d["amortecimento_linear"]))
+        c.set_angular_damping(float(d["amortecimento_angular"]))
+        c.set_editor_property('can_character_step_up_on',U.CanBeCharacterBase.ECB_YES if d['subir'] else U.CanBeCharacterBase.ECB_NO)
+        c.set_simulate_physics(bool(d['simular']))
     if a.get("tipo") == "nav":
         nav = U.NavigationSystemV1.get_navigation_system(_mundo_editor())
         if nav is not None:
             nav.on_navigation_bounds_updated(ator)
     return "criado" if acao == "criar" else "atualizado"
+
+
+def _modelo_mesh(mesh):
+    b=mesh.get_bounds()
+    return {"asset":mesh.get_path_name().rsplit('.',1)[0],"tamanho":[float(b.box_extent.x)*2,float(b.box_extent.y)*2,float(b.box_extent.z)*2],
+            "centro":_v(b.origin),"min_z":float(b.origin.z-b.box_extent.z)}
+
+
+def _modelo_composto_existente(a, cs):
+    temporarios=[];unido=None
+    try:
+        for c in cs:
+            if c.static_mesh is None: continue
+            b=_eas().spawn_actor_from_class(U.StaticMeshActor,c.get_world_location(),c.get_world_rotation())
+            temporarios.append(b);b.static_mesh_component.set_static_mesh(c.static_mesh)
+            b.set_actor_scale3d(c.get_world_scale())
+            for i in range(c.get_num_materials()): b.static_mesh_component.set_material(i,c.get_material(i))
+        settings=U.MeshMergingSettings();settings.set_editor_property('merge_physics_data',True)
+        settings.set_editor_property('generate_light_map_uv',False)
+        options=U.MergeStaticMeshActorsOptions()
+        import uuid
+        for k,v in {'base_package_name':PASTA+'/Objetos/SM_Adotado_'+uuid.uuid4().hex[:12],
+                    'destroy_source_actors':False,'spawn_merged_actor':True,'mesh_merging_settings':settings}.items():options.set_editor_property(k,v)
+        unido=U.get_editor_subsystem(U.StaticMeshEditorSubsystem).merge_static_mesh_actors(temporarios,options)
+        if unido is None: raise RuntimeError('nao uniu componentes do objeto existente')
+        mesh=unido.static_mesh_component.static_mesh;U.EditorAssetLibrary.save_loaded_asset(mesh)
+        proxy=_descrever(a)
+        proxy.update(classe='/Script/Engine.StaticMeshActor',loc=_v(unido.get_actor_location()),rot=[0,0,0],escala=[1,1,1])
+        return {'modelo':_modelo_mesh(mesh),'ator':proxy,'converter':True,'limite':'componentes convertidos em malha unica; comportamento de Blueprint nao e transferido'}
+    finally:
+        if unido is not None:_eas().destroy_actor(unido)
+        for b in temporarios:_eas().destroy_actor(b)
+
+
+@op
+def object_model(asset: str = "", ator: str = "", partes: list = None):
+    """Inspeciona um asset/ator ou compoe partes usando merge nativo e colisao composta."""
+    if partes:
+        code=json.dumps(partes,sort_keys=True)
+        caminho=PASTA+'/Objetos/SM_'+hashlib.sha256(code.encode()).hexdigest()[:16]
+        if U.EditorAssetLibrary.does_asset_exist(caminho): return {"modelo":_modelo_mesh(U.load_asset(caminho)),"reutilizado":True}
+        temporarios=[];unido=None
+        try:
+            for i,p in enumerate(partes):
+                mesh=U.load_asset(p.get('asset','/Engine/BasicShapes/Cube'))
+                m=_modelo_mesh(mesh)
+                size=p['tamanho_cm'];offset=p['centro_cm']
+                if len(size)!=3 or len(offset)!=3 or any(not math.isfinite(float(v)) for v in size+offset) or min(size)<=0:raise ValueError('parte requer tamanho positivo e centro finito em tres eixos')
+                escala=[float(size[j])/m['tamanho'][j] for j in range(3)]
+                loc=[float(offset[j])-m['centro'][j]*escala[j] for j in range(3)]
+                a=_eas().spawn_actor_from_class(U.StaticMeshActor,_vec(loc),U.Rotator())
+                temporarios.append(a);a.set_actor_label('DirectorComposicaoTmp')
+                a.static_mesh_component.set_static_mesh(mesh);a.set_actor_scale3d(_vec(escala))
+            settings=U.MeshMergingSettings();settings.set_editor_property('merge_physics_data',True)
+            settings.set_editor_property('generate_light_map_uv',False)
+            options=U.MergeStaticMeshActorsOptions()
+            for k,v in {'base_package_name':caminho,'destroy_source_actors':False,'spawn_merged_actor':True,'mesh_merging_settings':settings}.items(): options.set_editor_property(k,v)
+            unido=U.get_editor_subsystem(U.StaticMeshEditorSubsystem).merge_static_mesh_actors(temporarios,options)
+            if unido is None: raise RuntimeError('merge nativo nao criou objeto')
+            mesh=unido.static_mesh_component.static_mesh
+            U.EditorAssetLibrary.save_loaded_asset(mesh)
+            return {'modelo':_modelo_mesh(mesh),'reutilizado':False}
+        finally:
+            if unido is not None: _eas().destroy_actor(unido)
+            for a in temporarios: _eas().destroy_actor(a)
+    if ator:
+        encontrados=[a for a in _eas().get_all_level_actors() if a.get_path_name()==ator or a.get_actor_label()==ator]
+        if len(encontrados)!=1: raise ValueError('ator inexistente ou rotulo ambiguo; informe caminho completo')
+        a=encontrados[0];cs=a.get_components_by_class(U.StaticMeshComponent)
+        if not cs:
+            dinamicas=a.get_components_by_class(U.DynamicMeshComponent)
+            if len(dinamicas)!=1: raise ValueError('ator precisa de malha estatica ou uma malha dinamica')
+            if abs(a.get_actor_rotation().pitch)>.01 or abs(a.get_actor_rotation().roll)>.01:raise ValueError('malha dinamica inclinada requer transformacao incorporada')
+            c=dinamicas[0]
+            import uuid
+            caminho=PASTA+'/Objetos/SM_Dinamico_'+uuid.uuid4().hex[:12]
+            mesh,outcome=U.GeometryScript_NewAssetUtils.create_new_static_mesh_asset_from_mesh(c.get_dynamic_mesh(),caminho,U.GeometryScriptCreateNewStaticMeshAssetOptions())
+            if mesh is None: raise RuntimeError('conversao GeometryScript falhou: '+str(outcome))
+            for i in range(c.get_num_materials()):mesh.set_material(i,c.get_material(i))
+            sms=U.get_editor_subsystem(U.StaticMeshEditorSubsystem)
+            if not sms.set_convex_decomposition_collisions(mesh,16,32,100000): raise RuntimeError('nao gerou colisao convexa do objeto')
+            U.EditorAssetLibrary.save_loaded_asset(mesh)
+            proxy=_descrever(a);proxy['classe']='/Script/Engine.StaticMeshActor'
+            return {'modelo':_modelo_mesh(mesh),'ator':proxy,'converter':True,'limite':'geometria dinamica convertida por GeometryScript; comportamento de Blueprint nao e transferido'}
+        if len(cs)!=1 or a.get_editor_property('root_component')!=cs[0]: return _modelo_composto_existente(a,cs)
+        if abs(a.get_actor_rotation().pitch)>.01 or abs(a.get_actor_rotation().roll)>.01: raise ValueError('objeto inclinado requer modelo com transformacao incorporada')
+        return {'modelo':_modelo_mesh(cs[0].static_mesh),'ator':_descrever(a)}
+    mesh=U.load_asset(asset)
+    if not isinstance(mesh,U.StaticMesh): raise ValueError('asset precisa ser StaticMesh')
+    return {'modelo':_modelo_mesh(mesh)}
 
 
 @op
@@ -483,7 +697,9 @@ def _freio_de_fundo(soltar: bool):
     st = _estado()
     try:
         cfg = U.load_object(None, "/Script/UnrealEd.Default__EditorPerformanceSettings")
-        prop = "throttle_cpu_when_not_foreground"
+        # Esta classe nao tem wrapper Python proprio nesta instalacao. O nome
+        # C++ refletido funciona; o alias snake_case nao e encontrado.
+        prop = "bThrottleCPUWhenNotForeground"
         anterior = getattr(st, "freio_anterior", None)
         if soltar:
             if anterior is None:
@@ -492,9 +708,12 @@ def _freio_de_fundo(soltar: bool):
         elif anterior is not None:
             cfg.set_editor_property(prop, anterior)
             st.freio_anterior = None
-        return bool(cfg.get_editor_property(prop))
+        return {"aplicado": True, "atual": bool(cfg.get_editor_property(prop)),
+                "anterior": anterior if anterior is not None else getattr(st,"freio_anterior",None),
+                "restaurado": not soltar and anterior is not None, "propriedade": prop,
+                "persistido": False}
     except Exception as e:  # noqa: BLE001
-        return f"erro: {e}"
+        return {"aplicado": False, "atual": None, "erro": str(e), "persistido": False}
 
 
 def _parar_amostragem():
@@ -514,11 +733,16 @@ def play_start(simulate: bool = True, full_speed: bool = True):
     if _mundo_jogo() is not None:
         raise RuntimeError("ja_em_play")
     freio = _freio_de_fundo(True) if full_speed else None
-    if simulate:
-        _les().editor_play_simulate()
-    else:
-        _les().editor_request_begin_play()
-    return {"modo": "simulate" if simulate else "pie", "economia_de_cpu_ligada": freio}
+    try:
+        if simulate:
+            _les().editor_play_simulate()
+        else:
+            _les().editor_request_begin_play()
+    except Exception:
+        if full_speed:_freio_de_fundo(False)
+        raise
+    return {"modo": "simulate" if simulate else "pie", "controle_cpu":freio,
+            "economia_de_cpu_ligada":freio.get('atual') if freio else None}
 
 
 @op
@@ -534,7 +758,8 @@ def play_stop():
     _estado().andar = None
     if _mundo_jogo() is not None:
         _les().editor_request_end_play()
-    return {"pedido": "parar", "economia_de_cpu_ligada": _freio_de_fundo(False)}
+    freio=_freio_de_fundo(False)
+    return {"pedido": "parar", "controle_cpu":freio,"economia_de_cpu_ligada":freio['atual']}
 
 
 def _raiz_fisica(ator):
@@ -714,3 +939,77 @@ def sim_walk_state(amostras_desde: int = -1):
     if amostras_desde >= 0:
         d["amostras"] = andar["amostras"][amostras_desde:]
     return d
+
+# Ajustes de navegacao usam resolucoes e modificadores nativos do Unreal.
+def _nav_dados(a):
+    return {'ator':a.get_path_name(),'raio_cm':a.get_editor_property('agent_radius'),
+        'tile_cm':a.get_editor_property('tile_size_uu'),
+        'resolucoes':[{k:p.get_editor_property(k) for k in ('cell_size','cell_height','agent_max_step_height')}
+            for p in a.get_editor_property('nav_mesh_resolution_params')]}
+
+
+@op
+def nav_config(acao='diagnosticar',celula_cm=5.0,altura_cm=2.0,regiao=None,escopo='regiao',backup=None):
+    navs=[a for a in _eas().get_all_level_actors() if isinstance(a,U.RecastNavMesh)]
+    if acao=='diagnosticar':return {'malhas':[_nav_dados(a) for a in navs], 'level':info()['level']}
+    if _mundo_jogo() is not None:raise ValueError('pare o Play antes de ajustar navegacao')
+    if acao not in ('ajustar','restaurar'):raise ValueError('acao desconhecida')
+    anterior={'malhas':[_nav_dados(a) for a in navs], 'level':info()['level'],'criados':[]}
+    if acao=='restaurar':
+        if not backup or backup['level']!=info()['level']:raise ValueError('backup precisa pertencer ao level aberto')
+        por_path={a.get_path_name():a for a in navs}
+        for d in backup['malhas']:
+            a=por_path[d['ator']];ps=[p.copy() for p in a.get_editor_property('nav_mesh_resolution_params')]
+            for p,old in zip(ps,d['resolucoes']):
+                for k,v in old.items():p.set_editor_property(k,v)
+            a.set_editor_property('nav_mesh_resolution_params',ps)
+            a.set_editor_property('agent_radius',d['raio_cm'])
+        for a in list(_eas().get_all_level_actors()):
+            if a.get_path_name() in backup.get('criados',[]):_eas().destroy_actor(a)
+    else:
+        if escopo not in ('regiao','level'):raise ValueError('escopo deve ser regiao ou level')
+        if not all(math.isfinite(float(x)) and float(x)>0 for x in (celula_cm,altura_cm)):raise ValueError('celulas positivas e finitas')
+        if escopo=='regiao' and (not regiao or len(regiao)!=2 or any(len(x)!=3 for x in regiao) or any(not math.isfinite(v) for x in regiao for v in x) or any(a>=b for a,b in zip(*regiao))):raise ValueError('regiao deve ter min/max tridimensionais crescentes')
+        for a in navs:
+            ps=[p.copy() for p in a.get_editor_property('nav_mesh_resolution_params')]
+            for n,p in enumerate(ps):
+                if escopo=='level' or n==2:
+                    p.set_editor_property('cell_size',float(celula_cm));p.set_editor_property('cell_height',float(altura_cm))
+            a.set_editor_property('nav_mesh_resolution_params',ps)
+        if escopo=='regiao':
+            centro=[(a+b)/2 for a,b in zip(*regiao)];ext=[(b-a)/2 for a,b in zip(*regiao)]
+            a=_eas().spawn_actor_from_class(U.NavModifierVolume,_vec(centro));a.set_actor_label('Director.nav_refino')
+            a.set_actor_scale3d(_vec([v/100 for v in ext]))
+            a.set_editor_property('area_class',None)
+            a.set_editor_property('nav_mesh_resolution',U.NavigationDataResolution.HIGH)
+            # PostEditChangeProperty nao atualiza dados ao mudar NavMeshResolution
+            # em 5.8. SetAreaClass chama UpdateActorData depois do perfil definido.
+            a.set_area_class(U.NavArea_Default)
+            anterior['criados'].append(a.get_path_name())
+    nav=U.NavigationSystemV1.get_navigation_system(_mundo_editor())
+    for a in _eas().get_all_level_actors():
+        if isinstance(a,U.NavMeshBoundsVolume):nav.on_navigation_bounds_updated(a)
+    U.SystemLibrary.execute_console_command(_mundo_editor(),'RebuildNavigation')
+    return {'backup':anterior,'atual':[_nav_dados(a) for a in navs], 'escopo':escopo,
+        'aviso':'regiao afeta tiles tocados e qualquer outro modificador HIGH que use o perfil alterado; level afeta toda a malha',
+        'rebuild_solicitado':True,'custo_nao_medido':['memoria e FPS; tempo de estabilizacao e medido pelo cliente']}
+
+@op
+def api_export(caminho: str, classes: list):
+    """Exporta documentacao real da instalacao, sem devolver todo o texto ao agente."""
+    from pathlib import Path
+    from datetime import datetime,timezone
+    dados=[];ausentes=[]
+    for nome in classes:
+        cls=getattr(U,nome,None)
+        if cls is None:ausentes.append(nome);continue
+        dados.append({'simbolo':nome,'tipo':'classe','doc':cls.__doc__ or ''})
+        for metodo in dir(cls):
+            if metodo.startswith('_'):continue
+            valor=getattr(cls,metodo,None)
+            if callable(valor) and getattr(valor,'__doc__',None):
+                dados.append({'simbolo':nome+'.'+metodo,'tipo':'metodo','doc':valor.__doc__})
+    p=Path(caminho);p.parent.mkdir(parents=True,exist_ok=True)
+    meta={'motor':info()['motor'],'gerado_utc':datetime.now(timezone.utc).isoformat(),'classes':classes,'ausentes':ausentes}
+    p.write_text(json.dumps({'meta':meta,'entradas':dados},ensure_ascii=True),encoding='utf-8')
+    return {'arquivo':str(p),'entradas':len(dados),'bytes':p.stat().st_size,**meta}

@@ -10,6 +10,7 @@ Duas salas encostadas (a uma parede de distância) dividem a parede: ela sai uma
 em ordem alfabética, e o vão posto por qualquer das duas corta essa parede.
 """
 from . import pecas as P
+import math
 from .operacoes import VAOS, trechos_de_parede, vao_no_mundo
 
 MARGEM_NAV = 300.0  # cm de área navegável em volta da sala (para o personagem chegar pela porta)
@@ -99,6 +100,14 @@ def derivar(planta: dict) -> dict:
                                         0.0, {}, escala=[v / base for v in tam])
         elif t in VAOS:
             saida[oid] = _vao(o, objs[o["sala"]])
+        elif t == "asset":
+            m=o["modelo"]; escala=[o[k]/m["tamanho"][i] for i,k in enumerate(("largura","profundidade","altura"))]
+            cx,cy=[m["centro"][i]*escala[i] for i in (0,1)]
+            g=math.radians(o["giro"])
+            loc=[o["x"]-cx*math.cos(g)+cy*math.sin(g),o["y"]-cx*math.sin(g)-cy*math.cos(g),o["z"]-m["min_z"]*escala[2]]
+            saida[oid]={"tipo":"asset","classe":o.get("classe","/Script/Engine.StaticMeshActor"),"loc":loc,
+                "rot":[0.0,o["giro"],0.0],"escala":escala,"params":{},
+                "objeto":{"asset":m["asset"],**o["fisica"],**{k:o[k] for k in ("adotar","duplicar","converter") if k in o}}}
         elif t == "mesa":
             saida[oid] = _peca("mesa", (o["x"], o["y"], objs[o["sala"]]["z"]), o["giro"],
                                {"Largura": o["largura"], "Profundidade": o["profundidade"], "Altura": o["altura"]})

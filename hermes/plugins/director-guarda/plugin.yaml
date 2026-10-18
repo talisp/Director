@@ -1,6 +1,6 @@
 name: director-guarda
-version: "0.2.0"
-description: "Corrige argumentos malformados da ferramenta clarify enviados pelo modelo local; não cria cartões de aprovação."
+version: "0.3.0"
+description: "Corrige argumentos malformados do clarify, limita cada espera a 60 s e barra duas alterações na mesma cena ao mesmo tempo; não cria cartões de aprovação."
 author: "Talis / Codex"
 provides_hooks:
   - pre_tool_call
