@@ -70,6 +70,8 @@ OPERACOES: dict = {
                    "largura_m": (NUM, False, ""), "altura_m": (NUM, False, ""),
                    "peitoril_m": (NUM, False, "janela: altura da base do vão"),
                    "angulo": (NUM, False, "porta: 0 fechada, 90 aberta"),
+                   "dobradica": (TXT, False, "porta: inicio | fim do vao; omitido preserva o padrao da parede"),
+                   "sentido": (TXT, False, "porta: dentro | fora; omitido abre para dentro"),
                    "x_m": (NUM, False, "mesa: posição do centro, medida do canto sudoeste da sala; padrão: meio da sala"),
                    "y_m": (NUM, False, ""), "giro": (NUM, False, "mesa: graus"),
                    "profundidade_m": (NUM, False, "mesa"),
@@ -82,6 +84,7 @@ OPERACOES: dict = {
                    "parede": (TXT, False, "porta e janela: sul | norte | leste | oeste | oposta"),
                    "posicao_m": (NUM, False, ""), "largura_m": (NUM, False, ""), "altura_m": (NUM, False, ""),
                    "peitoril_m": (NUM, False, ""), "angulo": (NUM, False, "porta: 0 fechada, 90 aberta"),
+                   "dobradica": (TXT, False, "porta: inicio | fim"), "sentido": (TXT, False, "porta: dentro | fora"),
                    "x_m": (NUM, False, "mesa: medido do canto sudoeste da sala"), "y_m": (NUM, False, ""),
                    "giro": (NUM, False, ""), "profundidade_m": (NUM, False, ""), "diametro_m": (NUM, False, "")},
     },
@@ -90,6 +93,24 @@ OPERACOES: dict = {
         "campos": {"id": (TXT, True, "nome da peça")},
     },
 }
+
+
+def avisos(planta):
+    """Alertas semanticos baratos; janela interna e permitida, mas precisa ser informada."""
+    saida=[]
+    for oid,o in planta['objetos'].items():
+        if o['tipo']!='janela':continue
+        chave,ini,fim=vao_no_mundo(planta,o)
+        for sid,s in planta['objetos'].items():
+            if s['tipo']!='sala' or sid==o['sala']:continue
+            for lado in LADOS:
+                outra,a,b=_linha(s,lado)
+                if outra==chave and min(fim,b)-max(ini,a)>.01:
+                    saida.append({'codigo':'janela_em_parede_compartilhada','objeto':oid,
+                        'salas':[o['sala'],sid],'parede':o['parede'],
+                        'motivo':'janela nesta parede comunica com outro comodo; nao e abertura externa',
+                        'proxima_acao':'pergunte se e janela interna ou informe explicitamente essa escolha; nao recuse nem mova sozinha'})
+    return saida
 
 
 def capacidades() -> dict:
@@ -288,6 +309,8 @@ def _colocar(planta: dict, d: dict) -> str:
         raise Invalida(f"tipo desconhecido: {tipo!r}. Existem: {', '.join(VAOS + MOVEIS + OBJETOS)}")
     oid = _id_livre(planta, d, tipo)
     pad = PADROES[tipo]
+    if tipo!='porta' and any(k in d for k in ('dobradica','sentido')):
+        raise Invalida('dobradica e sentido sao campos de porta')
     if tipo in VAOS:
         sala_id = _unico(planta, ("sala",), d.get("sala"), "sala")
         parede = d.get("parede", pad["parede"])
@@ -298,6 +321,8 @@ def _colocar(planta: dict, d: dict) -> str:
              "largura": _cm(d, "largura_m", pad["largura"]), "altura": _cm(d, "altura_m", pad["altura"])}
         if tipo == "porta":
             o["angulo"] = float(d.get("angulo", pad["angulo"]))
+            for k in ('dobradica','sentido'):
+                if k in d:o[k]=d[k]
         else:
             o["peitoril"] = _cm(d, "peitoril_m", pad["peitoril"])
     elif tipo in MOVEIS:
@@ -335,7 +360,7 @@ def _mudar(planta: dict, d: dict) -> str:
     tipo = o["tipo"]
     if tipo == "sala":
         raise Invalida("para mudar uma sala use a operação mudar_sala")
-    aceitos = {"porta": ("parede", "posicao_m", "largura_m", "altura_m", "angulo"),
+    aceitos = {"porta": ("parede", "posicao_m", "largura_m", "altura_m", "angulo", "dobradica", "sentido"),
                "janela": ("parede", "posicao_m", "largura_m", "altura_m", "peitoril_m"),
                "mesa": ("x_m", "y_m", "giro", "largura_m", "profundidade_m", "altura_m"),
                "asset": ("x_m", "y_m", "giro", "largura_m", "profundidade_m", "altura_m"),
@@ -357,6 +382,8 @@ def _mudar(planta: dict, d: dict) -> str:
                 o[chave] = _cm(d, campo)
         if "angulo" in d:
             o["angulo"] = float(d["angulo"])
+        for k in ('dobradica','sentido'):
+            if k in d:o[k]=d[k]
     elif tipo in MOVEIS:
         sala = planta["objetos"][o["sala"]]
         antes = dict(o)
@@ -484,6 +511,10 @@ def conferir(planta: dict, final: bool = True) -> None:
             raise Invalida(f"{oid} não cabe na altura da parede de {o['sala']} ({s['altura'] / 100:g} m)")
         if o["tipo"] == "porta" and not -1e-6 <= o["angulo"] <= 120.0:
             raise Invalida(f"{oid}: ângulo de {o['angulo']:g} fora do aceito (0 a 120)")
+        if o['tipo']=='porta':
+            from . import portas
+            if portas.dobradica(o) not in ('inicio','fim') or o.get('sentido','dentro') not in ('dentro','fora'):
+                raise Invalida(f'{oid}: dobradica requer inicio|fim e sentido requer dentro|fora')
         chave, mi, mf = vao_no_mundo(planta, o)
         for outro_id, v in objs.items():
             if outro_id < oid and v["tipo"] in VAOS:
@@ -544,6 +575,17 @@ def conferir(planta: dict, final: bool = True) -> None:
             raise Invalida(f"{oid} sairia para fora de {o['sobre']}: coloque dentro do tampo ou diminua")
         if o["z"] + o["altura"] > objs[o["sala"]]["z"] + objs[o["sala"]]["altura"]:
             raise Invalida(f"{oid} sobre {o['sobre']} passaria do teto")
+    if final:
+        from . import portas
+        for pid,p in objs.items():
+            if p['tipo']!='porta':continue
+            s=objs[p['sala']]
+            folha=portas.vertices({**p,'espessura_parede':s['parede']},s['largura'],s['comprimento'])
+            folha=[(x+s['x'],y+s['y']) for x,y in folha]
+            for oid,o in objs.items():
+                if o['tipo'] not in MOVEIS or o.get('z',s['z'])>=s['z']+p['altura']:continue
+                if portas.sobrepoem(folha,portas.movel_vertices(o)):
+                    raise Invalida(f'{pid}: folha na abertura solicitada colide com {oid}; altere lado, sentido, angulo ou disposicao')
     for oid, o in objs.items():
         if o["tipo"] not in OBJETOS:
             continue

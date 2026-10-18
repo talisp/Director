@@ -12,6 +12,7 @@ em ordem alfabética, e o vão posto por qualquer das duas corta essa parede.
 from . import pecas as P
 import math
 from .operacoes import VAOS, trechos_de_parede, vao_no_mundo
+from . import portas
 
 MARGEM_NAV = 300.0  # cm de área navegável em volta da sala (para o personagem chegar pela porta)
 FOLGA_NAV_Z = 100.0
@@ -75,12 +76,12 @@ def _vao(o: dict, s: dict) -> dict:
         return _peca("janela", (ox + dx * ini, oy + dy * ini, z), giro, {"Largura": o["largura"], "Altura": o["altura"]})
     # a folha gira para o +Y local da peça: nas paredes norte e oeste o +Y do giro da parede aponta para fora,
     # então a dobradiça vai para a outra ponta do vão e a peça gira 180 graus
-    if lado in ("norte", "oeste"):
+    if portas.dobradica(o) == 'fim':
         ancora, giro = fim, giro + 180.0
     else:
         ancora = ini
     return _peca("porta", (ox + dx * ancora, oy + dy * ancora, z), giro,
-                 {"Largura": o["largura"], "Altura": o["altura"], "Angulo": o["angulo"]})
+                 {"Largura": o["largura"], "Altura": o["altura"], "Angulo": o["angulo"] * portas.sinal(o)})
 
 
 def derivar(planta: dict) -> dict:

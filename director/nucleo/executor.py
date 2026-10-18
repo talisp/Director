@@ -111,6 +111,7 @@ def _efetivar(editor, raiz_cenas: str, planta0: dict, planta2: dict, inv0: dict,
     mesmos = sorted(pid for pid, d in inv1["controlados"].items()
                     if pid in inv0["controlados"] and inv0["controlados"][pid]["caminho"] == d["caminho"])
     return {"ok": True, "revisao": planta2["revisao"], "resumo": resumo,
+            "avisos": OP.avisos(planta2),
             "acoes": [[a["acao"], a["id"]] + (sorted(a.get("params", {})) if a["acao"] == "atualizar" else []) for a in acoes],
             "adotados": rel["adotados"], "levados_junto": rel.get("levados_junto", []),
             "estrutura_reposta": rel["estrutura_divergente"], "pecas": len(alvo), "atores_mantidos": mesmos,
@@ -212,9 +213,12 @@ def incorporar(cena: str, editor, raiz_cenas: str, lab_dir: str = "", pasta_pont
                 o.update(x=s['loc'][0]+cx*math.cos(g)-cy*math.sin(g),y=s['loc'][1]+cx*math.sin(g)+cy*math.cos(g),
                          z=s['loc'][2]+m['min_z']*es[2],giro=s['rot'][1])
                 resumo.append(oid+' incorporado do Play (posicao e giro vertical)')
-            elif o["tipo"] == "porta" and "angulo" in s and abs(s["angulo"] - o["angulo"]) > PN.TOL_GRAUS:
-                o["angulo"] = s["angulo"]
-                resumo.append(f"{oid} incorporada com {s['angulo']:g} graus")
+            elif o["tipo"] == "porta" and "angulo" in s:
+                from . import portas
+                angulo = s["angulo"] * portas.sinal(o)
+                if abs(angulo-o['angulo']) > PN.TOL_GRAUS:
+                    o["angulo"] = angulo
+                    resumo.append(f"{oid} incorporada com {angulo:g} graus")
         OP.conferir(planta2)
         res = _efetivar(editor, raiz_cenas, planta0, planta2, inv0, rel, resumo, lab_dir, pasta_pontos, pausa)
         res["lido_no_play"] = {k: v for k, v in lido.items() if not ids or k in ids}
@@ -234,6 +238,7 @@ def estado(cena: str, editor, raiz_cenas: str) -> dict:
     _, rel = PN.conciliar(planta0, inv["controlados"])
     return {"cena": cena, "planta": PL.caminho(raiz_cenas,cena), "nivel": planta0["nivel"], "revisao": planta0["revisao"], "level_aberto": True, "objetos": sorted(planta0["objetos"]),
             "objetos_registrados": len(planta0["objetos"]),
+            "avisos": OP.avisos(planta0),
             "pecas_no_unreal": len(inv["controlados"]), "outros_atores": len(inv["fora"]),
             "diferencas": PN.diferencas(D.derivar(planta0), inv["controlados"]), "conciliacao": rel,
             "por_salvar": inv["por_salvar"]}

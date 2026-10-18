@@ -122,13 +122,15 @@ def resolver(pedido,filtro=True):
             b={'sul':(lo,0,hi-lo,d),'norte':(lo,H-d,hi-lo,d),
                 'oeste':(0,lo,d,hi-lo),'leste':(W-d,lo,d,hi-lo)}[a['parede']]
             separar((x,y,w,h),b)
-            if a['tipo']=='porta':
+            if a['tipo']=='porta' and a.get('sentido','dentro')=='dentro':
                 # Primeira tentativa: livre o quadrado (2 x raio) logo apos a ponta da folha aberta, por onde o
                 # boneco contorna a folha. Se nao der, a busca segue sem essa pista (so com o filtro 2D).
                 L=math.ceil(a['largura']);R=int(pedido.get('raio_cm',RAIO_CM))
                 i0,f0=math.floor(a['posicao']-a['largura']/2),math.ceil(a['posicao']+a['largura']/2)
-                qd={'oeste':(L,f0-R,2*R,2*R),'leste':(W-L-2*R,i0-R,2*R,2*R),
-                    'sul':(i0-R,L,2*R,2*R),'norte':(f0-R,H-L-2*R,2*R,2*R)}[a['parede']]
+                from .nucleo import portas
+                pos_dobradica=i0 if portas.dobradica(a)=='inicio' else f0
+                qd={'oeste':(L,pos_dobradica-R,2*R,2*R),'leste':(W-L-2*R,pos_dobradica-R,2*R,2*R),
+                    'sul':(pos_dobradica-R,L,2*R,2*R),'norte':(pos_dobradica-R,H-L-2*R,2*R,2*R)}[a['parede']]
                 separar((x,y,w,h),qd,contornar)
     for a in pedido.get('aberturas',[]):
         # A abertura tem de caber na parede do tamanho testado.
@@ -291,6 +293,7 @@ def planejar(cena,pedido,editor):
         proposta,_=OP.aplicar_ficha(p,{'operacoes':[op]})
         r['ficha_sala']={'operacoes':[op]}
     r['paredes_compartilhadas_planejadas']=compartilhadas(proposta)
+    r['avisos']=OP.avisos(proposta)
     return r
 
 

@@ -148,8 +148,10 @@ def conciliar(planta: dict, controlados: dict) -> tuple:
                     o[chave] = r["params"][var]
                     rel["adotados"].append({"id": pid, "campo": chave, "de": p["params"][var], "para": r["params"][var]})
         elif tipo == "porta" and "Angulo" in errados:
-            o["angulo"] = r["params"]["Angulo"]
-            rel["adotados"].append({"id": pid, "campo": "angulo", "de": p["params"]["Angulo"], "para": r["params"]["Angulo"]})
+            from . import portas
+            antes = o['angulo']
+            o["angulo"] = r["params"]["Angulo"] * portas.sinal(o)
+            rel["adotados"].append({"id": pid, "campo": "angulo", "de": antes, "para": o['angulo']})
             if mudou_lugar or len(errados) > 1:
                 rel["estrutura_divergente"].append(pid)
         elif mudou_lugar or errados or _escala_difere(p["escala"], r["escala"]):
