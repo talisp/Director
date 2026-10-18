@@ -29,7 +29,7 @@ def inspecionar(arquivo,blender=None):
 
 def indexar(pedido):
     t0=time.monotonic();itens=[];erros=[]
-    base=Path(C.WORK)/'biblioteca';base.mkdir(parents=True,exist_ok=True)
+    base=Path(C.BIBLIOTECA);base.mkdir(parents=True,exist_ok=True)
     for f in pedido['fontes']:
         for arquivo in f['arquivos']:
             p=Path(arquivo).resolve()
@@ -60,7 +60,7 @@ def cli(args):
         r=subprocess.run([str(exe),'-m','director.biblioteca'],input=json.dumps(pedido).encode(),capture_output=True,timeout=180,cwd=C.RAIZ)
         if r.returncode:raise RuntimeError(r.stderr.decode(errors='replace')[-1500:])
         return json.loads(r.stdout)
-    d=json.loads((Path(C.WORK)/'biblioteca'/'indice.json').read_text(encoding='utf-8'))
+    d=json.loads((Path(C.BIBLIOTECA)/'indice.json').read_text(encoding='utf-8'))
     return catalogo.consultar(d,{'texto':' '.join(args)})
 
 

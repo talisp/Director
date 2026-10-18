@@ -9,12 +9,13 @@ from . import config as C
 from .nucleo import planta as PL
 
 SINONIMOS={
- 'cadeira':['chair','seat','stool','assento','banco'],
+ 'cadeira':['chair','chair desk','desk chair','seat','stool','assento','banco','armchair','poltrona'],
  'cama':['bed','singlebed','bedsingle','solteiro'],
- 'criado_mudo':['nightstand','bedside','cabinetbed','cabinet bed','cabeceira'],
+ 'criado_mudo':['nightstand','bedside','bedside table','cabinetbed','cabinet bed','cabeceira'],
+ 'estante':['bookcase','bookshelf','shelving'],
  'guarda_roupa':['wardrobe','closet','armario','cabinet','guardaroupa'],
  'escrivaninha':['desk','estudos','study'],
- 'mesa':['table'],'sofa':['couch','armchair','poltrona','sofa'],
+ 'mesa':['table'],'sofa':['couch','sofa'],
 }
 
 
@@ -28,9 +29,15 @@ def _palavras(s):
 
 
 def _aliases(texto):
-    words=_palavras(texto);cats=[];aliases=[]
+    words=_palavras(texto);cats=[];aliases=[];matches=[]
     for cat,terms in SINONIMOS.items():
-        if any(_palavras(t)<=words for t in [cat,*terms]):cats.append(cat);aliases.extend([cat,*terms])
+        for t in [cat,*terms]:
+            p=_palavras(t)
+            if p<=words:matches.append((cat,p))
+    # 'cabinet bed' e criado-mudo; seus fragmentos nao provam cama nem guarda-roupa.
+    for cat,terms in SINONIMOS.items():
+        if any(c==cat and not any(p<outro and c2!=cat for c2,outro in matches) for c,p in matches):
+            cats.append(cat);aliases.extend([cat,*terms])
     return cats,aliases
 
 
@@ -43,6 +50,8 @@ def atualizar(editor,raiz=None):
     for a in snapshot['atores']:
         o=planta['objetos'].get(a['id'],{})
         cats,aliases=_aliases(a['rotulo']+' '+a['classe']+' '+o.get('categoria',''))
+        if o.get('categoria') in SINONIMOS:
+            cats=[o['categoria']];aliases=[o['categoria'],*SINONIMOS[o['categoria']]]
         entries.append({'nome':a['rotulo'],'caminho':a['caminho'],'origem':'cena','estado':'importado',
             'id':a['id'],'na_planta':bool(o),'categoria':cats,'sinonimos':aliases+o.get('apelidos',[]),
             'dimensoes_cm':a.get('dimensoes_cm'),'assets':a['assets'],'classe':a['classe'],
@@ -51,7 +60,7 @@ def atualizar(editor,raiz=None):
         cats,aliases=_aliases(a['nome'])
         entries.append({**a,'origem':'projeto','estado':'importado','categoria':cats,'sinonimos':aliases,
                         'dimensoes_cm':None,'descricao':'asset do projeto; dimensoes ainda nao inspecionadas'})
-    bib=Path(C.WORK)/'biblioteca'/'indice.json'
+    bib=Path(C.BIBLIOTECA)/'indice.json'
     if bib.is_file():entries.extend(json.loads(bib.read_text(encoding='utf-8')).get('itens',[]))
     dados={'gerado_em':dt.datetime.now(dt.timezone.utc).isoformat(),'level':snapshot['level'],'motor':snapshot['motor'],'itens':entries}
     (base/'indice.json').write_text(json.dumps(dados,ensure_ascii=True,indent=2),encoding='utf-8')
@@ -60,12 +69,14 @@ def atualizar(editor,raiz=None):
 
 def consultar(dados,pedido):
     busca=_palavras(pedido.get('texto',''))
+    categorias_busca=set(_aliases(pedido.get('texto',''))[0])
     expandido=set(busca)
     for cat,terms in SINONIMOS.items():
         if any(_palavras(t)<=busca for t in [cat,*terms]):
             for t in [cat,*terms]:expandido.update(_palavras(t))
     resultados=[]
     for a in dados['itens']:
+        if categorias_busca and a.get('categoria') and not categorias_busca.intersection(a['categoria']):continue
         texto=' '.join([a['nome'],a.get('descricao',''),a.get('classe',''),*a.get('categoria',[]),*a.get('sinonimos',[])])
         words=_palavras(texto)
         score=len(busca&words)*3+len(expandido&words)
@@ -74,6 +85,8 @@ def consultar(dados,pedido):
         dims=a.get('dimensoes_cm')
         if pedido.get('maximo_cm'):
             if not dims or any(d>lim for d,lim in zip(dims,pedido['maximo_cm'])):continue
+        if pedido.get('minimo_cm'):
+            if not dims or any(d<lim for d,lim in zip(dims,pedido['minimo_cm'])):continue
         resultados.append(({'cena':0,'projeto':1,'offline':2}.get(a['origem'],3),-score,a['nome'],a))
     resultados.sort(key=lambda x:x[:3]);lim=min(int(pedido.get('limite',8)),50)
     return {'ok':True,'resultados':[x[3] for x in resultados[:lim]],'total':len(resultados),'limitado':len(resultados)>lim,

@@ -20,5 +20,6 @@ TRAVA = os.path.join(ESTADO_DIR, "unreal_lab.trava")  # mesma trava entre checko
 TRAVA_LOG = os.path.join(ESTADO_DIR, "trava.jsonl")
 LAB_ESTADO = os.path.join(WORK, "lab_editor.json")
 CENAS = resolver(LAB_DIR, os.path.join(RAIZ, "director", "cenas"), VINCULO_CENAS)
+BIBLIOTECA = os.path.join(ESTADO_DIR, "biblioteca")  # indice de arquivos locais, independente do checkout
 
 PASTA_UNREAL = "/Game/Director"  # o único lugar do projeto em que o Director grava
