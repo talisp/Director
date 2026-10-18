@@ -78,6 +78,8 @@ def executar(eid, arquivo, editor, raiz=None):
         antes = editor.chamar("inventory", variaveis=P.variaveis())
         registro["executado"] = True
         registro["retorno"] = editor.chamar("dev_exec", codigo=codigo)
+        if registro["retorno"].get("resultado") is None:
+            registro["aviso_retorno"] = "o script nao definiu resultado; print nao e capturado como retorno. Atribua resultado = {...} para devolver dados; ok so confirma execucao"
         registro["ok"] = True
     except Exception as exc:
         registro["erro"] = {"tipo": type(exc).__name__, "mensagem": str(exc)}
@@ -92,7 +94,7 @@ def executar(eid, arquivo, editor, raiz=None):
                          "antes": antes, "depois": depois,
                          "limite": "inventario nao prova colisao, aparencia nem efeitos fora do level"})
         _gravar(run / "resultado.json", registro)
-    return {k: registro[k] for k in ("ok", "executado", "sha256", "segundos", "mudancas", "erro") if k in registro} | {
+    return {k: registro[k] for k in ("ok", "executado", "sha256", "segundos", "mudancas", "erro", "aviso_retorno") if k in registro} | {
         "registro": str(run / "resultado.json"), "retorno": registro.get("retorno")}
 
 

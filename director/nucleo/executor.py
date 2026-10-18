@@ -128,8 +128,8 @@ def _preparar(editor, raiz_cenas: str, cena: str, removidos: set) -> tuple:
     planta1, rel = PN.conciliar(planta0, inv0["controlados"])
     faltam = [pid for pid in rel["faltando"] if D.dono(planta0, pid) not in removidos]
     if faltam:
-        return planta0, planta1, inv0, rel, ("peças do Director foram apagadas à mão no editor: " + ", ".join(faltam)
-                                             + ". Remova-as pela operação `remover` (ou recoloque-as) antes de continuar")
+        return planta0, planta1, inv0, rel, ("pecas esperadas pela planta nao encontradas no editor: " + ", ".join(faltam)
+                                             + ". Confira a planta e o level: pode haver estado desatualizado ou remocao; a causa nao foi determinada")
     if rel["sobrando"]:
         return planta0, planta1, inv0, rel, ("há peças com a etiqueta do Director que a planta não conhece: "
                                              + ", ".join(rel["sobrando"]) + ". Nada foi feito")
@@ -146,6 +146,11 @@ def executar(cena: str, ficha: dict, editor, raiz_cenas: str, lab_dir: str = "",
         planta0, planta1, inv0, rel, recusa = _preparar(editor, raiz_cenas, cena, removidos)
         if recusa:
             res = {"ok": False, "motivo": "recusado", "porque": recusa, "tocou_na_cena": False}
+            if rel and (rel["faltando"] or rel["sobrando"]):
+                res["diagnostico"] = {"codigo": "planta_editor_divergentes", "planta": PL.caminho(raiz_cenas,cena),
+                    "revisao": planta0["revisao"], "nivel": planta0["nivel"],
+                    "faltando": rel["faltando"], "sobrando": rel["sobrando"],
+                    "proxima_acao": "confira se esta e a planta correspondente ao level; compare uma copia conhecida com o inventario antes de recuperar; nao reconstrua paredes nem contorne a recusa automaticamente"}
         else:
             try:
                 planta2, resumo = OP.aplicar_ficha(planta1, ficha)
@@ -224,10 +229,10 @@ def estado(cena: str, editor, raiz_cenas: str) -> dict:
     """Só leitura: a planta, o que alguém mudou à mão e o que difere entre a planta e o Unreal."""
     planta0 = PL.carregar(raiz_cenas, cena)
     if editor.chamar("info")["level"] != planta0["nivel"]:
-        return {"cena": cena, "revisao": planta0["revisao"], "level_aberto": False, "objetos": sorted(planta0["objetos"])}
+        return {"cena": cena, "planta": PL.caminho(raiz_cenas,cena), "nivel": planta0["nivel"], "revisao": planta0["revisao"], "level_aberto": False, "objetos": sorted(planta0["objetos"])}
     inv = _inventario(editor)
     _, rel = PN.conciliar(planta0, inv["controlados"])
-    return {"cena": cena, "revisao": planta0["revisao"], "level_aberto": True, "objetos": sorted(planta0["objetos"]),
+    return {"cena": cena, "planta": PL.caminho(raiz_cenas,cena), "nivel": planta0["nivel"], "revisao": planta0["revisao"], "level_aberto": True, "objetos": sorted(planta0["objetos"]),
             "pecas_no_unreal": len(inv["controlados"]), "outros_atores": len(inv["fora"]),
             "diferencas": PN.diferencas(D.derivar(planta0), inv["controlados"]), "conciliacao": rel,
             "por_salvar": inv["por_salvar"]}

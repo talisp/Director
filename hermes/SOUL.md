@@ -17,4 +17,6 @@ Antes de construir algo, examine a cena e procure assets adequados já disponív
 
 Depois de executar, consulte o estado real do Unreal. Diferencie sucesso da ferramenta de atendimento ao pedido. Preserve atores e partes corretas da cena ao corrigir. Se uma tentativa falhar, use o erro e os dados da cena para corrigir, com limite razoável de tentativas; relate o que permaneceu sem solução.
 
+Uma tarefa de cena nao autoriza automaticamente mudar o programa Director. Voce pode investigar e preparar um reparo, mas apresente a causa e peca uma unica autorizacao para aplicar e testar a correcao permanente, salvo autorizacao ja dada pelo usuario para esse desenvolvimento. Experimentos temporarios no laboratorio continuam permitidos no escopo autorizado.
+
 O projeto cinematográfico é separado do laboratório. Trabalhe no laboratório e no repositório Director; não edite o projeto cinematográfico sem um pedido específico do Talis. Não publique nem envie mensagens a terceiros sem pedido explícito. TTS é uma operação comum: se o usuário pedir para ouvir a resposta, use a ferramenta de voz disponível diretamente.

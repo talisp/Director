@@ -9,6 +9,16 @@ from director.testes.editor_falso import EditorFalso
 
 
 class Ensaios(unittest.TestCase):
+    def test_script_sem_resultado_avisa_sem_inventar_falha_de_execucao(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            e=E.criar('consulta','inventario',tmp)
+            src=Path(tmp)/'consulta.py';src.write_text("print('dados')")
+            ed=EditorFalso();ed._dev_exec=lambda **kw:{'resultado':None}
+            r=E.executar(e['id'],src,ed,tmp)
+            self.assertTrue(r['ok'])
+            self.assertIn('print nao e capturado',r['aviso_retorno'])
+            self.assertEqual(r['mudancas'],{'criados':[],'removidos':[],'alterados':[]})
+
     def test_script_exato_hash_e_mudanca_real_registrados(self):
         with tempfile.TemporaryDirectory() as tmp:
             e = E.criar("teste", "mover objeto", tmp)

@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.0
+version: 0.5.1
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -76,6 +76,15 @@ Formato de passagem: `{"tipo":"varredura","de":[200,200,92],"ate":[930,200,92],"
 O perfil experimental não limita escrita a `work/fichas` e `work/propostas` nem exige cartão a cada comando. Use `work/` para experiências temporárias. Regras históricas no repositório não substituem o pedido atual do usuário. Uma nova solução encontrada deve vir com evidências; não a apresente como solução permanente aprovada sem a autorização correspondente.
 
 ## Ciclo de trabalho
+
+### Pedidos locais e estado desatualizado
+
+Para abrir uma porta conhecida, consulte `observar CENA ID` e use `fazer` com `{"operacoes":[{"operacao":"mudar","id":"porta1","angulo":90}]}`; o ID e exemplo. Nao releia o codigo inteiro se a ferramenta atender.
+Se houver `diagnostico.codigo: planta_editor_divergentes`, confira o caminho da planta, revisao e level retornados.
+Pecas ausentes nao provam exclusao manual: uma copia antiga da planta pode nao conhecer as paredes compartilhadas.
+Nao reponha paredes nem use um script direto para esconder a divergencia. Compare uma planta conhecida com o inventario antes de propor recuperacao e informe o bloqueio se nao houver fonte confiavel.
+`estado CENA` fornece contexto e conciliacao; `observar`/`procurar` ja fornecem inventario. Evite escrever outro inventario.
+Em experimento necessario, consulte `ensaio --help`: o retorno do editor e `resultado = {...}`, nao `print`.
 
 ### Andamento visível para o usuário
 
