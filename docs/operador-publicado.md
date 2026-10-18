@@ -35,6 +35,12 @@ alias pessoais ficam na configuracao local, fora do Git. Nao alterar a sessao in
 anterior nem o acesso web do Strata. Instancia unica, sem limite de duracao; reinicio da
 tarefa em falha com intervalo de um minuto. Isso reaproveita o Windows, sem scheduler novo.
 
+No ambiente instalado, o teste de encerramento do SSH nao demonstrou recuperacao apenas
+com RestartOnFailure, inclusive normalizando a saida para codigo 1. A configuracao final
+acrescenta um disparo temporal repetido a cada minuto, sem prazo final; `IgnoreNew` evita
+nova instancia enquanto a tarefa continua viva. O disparo de login permanece. A prova
+abaixo corresponde a essa repeticao nativa, nao ao RestartOnFailure isolado.
+
 O iniciador local usa WScript com janela escondida e espera pelo SSH, devolvendo seu
 codigo de saida; assim a tarefa acompanha a vida do processo e aplica a recuperacao.
 Nao basta agendar um lancador que termina imediatamente deixando SSH sem supervisao.
@@ -60,3 +66,30 @@ As issues #12/#29/#33/#37/#40 receberam comentarios proprios com prova, limites 
 para documentos. Encerramento automatico pelo PR nao substitui esse comentario.
 A orientacao da guarda instalada ja usa `process_manage(..., timeout=60)` desde o PR56;
 foi acrescentada regressao para impedir a volta de `timeout_seconds` na mensagem.
+
+## Instalacao efetivamente conferida
+
+- Instalacao inicial em `557845d` (merge PR57), arquivos rastreados limpos; perfil e skill
+  preenchida conferidos. Venvs proprios com requisitos publicados, sem link ao desenvolvimento.
+- 132 testes Director aprovados tambem na pasta publicada; 13 testes guarda aprovados.
+- Codigo das operacoes no editor passou a carregar dessa pasta, sem reiniciar o Unreal;
+  inventario integral identico, L_sala, fora de Play e sem pacotes por salvar.
+- `contexto` conserva a fonte compartilhada de plantas/biblioteca. Busca real atualizada
+  retornou quatro candidatos a cama (cena/projeto/offline), sem luz ou neblina. O teste
+  antes/depois de dois candidatos usava o mesmo cache historico, nao esse indice novo.
+- Quatro conversas vivas, ociosas, ainda tinham cwd congelado em pastas antigas. Foram
+  movidas por `session.mutate(operation=workspace)` com revisao/geracao, e relidas para
+  confirmar a pasta publicada; nenhuma inferencia e nenhuma edicao direta do banco.
+  Apenas trocar config.yaml nao teria corrigido essas conversas.
+- Tarefa nativa `Director_Qwen_Tunel_8082`, usuario atual, janela escondida, login e
+  repeticao de um minuto. Prova: SSH 8460 encerrado; novo SSH 50664 criado automaticamente
+  47,1 s depois, filho do iniciador da tarefa, listener unico e /health ok/modelo carregado.
+- Primeiro houve conflito com um processo remanescente do ensaio de troca de iniciador;
+  ele foi identificado e encerrado, sem tocar nos outros tuneis. A prova final foi feita
+  com listener unico. Parar a tarefa pode deixar seu SSH filho: em manutencao, conferir
+  dono/rota e encerrar somente o filho dessa tarefa antes de tentar substituir o iniciador.
+- O Windows nao foi reiniciado. Login apos boot e redundancia continuam nao verificados,
+  portanto #17 permanece aberta. Nenhuma afirmacao de recuperacao instantanea ou sem login.
+
+Manifesto, XML da tarefa e iniciador ficam em `%LOCALAPPDATA%/hermes/director-operacao`;
+registros adicionais em work/instalacao-20261018 e work/pipeline_20261018, fora do Git.

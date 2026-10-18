@@ -25,7 +25,7 @@ procedencia antes de reinstalar. A comparacao nao classifica automaticamente a n
 1. `hermes profile create director --no-skills`
 2. Copie `config.exemplo.yaml` para o `config.yaml` do perfil e troque `<pasta do Director>`. Ponha a chave do servidor do modelo no `.env` do perfil.
 3. Use os toolsets e `approvals.mode: "off"` do `config.exemplo.yaml`. O TTS aponta para o serviço local Kokoro na porta 8880; esse serviço precisa estar em execução para gerar áudio.
-4. Na raiz do Director, com o Python que roda o Director: `python hermes/instalar_perfil.py` (copia também o complemento)
+4. Use uma instalacao dedicada do codigo publicado, separada do desenvolvimento (ver [operador-publicado](../docs/operador-publicado.md)). Na raiz dessa instalacao, com o Python que roda o Director: `python hermes/instalar_perfil.py` (copia também o complemento). O cwd do perfil deve apontar para essa pasta. Conversas existentes podem conservar outro cwd: mova-as pelo mecanismo nativo de workspace e confira.
 5. Uma vez: `hermes -p director plugins enable director-guarda`
 6. Abra: `hermes -p director`. O laboratório pode ser aberto por `python -m director.lab abrir` quando necessário.
 
