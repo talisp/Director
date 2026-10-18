@@ -1,5 +1,7 @@
 # Director
 
+**Teste integrado da cozinha:** [resultado, correções pontuais e limites](docs/teste-cozinha-2026-10-17/README.md). Hermes criou uma cozinha anexa e ampliou a mesa; o teste revelou e corrigiu o envelope de marcadores do editor e a exigência indevida de simulação dinâmica da mesa fixa. 100 testes Director e 11 da guarda passaram; as pendências maiores continuam abertas.
+
 **Builds and edits functional 3D scenes in Unreal Engine through conversation, with a small or local LLM planning, composing operations, inspecting the result and investigating alternatives.**
 
 The LLM (or a person) writes a *ficha*: a short JSON with an operation and a few fields ("create a 4 × 4 m room", "move the door to the opposite wall"). A deterministic core, with no LLM inside, validates it, plans the smallest change, asks Unreal to do it with Unreal's own automation, measures the result and saves. If anything fails, the scene goes back to what it was.
