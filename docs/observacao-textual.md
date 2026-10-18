@@ -22,6 +22,7 @@ Comparacao curta com o Qwen pelo Hermes, somente perguntas sobre o quarto atual 
 |---|---:|---:|---:|---|
 | JSON reduzido | 79,835 s | 12.718 | 5.172 | acertou porta, criado e parede candidata; confundiu largura interna/externa |
 | Texto + legenda | 124,551 s | 13.127 (11.532 cache) | 9.110 | acertou largura interna; nao demonstrou ganho de custo/latencia |
+| Texto + legenda, reasoning low | 97,792 s | 13.126 (sem cache) | 6.471 | largura correta, mas chamou parede norte de livre apesar dos moveis |
 
 Nao e benchmark geral. JSON tinha 1.919 bytes e texto/legenda 3.488; o segundo explicita
 `interno_cm`, portanto a comparacao mistura representacao e rotulagem. Isso motivou corrigir
@@ -31,6 +32,8 @@ No protocolo futuro, perguntar se ULTRAPASSA o limite interno para FORA e usar a
 O objeto cama estava dentro; a cena nao foi alterada para produzir esse experimento.
 
 Nao foi medida a condicao fotografia/visao, nem repetido o JSON com os rotulos corrigidos.
+As tres rodadas nao isolam efeito de reasoning ou cache. O perfil continua em high;
+nao ha evidencia suficiente para reduzir globalmente nem recomendar texto por economia.
 #30 permanece aberta para essa comparacao controlada. A grade e opcional; se os dados
 estruturados bastarem, nao envia-la. Nenhuma inferencia adicional foi feita apenas para obter
 uma nota melhor. Sessoes e respostas brutas ficam em work/pipeline_20261018/comparacao_*.
