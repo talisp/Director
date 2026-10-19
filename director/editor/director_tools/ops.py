@@ -951,6 +951,7 @@ def sim_walk_state(amostras_desde: int = -1):
     return d
 
 # Ajustes de navegacao usam resolucoes e modificadores nativos do Unreal.
+from . import nav_parametros as NP
 def _nav_dados(a):
     return {'ator':a.get_path_name(),'raio_cm':a.get_editor_property('agent_radius'),
         'tile_cm':a.get_editor_property('tile_size_uu'),
@@ -959,32 +960,45 @@ def _nav_dados(a):
 
 
 @op
-def nav_config(acao='diagnosticar',celula_cm=5.0,altura_cm=2.0,regiao=None,escopo='regiao',backup=None):
+def nav_config(acao='diagnosticar',celula_cm=5.0,altura_cm=2.0,regiao=None,escopo='regiao',backup=None,tile_cm=None):
     navs=[a for a in _eas().get_all_level_actors() if isinstance(a,U.RecastNavMesh)]
     if acao=='diagnosticar':return {'malhas':[_nav_dados(a) for a in navs], 'level':info()['level']}
     if _mundo_jogo() is not None:raise ValueError('pare o Play antes de ajustar navegacao')
-    if acao not in ('ajustar','restaurar'):raise ValueError('acao desconhecida')
+    if acao not in ('ajustar','restaurar','reconstruir'):raise ValueError('acao desconhecida')
+    if not navs:raise ValueError('level sem RecastNavMesh; nao ha malha para configurar')
+    if U.NavigationSystemV1.is_navigation_being_built_or_locked(_mundo_editor()):
+        raise ValueError('navegacao ocupada: aguarde a construcao/carga antes de reconstruir ou ajustar')
     anterior={'malhas':[_nav_dados(a) for a in navs], 'level':info()['level'],'criados':[]}
+    propostas=[]
     if acao=='restaurar':
         if not backup or backup['level']!=info()['level']:raise ValueError('backup precisa pertencer ao level aberto')
         por_path={a.get_path_name():a for a in navs}
+        # Conferir todo o backup antes da primeira alteracao.
         for d in backup['malhas']:
-            a=por_path[d['ator']];ps=[p.copy() for p in a.get_editor_property('nav_mesh_resolution_params')]
+            if d['ator'] not in por_path or len(d['resolucoes'])!=3:
+                raise ValueError('backup nao corresponde as malhas atuais')
+        for d in backup['malhas']:
+            a=por_path[d['ator']]
+            # TileSizeUU normaliza celulas em PostEditChangeProperty: restaurar tile primeiro.
+            if 'tile_cm' in d:a.set_editor_property('tile_size_uu',d['tile_cm'])
+            ps=[p.copy() for p in a.get_editor_property('nav_mesh_resolution_params')]
             for p,old in zip(ps,d['resolucoes']):
                 for k,v in old.items():p.set_editor_property(k,v)
             a.set_editor_property('nav_mesh_resolution_params',ps)
-            a.set_editor_property('agent_radius',d['raio_cm'])
+            if abs(float(a.get_editor_property('agent_radius'))-d['raio_cm'])>.001:
+                a.set_editor_property('agent_radius',d['raio_cm'])
         for a in list(_eas().get_all_level_actors()):
             if a.get_path_name() in backup.get('criados',[]):_eas().destroy_actor(a)
-    else:
-        if escopo not in ('regiao','level'):raise ValueError('escopo deve ser regiao ou level')
-        if not all(math.isfinite(float(x)) and float(x)>0 for x in (celula_cm,altura_cm)):raise ValueError('celulas positivas e finitas')
+    elif acao=='ajustar':
         if escopo=='regiao' and (not regiao or len(regiao)!=2 or any(len(x)!=3 for x in regiao) or any(not math.isfinite(v) for x in regiao for v in x) or any(a>=b for a,b in zip(*regiao))):raise ValueError('regiao deve ter min/max tridimensionais crescentes')
-        for a in navs:
+        # Planejamento completo antes de tocar qualquer RecastNavMesh.
+        for d in anterior['malhas']:
+            propostas.append(NP.preparar(d['resolucoes'],d['tile_cm'],escopo,celula_cm,altura_cm,tile_cm))
+        for a,q in zip(navs,propostas):
+            if q['tile_alterado']:a.set_editor_property('tile_size_uu',q['tile_cm'])
             ps=[p.copy() for p in a.get_editor_property('nav_mesh_resolution_params')]
-            for n,p in enumerate(ps):
-                if escopo=='level' or n==2:
-                    p.set_editor_property('cell_size',float(celula_cm));p.set_editor_property('cell_height',float(altura_cm))
+            for p,d in zip(ps,q['resolucoes']):
+                for k,v in d.items():p.set_editor_property(k,v)
             a.set_editor_property('nav_mesh_resolution_params',ps)
         if escopo=='regiao':
             centro=[(a+b)/2 for a,b in zip(*regiao)];ext=[(b-a)/2 for a,b in zip(*regiao)]
@@ -992,16 +1006,15 @@ def nav_config(acao='diagnosticar',celula_cm=5.0,altura_cm=2.0,regiao=None,escop
             a.set_actor_scale3d(_vec([v/100 for v in ext]))
             a.set_editor_property('area_class',None)
             a.set_editor_property('nav_mesh_resolution',U.NavigationDataResolution.HIGH)
-            # PostEditChangeProperty nao atualiza dados ao mudar NavMeshResolution
-            # em 5.8. SetAreaClass chama UpdateActorData depois do perfil definido.
             a.set_area_class(U.NavArea_Default)
             anterior['criados'].append(a.get_path_name())
     nav=U.NavigationSystemV1.get_navigation_system(_mundo_editor())
     for a in _eas().get_all_level_actors():
         if isinstance(a,U.NavMeshBoundsVolume):nav.on_navigation_bounds_updated(a)
     U.SystemLibrary.execute_console_command(_mundo_editor(),'RebuildNavigation')
-    return {'backup':anterior,'atual':[_nav_dados(a) for a in navs], 'escopo':escopo,
-        'aviso':'regiao afeta tiles tocados e qualquer outro modificador HIGH que use o perfil alterado; level afeta toda a malha',
+    return {'backup':anterior,'atual':[_nav_dados(a) for a in navs], 'escopo':escopo,'acao':acao,
+        'tile_alterado':any(q['tile_alterado'] for q in propostas),
+        'aviso':'regiao afeta tiles tocados e outros modificadores HIGH; alterar tile_cm afeta o level inteiro. Reconstruir nao modifica os perfis',
         'rebuild_solicitado':True,'custo_nao_medido':['memoria e FPS; tempo de estabilizacao e medido pelo cliente']}
 
 @op

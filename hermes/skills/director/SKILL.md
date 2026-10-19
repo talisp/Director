@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.6
+version: 0.5.7
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -57,6 +57,14 @@ uma rota desatualizada. Se a varredura passa e o caminho falha, diagnostique `na
 de mover objetos novamente. Reconstrucao e ajuste de resolucao sao coisas diferentes:
 guarde o backup e declare qualquer mudanca de celula e escopo. Celula 5/altura 2 funcionou
 naquele level; nao e padrao universal e o custo de memoria nao foi medido.
+
+Se a carga terminou mas a rota segue ausente, `navegacao PEDIDO.json` aceita
+`{"acao":"reconstruir","prazo_s":20}` sem mudar resolucoes. Depois consulte a rota nos
+dois sentidos: `pronta` nao prova caminho. Nao remova parede para fazer o teste passar.
+Refino regional pode precisar de `tile_cm` explicito: perfis que geram tamanhos efetivos
+de tile diferentes sao recusados antes de alterar o motor. Leia a proposta do erro;
+950 funcionou com celulas 38/19/5 naquele ensaio, nao e valor universal. Alterar tile_cm
+afeta a grade de todo o level, mesmo com escopo regiao. O backup/restaurar inclui esse valor.
 
 O contrato de ficha atual contém `criar_sala`, `mudar_sala`, `colocar`, `mudar` e `remover`. Use-o quando atender ao pedido. O mesmo `criar_sala` aceita sala, quarto, corredor e outros cômodos retangulares: o nome da categoria não precisa de uma macro. Para um pedido fora do contrato, investigue o Unreal e a ponte no laboratório, em vez de responder apenas que não existe uma operação. Experimentos pequenos e reversíveis podem usar código temporário. Distinga um experimento de uma alteração permanente no Director.
 
