@@ -1032,6 +1032,8 @@ def api_export(caminho: str, classes: list):
             valor=getattr(cls,metodo,None)
             if callable(valor) and getattr(valor,'__doc__',None):
                 dados.append({'simbolo':nome+'.'+metodo,'tipo':'metodo','doc':valor.__doc__})
+            elif metodo.isupper():
+                dados.append({'simbolo':nome+'.'+metodo,'tipo':'valor','doc':str(valor)})
     p=Path(caminho);p.parent.mkdir(parents=True,exist_ok=True)
     meta={'motor':info()['motor'],'gerado_utc':datetime.now(timezone.utc).isoformat(),'classes':classes,'ausentes':ausentes}
     p.write_text(json.dumps({'meta':meta,'entradas':dados},ensure_ascii=True),encoding='utf-8')
