@@ -19,3 +19,8 @@ class Referencia(unittest.TestCase):
         r=consultar(d,'amortecimento')['resultados'][0]
         self.assertIn('damping',r['doc']);self.assertTrue(r['texto_truncado'])
         self.assertLessEqual(len(r['doc']),1200)
+
+    def test_busca_camelcase_encontra_nome_python_sem_inventar_alias(self):
+        d={'meta':{},'entradas':[{'simbolo':'StaticMeshComponent.get_collision_enabled','tipo':'metodo','doc':'x.get_collision_enabled() -> CollisionEnabled'}]}
+        r=consultar(d,'GetCollisionEnabled')
+        self.assertEqual(r['resultados'][0]['simbolo'],'StaticMeshComponent.get_collision_enabled')

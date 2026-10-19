@@ -36,8 +36,10 @@ def consultar(dados,termo,limite=5):
     encontrados=[]
     for e in dados['entradas']:
         nome=_normalizar(e['simbolo']);txt=nome+' '+_normalizar(e['doc'])
-        if not palavras or not all(x in txt for x in palavras):continue
-        score=sum(10 if x in nome else 1 for x in palavras)
+        compacto=re.sub(r'[^a-z0-9]','',nome)
+        def no_nome(x):return x in nome or re.sub(r'[^a-z0-9]','',x) in compacto
+        if not palavras or not all(x in txt or no_nome(x) for x in palavras):continue
+        score=sum(10 if no_nome(x) else 1 for x in palavras)
         encontrados.append((score,e))
     encontrados.sort(key=lambda x:(-x[0],x[1]['simbolo']))
     resultados=[]
