@@ -40,6 +40,10 @@ class Invalida(ValueError):
 NUM, TXT, BOOL = "numero", "texto", "booleano"
 # campo -> (tipo, obrigatório, explicação). É isto que o agente lê em `capacidades`.
 OPERACOES: dict = {
+    'material_sala':{
+        'descricao':'Aplica material existente a piso, teto ou paredes; caminho resolvido e conferido antes pelo comando material.',
+        'campos':{'id':(TXT,True,'sala'),'alvo':(TXT,True,'piso | teto | paredes | parede_norte/sul/leste/oeste'),
+            'caminho':(TXT,True,'MaterialInterface existente no Unreal'),'descricao':(TXT,True,'descricao original, nao prova de aparencia')}},
     "registrar_objeto": {
         "descricao": "Modelo medido pelo comando objeto: adotar, duplicar, colocar asset ou compor, com identidade na planta.",
         "campos": {"id": (TXT, True, "identidade logica"), "modelo_json": (TXT, True, "gerado por objeto; descreve geometria, origem e fisica")},
@@ -429,7 +433,10 @@ def levar_junto(planta: dict, mesa_id: str, antes: dict, depois: dict) -> list:
         lx, ly = dx * math.cos(g0) + dy * math.sin(g0), -dx * math.sin(g0) + dy * math.cos(g0)
         o["x"] = depois["x"] + lx * math.cos(g1) - ly * math.sin(g1)
         o["y"] = depois["y"] + lx * math.sin(g1) + ly * math.cos(g1)
-        o["z"] += depois.get("z", 0) + depois["altura"] - antes.get("z", 0) - antes["altura"]
+        if o['tipo']=='asset':
+            z0=antes.get('z',planta['objetos'][antes['sala']]['z']);z1=depois.get('z',planta['objetos'][depois['sala']]['z'])
+            o['z']=z1+(o['z']-z0)*depois['altura']/antes['altura']
+        else:o["z"] += depois.get("z", 0) + depois["altura"] - antes.get("z", 0) - antes["altura"]
         if "rot" in o:
             o["rot"] = [o["rot"][0], o["rot"][1] + depois["giro"] - antes["giro"], o["rot"][2]]
         else:  # asset apoiado: gira junto
@@ -474,6 +481,16 @@ def _registrar_objeto(planta, d):
     return "objeto "+oid+" registrado na planta"
 
 
+def _material_sala(planta,d):
+    sid=_unico(planta,('sala',),d['id'],'sala');s=planta['objetos'][sid];alvo=d['alvo']
+    alvos=['parede_'+l for l in LADOS] if alvo=='paredes' else [alvo]
+    if any(a not in ('piso','teto',*('parede_'+l for l in LADOS)) for a in alvos):raise Invalida('alvo de material invalido')
+    if 'teto' in alvos and not s.get('teto'):raise Invalida('nao existe teto para aplicar material')
+    if not d['caminho'].startswith(('/Game/','/Engine/')):raise Invalida('material requer caminho de asset do projeto/motor')
+    for a in alvos:s.setdefault('materiais',{})[a]={'caminho':d['caminho'],'descricao':d['descricao']}
+    return f'material de {sid}.{alvo} registrado'
+
+
 def conferir_ancora(planta,oid,o):
     """Ancora e uma relacao persistente com parede/teto, nao apenas uma altura solta."""
     a=o.get('ancora')
@@ -505,7 +522,7 @@ def conferir_ancora(planta,oid,o):
     if o['z']<s['z'] or o['z']+o['altura']>s['z']+s['altura']+.1:raise Invalida(f'{oid}: ancora fora da altura do comodo')
 
 
-_FUNCOES = {"criar_sala": _criar_sala, "mudar_sala": _mudar_sala, "colocar": _colocar, "mudar": _mudar, "remover": _remover, "registrar_objeto": _registrar_objeto}
+_FUNCOES = {"criar_sala": _criar_sala, "mudar_sala": _mudar_sala, "colocar": _colocar, "mudar": _mudar, "remover": _remover, "registrar_objeto": _registrar_objeto,'material_sala':_material_sala}
 
 
 # ------------------------------------------------------------------------------------------------------- conferir a planta
@@ -538,6 +555,7 @@ def conferir(planta: dict, final: bool = True) -> None:
                         raise Invalida(f"a parede {la} de {ia} e a parede {lb} de {ib} ficariam meio uma dentro da outra; "
                                        f"{dica}, ou {(a['parede'] + b['parede']) / 100:g} m ou mais para cada uma ter a sua")
     trechos = trechos_de_parede(planta)
+    for tr in trechos:material_do_trecho(planta,tr)
     no_trecho = {v: tr for tr in trechos for v in tr["vaos"]}
     todas = [(i, l, faixa_da_parede(s, l), _linha(s, l)[0]) for i, s in salas for l in LADOS]
     for oid, o in objs.items():
@@ -655,6 +673,18 @@ def conferir(planta: dict, final: bool = True) -> None:
         if o.get("sobre"):
             if not _na_mesa(objs[o["sobre"]], o["x"], o["y"], o["diametro"] / 2):
                 raise Invalida(f"{oid} não cabe sobre {o['sobre']} nesse lugar")
+
+
+def material_do_trecho(planta,tr):
+    caminhos=set()
+    for sid,s in planta['objetos'].items():
+        if s['tipo']!='sala':continue
+        for lado in LADOS:
+            chave,ini,fim=_linha(s,lado)
+            m=s.get('materiais',{}).get('parede_'+lado)
+            if m and chave==tr['chave'] and min(fim,tr['fim'])>max(ini,tr['ini'])+EPS:caminhos.add(m['caminho'])
+    if len(caminhos)>1:raise Invalida('materiais conflitantes numa parede compartilhada/continua; faces independentes nao implementadas')
+    return next(iter(caminhos),None)
 
 
 def aplicar_ficha(planta: dict, ficha: dict) -> tuple:

@@ -62,6 +62,9 @@ class EditorFalso:
                     if k in a:
                         m[k] = [float(v) for v in a[k]]
                 m["params"].update({k: float(v) for k, v in (a.get("params") or {}).items()})
+                if 'material' in a:
+                    if a['material'] is None:m.pop('material',None)
+                    else:m['material']=a['material']
                 if "objeto" in a:
                     m["objeto"]={k:v for k,v in a["objeto"].items() if k not in ("adotar","duplicar","converter")}
                     origem=a["objeto"].get("adotar")

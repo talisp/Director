@@ -10,13 +10,13 @@ MASSAS={'cama':45,'criado_mudo':12,'guarda_roupa':80,'escrivaninha':25,'cadeira'
 FIXOS=('box','box_chuveiro','chuveiro','vaso_sanitario','pia','bancada','divisoria','parede','bancada_pia')
 
 
-def _altura_de_apoio(editor,b,sobre,o,folga=2.0,irregular=3.0):
+def _altura_de_apoio(editor,b,sobre,o,folga=2.0,irregular=3.0,esperado_z=None):
     """Altura real da superficie sob o objeto: raios para baixo no centro e nos quatro cantos.
     O topo da caixa do movel engana (a cabeceira da cama e mais alta que o colchao: visto em 17/10)."""
     g=math.radians(o['giro']);hw,hd=max(o['largura']/2-folga,0),max(o['profundidade']/2-folga,0)
     pts=[(0,0)]+[(sx*hw,sy*hd) for sx in (-1,1) for sy in (-1,1)]
-    topo=b.get('z',0)+b['altura']
-    qs=[{'tipo':'raio','de':[o['x']+px*math.cos(g)-py*math.sin(g),o['y']+px*math.sin(g)+py*math.cos(g),topo+50],
+    inicio=b.get('z',0)+b['altura']+50 if esperado_z is None else esperado_z+max(o.get('altura',0)+2,5)
+    qs=[{'tipo':'raio','de':[o['x']+px*math.cos(g)-py*math.sin(g),o['y']+px*math.sin(g)+py*math.cos(g),inicio],
          'ate':[o['x']+px*math.cos(g)-py*math.sin(g),o['y']+px*math.sin(g)+py*math.cos(g),b.get('z',0)]} for px,py in pts]
     med=editor.chamar('measure',consultas=qs)['medidas']
     zs=[]
@@ -27,6 +27,7 @@ def _altura_de_apoio(editor,b,sobre,o,folga=2.0,irregular=3.0):
     if max(zs)-min(zs)>irregular:
         raise ValueError(f'sobre {sobre}: a superficie embaixo do objeto e irregular ({min(zs):.1f} a {max(zs):.1f} cm); '
                          f'mova o objeto para uma parte plana (ex.: longe da cabeceira ou da borda)')
+    if esperado_z is not None and abs(max(zs)-esperado_z)>3:raise ValueError('altura de apoio solicitada nao corresponde a superficie medida')
     return max(zs)
 
 
@@ -59,6 +60,7 @@ def apoios(cena,pedido,editor):
     if b['tipo'] not in operacoes.MOVEIS:raise ValueError('apoio requer movel registrado')
     w,h=pedido['largura_m']*100,pedido['profundidade_m']*100
     if min(w,h)<=0 or not all(math.isfinite(v) for v in (w,h)):raise ValueError('pegada positiva e finita')
+    if pedido.get('niveis'):return _apoios_em_niveis(p,b,oid,w,h,pedido,editor)
     candidatos=[];recusados=0
     for dx in (-.3,0,.3):
         for dy in (-.3,0,.3):
@@ -70,6 +72,47 @@ def apoios(cena,pedido,editor):
             candidatos.append({'centro_cm':[o['x'],o['y']],'base_z_cm':z,'giro':b['giro']})
     return {'ok':True,'objeto':oid,'pegada_cm':[w,h],'candidatos':candidatos,'recusados':recusados,
         'limite':'amostra 3x3 por colisao visivel de cima; nao enumera prateleiras ocultas, nao comprova estabilidade em Play'}
+
+
+def _apoios_em_niveis(planta,b,oid,w,h,pedido,editor):
+    """Busca pegadas em prateleiras via raios a varias alturas; nao extrai triangulos."""
+    altura=pedido.get('altura_m',.05)*100
+    if not isinstance(altura,(int,float)) or not math.isfinite(altura) or altura<=0:raise ValueError('altura_m positiva e finita')
+    base=b.get('z',planta['objetos'][b['sala']]['z']);passo=max(5,b['altura']/30)
+    niveis=[base+b['altura']+altura+5]+[base+b['altura']-n*passo for n in range(1,31) if b['altura']-n*passo>0]
+    g=math.radians(b['giro']);c,si=math.cos(g),math.sin(g);amostras=[];qs=[]
+    for dx in (-.3,0,.3):
+        for dy in (-.3,0,.3):
+            lx=dx*max(0,b['largura']-w);ly=dy*max(0,b['profundidade']-h)
+            x,y=b['x']+lx*c-ly*si,b['y']+lx*si+ly*c
+            pontos=[(x,y)]+[(x+px*c-py*si,y+px*si+py*c) for px in (-w/2+min(2,w/4),w/2-min(2,w/4)) for py in (-h/2+min(2,h/4),h/2-min(2,h/4))]
+            for z in niveis:
+                amostras.append((x,y,z,pontos))
+                qs.extend({'tipo':'raio','de':[px,py,z],'ate':[px,py,base-.1]} for px,py in pontos)
+    medidas=editor.chamar('measure',consultas=qs)['medidas'];encontrados={}
+    for n,(x,y,z,pontos) in enumerate(amostras):
+        hits=medidas[n*5:n*5+5]
+        if len(hits)!=5 or not all(m.get('acertou') and m.get('id')==oid and m.get('distancia',0)>.1 and (m.get('normal') or [0,0,0])[2]>.95 for m in hits):continue
+        zs=[m['ponto'][2] for m in hits];topo=max(zs)
+        if max(zs)-min(zs)>3 or z-topo<altura+1:continue
+        key=(round(x,2),round(y,2),round(topo,1))
+        encontrados[key]=(pontos,{'centro_cm':[x,y],'base_z_cm':topo,
+            'apoio_z_m':(topo-planta['objetos'][b['sala']]['z'])/100,'giro':b['giro']})
+    lista=list(encontrados.values());up=[]
+    for pontos,r in lista:
+        up.extend({'tipo':'raio','de':[x,y,r['base_z_cm']+.1],'ate':[x,y,r['base_z_cm']+altura+1]} for x,y in pontos)
+    livres=editor.chamar('measure',consultas=up)['medidas'] if up else []
+    candidatos=[r for n,(_,r) in enumerate(lista) if all(not m.get('acertou') for m in livres[n*5:n*5+5])]
+    candidatos.sort(key=lambda r:(r['base_z_cm'],r['centro_cm']))
+    representantes=[];vistos=set()
+    for r in candidatos:
+        z=round(r['base_z_cm'],1)
+        if z not in vistos:representantes.append(r);vistos.add(z)
+    curtos=(representantes+[r for r in candidatos if r not in representantes])[:12]
+    return {'ok':True,'objeto':oid,'pegada_cm':[w,h],'altura_cm':altura,'candidatos':curtos,
+        'candidatos_totais':len(candidatos),'limitado':len(curtos)<len(candidatos),
+        'alturas_cm':sorted({round(r['base_z_cm'],1) for r in candidatos}),'raios':len(qs)+len(up),
+        'limite':'amostragem 3x3 e ate 31 alturas por colisao simples; exige normal superior e folga acima. Pode omitir nichos estreitos/entre amostras; nao certifica toda malha nem estabilidade'}
 
 
 def fazer(cena,pedido,editor):
@@ -115,7 +158,8 @@ def fazer(cena,pedido,editor):
             raise ValueError(f'sobre: {sobre!r} precisa ser um movel registrado na sala {sid}')
         if 'x_m' not in pedido:o['x']=b['x']
         if 'y_m' not in pedido:o['y']=b['y']
-        o['z']=_altura_de_apoio(editor,b,sobre,o);o['sobre']=sobre
+        esperado=s['z']+pedido['apoio_z_m']*100 if 'apoio_z_m' in pedido else None
+        o['z']=_altura_de_apoio(editor,b,sobre,o,esperado_z=esperado);o['sobre']=sobre
     fixo=pedido.get('fixo',bool(ancora) or pedido.get('colisao') is False or o['categoria'] in FIXOS)
     if fixo and pedido.get('simular') is True:raise ValueError('fixo e simular ao mesmo tempo: escolha um')
     massa=pedido.get('massa_kg',MASSAS.get(o['categoria'],MASSAS['generico']))

@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.10
+version: 0.5.11
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -95,6 +95,11 @@ para essa pegada, por raios nativos. E amostragem visivel de cima, NAO lista pra
 ocultas. `sobre` permite empilhar assets; confirme estabilidade em Play. Para tapete/poster
 sem colisao use `colisao:false` (sem simulacao); nao diga que esse objeto pode interagir
 fisicamente. Reaplique so a etapa afetada e confira as identidades e a passagem.
+Para prateleiras internas, `apoios` aceita `niveis:true` e `altura_m` do objeto desejado.
+Retorna ate 12 candidatos resumidos, normal superior e folga acima, por amostragem nativa.
+Use `apoio_z_m` retornado junto com `sobre`, `x_m` e `y_m` no `objeto`; a altura sera
+conferida outra vez. Nicho entre amostras pode nao aparecer; ausencia de candidato nao
+prova ausencia de apoio. Ao escalar/mover apoio, verifique novamente estabilidade.
 Malha dinamica pode virar StaticMesh pela GeometryScript nativa; comportamento de Blueprint nao e transferido.
 Use `mudar`/`remover` pelo ID para objetos registrados; mover o comodo nao autoriza apagar seu conteudo.
 Depois use `verificar` para confirmar geometria, apoio e fisica. Recusa da planta nao comprova falta de asset.
@@ -132,6 +137,13 @@ Na raiz, use `{{PYTHON}} -m director ...` (caminhos com espaços exigem aspas co
   sala ao SEU lado e ao vizinho; nao atribua os dois lados da relacao ao mesmo comodo.
   Use imagem quando acrescentar evidencia; screenshot nao substitui medidas/colisao.
 - `assets cadeira chair seat`: busca nomes e caminhos já presentes em `/Game`. Experimente sinônimos; nenhum resultado por nome não prova ausência semântica. Isso não consulta a biblioteca externa do Fab.
+- `material CENA PEDIDO.json`: `sala`, `alvo` (`piso`, `teto`, `parede_norte`, `parede_sul`,
+  `parede_leste`, `parede_oeste` ou `paredes` para todas),
+  `descricao`, `caminho` opcional. Busca lexical PT/EN em materiais do projeto; mais de um
+  candidato exige escolha, ausencia gera aviso sem mudar a cena. Confira cache Fab antes de
+  propor download; nao baixe banco sem autorizacao. Caminho precisa ser MaterialInterface
+  nativo. Parede compartilhada muda dos dois lados: explique e use `aceitar_compartilhada:true`
+  so quando autorizado. Material persiste na planta; conferir aparencia, colisao e rota.
 - `procurar cadeira`: consulta unica atualizada, cena primeiro, depois projeto e indice offline. Retorna ate oito candidatos; categorias sugeridas por sinonimos nao sao prova de equivalencia. O nome anterior de um objeto adotado permanece como apelido. `catalogo atualizar` apenas refaz o indice local. Para filtros, `procurar consultar PEDIDO.json` aceita `{"texto":"chair","maximo_cm":[60,60,100],"limite":5}`; dimensao desconhecida nao satisfaz filtro numerico.
 - `medir CENA CONSULTAS.json`: consulta raios, varreduras de cápsula, caminhos e estado da navegação. A entrada é uma lista ou `{"consultas": [...], "mundo": "editor"}`. Use `mundo: jogo` somente durante o Play. Coordenadas das consultas em **centímetros**; fichas em **metros**.
 - `relatorio CENA [SALA ...]`: medidas internas por quatro raios abaixo do teto. `fazer` tambem devolve `resultado` com solicitado, planejado, medido e nao_verificado. Copie o medido; nao reconstrua medidas de memoria. Raio sem quatro paredes confirmadas nao produz dimensao inventada.

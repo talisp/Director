@@ -56,3 +56,9 @@ class Ancoras(unittest.TestCase):
         q=O.aplicar_ficha(p,_reg('t',o))[0];alvo=D.derivar(q);real=copy.deepcopy(alvo)
         real['t']['objeto']['colisao']=True
         self.assertEqual(PN.diferencas(alvo,real)[0]['o_que'],'objeto')
+
+    def test_altura_do_apoio_interno_escala_com_geometria_e_nao_com_topo(self):
+        p=self.planta();p=O.aplicar_ficha(p,_reg('estante',_asset(200,200,1,100,60,180,False)))[0]
+        p=O.aplicar_ficha(p,_reg('livro',_asset(200,200,81,20,15,4,sobre='estante')))[0]
+        q=O.aplicar_ficha(p,{'operacoes':[{'operacao':'mudar','id':'estante','altura_m':1.98}]})[0]
+        self.assertAlmostEqual(q['objetos']['livro']['z'],89)
