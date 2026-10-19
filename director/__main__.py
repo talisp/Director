@@ -18,6 +18,7 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
+    "acervo": {"uso":"acervo iniciar | resumo | buscar TERMO | pedido JSON|- | coletar JSON", "faz":"SQL em R:\\CINF\\BD; coleta incremental de arquivos ou leitura do laboratorio, com historico e retomada. Nao baixa modelos nem altera a cena."},
     "contexto": {"uso": "contexto", "faz": "Leitura: identifica level aberto, cena e fonte de plantas; nao escolhe sala fixa nem troca level."},
     "vincular": {"uso": "vincular PASTA_CENAS", "faz": "Valida todas as plantas no laboratorio salvo, preserva as fontes e ativa estado compartilhado entre checkouts. Nao escolhe maior revisao nem altera atores."},
     "planta2d": {"uso":"planta2d CENA SALA", "faz":"Filtro offline de contencao, areas livres e regioes de passagem; sem Unreal."},
@@ -77,6 +78,11 @@ def main(argv: list) -> None:
     if argv and any(a in ('--help','-h') for a in argv):
         nome=argv[0] if argv[0] not in ('--help','-h') else None
         r=_ajuda(nome);_sair(r,0 if r['ok'] else 2)
+    if argv and argv[0]=='acervo':
+        from . import acervo
+        try:
+            r=acervo.cli(argv[1:]);_sair(r,0 if r.get('ok') else 2)
+        except Exception as e:_sair({'ok':False,'porque':str(e)},2)
     if argv and argv[0]=='observar' and '--texto' in argv:
         from . import planta_texto
         try:
