@@ -111,6 +111,9 @@ Se precisar refino, diagnosticar os perfis e definir a região do caso; aceitar 
 somente com seu alcance entendido. 950/5/2 são valores destes ensaios, não receita universal.
 Conferir caminho nos dois sentidos, colisão, preservação e salvar/reabrir. `pronta` não é PA.
 
-Ainda não verificados: escolha da operação pelo Qwen/Hermes, custo de contexto, memória/FPS
+Atualização de 19/10: [dois ensaios reais pelo Hermes/GLM](hermes-glm-2026-10-19.md)
+confirmaram reconstrução e correção após feedback, com adaptador explícito da candidata.
+
+Ainda não verificados: seleção autônoma sem adaptador, comparação de custo de contexto, memória/FPS
 e robustez em cenas grandes. Não se alegam animação corporal, generalização irrestrita ou
 reparo automático de toda navegação apenas por estes testes.
