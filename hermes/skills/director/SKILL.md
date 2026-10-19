@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.7
+version: 0.5.8
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -98,6 +98,12 @@ Na raiz, use `{{PYTHON}} -m director ...` (caminhos com espaços exigem aspas co
   legenda por id, dobradica/folha e zonas reservadas. Use antes de propor ou depois de mudar
   disposicao quando ajudar; nao releia em toda consulta. E plano desejado, nao foto nem leitura
   do editor: combine com estado/medidas e nao declare uma zona livre so por estar desenhada.
+- `observar CENA --texto SALA --real`: consulta o inventario e desenha moveis conciliados
+  apenas em memoria; nao grava nem adota a planta. Recusa outro level ou Play. Moveis ausentes
+  nao sao desenhados; paredes/salas continuam referencia planejada, nao faces medidas.
+  Confira `conciliacao`, `fora_do_plano` e `limite`. `relacoes_compartilhadas` associa cada
+  sala ao SEU lado e ao vizinho; nao atribua os dois lados da relacao ao mesmo comodo.
+  Use imagem quando acrescentar evidencia; screenshot nao substitui medidas/colisao.
 - `assets cadeira chair seat`: busca nomes e caminhos já presentes em `/Game`. Experimente sinônimos; nenhum resultado por nome não prova ausência semântica. Isso não consulta a biblioteca externa do Fab.
 - `procurar cadeira`: consulta unica atualizada, cena primeiro, depois projeto e indice offline. Retorna ate oito candidatos; categorias sugeridas por sinonimos nao sao prova de equivalencia. O nome anterior de um objeto adotado permanece como apelido. `catalogo atualizar` apenas refaz o indice local. Para filtros, `procurar consultar PEDIDO.json` aceita `{"texto":"chair","maximo_cm":[60,60,100],"limite":5}`; dimensao desconhecida nao satisfaz filtro numerico.
 - `medir CENA CONSULTAS.json`: consulta raios, varreduras de cápsula, caminhos e estado da navegação. A entrada é uma lista ou `{"consultas": [...], "mundo": "editor"}`. Use `mundo: jogo` somente durante o Play. Coordenadas das consultas em **centímetros**; fichas em **metros**.

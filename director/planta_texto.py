@@ -1,4 +1,4 @@
-"""Vista textual da planta desejada. Nao consulta nem modifica o Unreal."""
+"""Vista textual planejada ou conciliada por leitura do inventario do editor."""
 import math
 import os
 from .nucleo import planta as PL,operacoes as OP,portas
@@ -89,12 +89,43 @@ def renderizar(planta,sala=None,escala_cm=None):
             'escala_cm':escala,'orientacao':'norte em cima; leste a direita','origem_grade_cm':[x0,norte],
             'texto':'\n'.join(''.join(row).rstrip() for row in grade),'legenda':legenda,
             'simbolos':{'#':'parede','+':'vao de porta/passagem','=':'janela','/':'folha','o':'dobradica',':':'zona reservada','.':'chao',' ':'fora'},
-            'salas':{i:{'interno_cm':[s['largura'],s['comprimento']],'sudoeste_cm':[s['x'],s['y']]} for i,s in salas.items()},
+            'salas':{i:{'interno_cm':[s['largura'],s['comprimento']],
+                       'eixos_interno_cm':['largura_leste_oeste','comprimento_sul_norte'],
+                       'sudoeste_cm':[s['x'],s['y']]} for i,s in salas.items()},
             'paredes_compartilhadas':[a for a in compartilhadas(planta) if any(i in salas for i in a['salas'])],
+            'relacoes_compartilhadas':[{'sala':sid,'lado':a['lados'][n],
+                    'vizinho':a['salas'][1-n],'lado_vizinho':a['lados'][1-n],
+                    'comprimento_planejado_cm':a['comprimento_planejado_cm']}
+                for a in compartilhadas(planta) for n,sid in enumerate(a['salas']) if sid in salas],
             'centros_grade':centros,'avisos':OP.avisos(planta),
             'limite':'desenho aproximado da planta, nao observacao do editor; zonas podem estar ocupadas; use estado/planta2d/medir para verificar'}
 
 
-def cli(cena,sala=None):
+def observar_no_editor(planta,editor,sala=None):
+    """Leitura conciliada em memoria; nao adota nem grava edicoes manuais."""
+    from .nucleo import plano,pecas
+    info=editor.chamar('info')
+    if info['level']!=planta['nivel']:raise ValueError('abra a cena correspondente; observar nao troca de level')
+    if info['em_play']:raise ValueError('vista do editor indisponivel durante Play; consulte verificar para o mundo de jogo')
+    inv=editor.chamar('inventory',variaveis=pecas.variaveis())
+    atual,rel=plano.conciliar(planta,inv['controlados'])
+    # Nao apresentar um movel ausente como observado. A estrutura permanece uma
+    # referencia planejada: inventario de transforms nao mede faces das paredes.
+    for pid in rel['faltando']:
+        if pid in atual['objetos'] and atual['objetos'][pid]['tipo'] in OP.MOVEIS:
+            del atual['objetos'][pid]
+    r=renderizar(atual,sala)
+    r.update(fonte='inventario_editor_com_estrutura_planejada',somente_leitura=True,
+        conciliacao=rel,level=info['level'],por_salvar=inv.get('por_salvar',[]),
+        fora_do_plano={'quantidade':len(inv['fora']),'caminhos':[a['caminho'] for a in inv['fora'][:8]],'limitado':len(inv['fora'])>8},
+        limite='posicoes/dimensoes de moveis conciliadas com inventario; paredes/salas sao referencia da planta, nao faces medidas. Atores fora do plano nao sao desenhados; inclinacao e colisao requerem verificar. Nenhuma planta foi gravada')
+    return r
+
+
+def cli(cena,sala=None,real=False):
     if not os.path.isfile(PL.caminho(C.CENAS,cena)):raise ValueError('cena sem planta registrada')
-    return renderizar(PL.carregar(C.CENAS,cena),sala)
+    planta=PL.carregar(C.CENAS,cena)
+    if real:
+        from .ponte import Ponte
+        with Ponte('director-observar-texto') as p:return observar_no_editor(planta,p,sala)
+    return renderizar(planta,sala)
