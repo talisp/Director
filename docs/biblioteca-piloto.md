@@ -40,3 +40,7 @@ O Fab foi catalogado, mas o comprovante de licenca da poltrona nao foi verificad
 #27 continua aberta: faltam candidato real a armario e comparacao dos gerenciadores prontos
 antes de qualquer escolha de banco/gerenciador. O piloto comprova reutilizacao local e fisica;
 nao autoriza declarar toda a biblioteca pronta. Os acervos grandes permanecem na ordem de #36.
+
+Atualização de 19/10: [comparação e conclusão do piloto](biblioteca-comparacao-2026-10-19.md),
+com candidato de armário redimensionado explicitamente e consultas/filtro conferidos.
+O estado desse candidato permanece baixado, não importado nem validado fisicamente.
