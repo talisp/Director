@@ -18,7 +18,7 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
-    "acervo": {"uso":"acervo iniciar | resumo | buscar TERMO | pedido JSON|- | coletar JSON", "faz":"SQL em R:\\CINF\\BD; coleta incremental de arquivos ou leitura do laboratorio, com historico e retomada. Nao baixa modelos nem altera a cena."},
+    "acervo": {"uso":"acervo iniciar | resumo | buscar TERMO | pedido JSON|- | coletar JSON | fontes JSON", "faz":"SQL em R:\\CINF\\BD; catalogos externos e coleta incremental de arquivos ou leitura do laboratorio. Nao baixa modelos nem altera a cena."},
     "contexto": {"uso": "contexto", "faz": "Leitura: identifica level aberto, cena e fonte de plantas; nao escolhe sala fixa nem troca level."},
     "vincular": {"uso": "vincular PASTA_CENAS", "faz": "Valida todas as plantas no laboratorio salvo, preserva as fontes e ativa estado compartilhado entre checkouts. Nao escolhe maior revisao nem altera atores."},
     "planta2d": {"uso":"planta2d CENA SALA", "faz":"Filtro offline de contencao, areas livres e regioes de passagem; sem Unreal."},

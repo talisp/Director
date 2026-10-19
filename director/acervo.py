@@ -66,7 +66,17 @@ CREATE TABLE IF NOT EXISTS inspecoes(
  assinatura TEXT, versao TEXT NOT NULL, estado TEXT NOT NULL, dados_json TEXT NOT NULL, criado_em TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS inspecoes_item ON inspecoes(escopo,chave);
 CREATE INDEX IF NOT EXISTS inspecoes_objeto ON inspecoes(objeto,id);
-PRAGMA user_version=2;
+CREATE TABLE IF NOT EXISTS pacotes(
+ id TEXT PRIMARY KEY, fonte TEXT NOT NULL REFERENCES fontes(id), chave TEXT NOT NULL,
+ nome TEXT NOT NULL, url TEXT, licenca TEXT NOT NULL, dados_json TEXT NOT NULL,
+ UNIQUE(fonte,chave));
+CREATE TABLE IF NOT EXISTS referencias_pacote(
+ objeto TEXT NOT NULL REFERENCES objetos(id), pacote TEXT NOT NULL REFERENCES pacotes(id),
+ caminho TEXT NOT NULL, origem TEXT NOT NULL,
+ PRIMARY KEY(objeto,pacote,caminho,origem));
+CREATE TABLE IF NOT EXISTS catalogos_importados(
+ chave TEXT PRIMARY KEY, resultado_json TEXT NOT NULL, importado_em TEXT NOT NULL);
+PRAGMA user_version=3;
 """
 
 
@@ -104,7 +114,7 @@ def abrir(caminho=None, escrita=False):
         c.execute('PRAGMA foreign_keys=ON')
         if escrita:
             versao=c.execute('PRAGMA user_version').fetchone()[0]
-            if versao not in (0,1,2):raise ValueError('versao de acervo nao suportada')
+            if versao not in (0,1,2,3):raise ValueError('versao de acervo nao suportada')
             c.executescript(SCHEMA)
         yield c
         if escrita:c.commit()
@@ -328,6 +338,12 @@ def buscar(c,pedido):
     for r in rows[:limite]:
         r.pop('rank');r.pop('criado_em')
         r['arquivo_remoto']=f"objects/{r['chave'][0]}/{r['chave']}.glb" if r['fonte']=='hssd' else None
+        if r['fonte']=='artvip':
+            principal=c.execute("SELECT valor_json FROM caracteristicas WHERE objeto=? AND nome='arquivo_principal' ORDER BY rowid DESC LIMIT 1",(r['id'],)).fetchone()
+            r['arquivo_remoto']=json.loads(principal[0]) if principal else None
+        if r['fonte']=='code4scene':
+            pacote=c.execute('SELECT p.nome,p.url,p.licenca FROM referencias_pacote ref JOIN pacotes p ON p.id=ref.pacote WHERE ref.objeto=? LIMIT 1',(r['id'],)).fetchone()
+            r['pacote']=dict(pacote) if pacote else None
         ultima=c.execute('SELECT estado,versao,criado_em FROM inspecoes WHERE objeto=? ORDER BY id DESC LIMIT 1',(r['id'],)).fetchone()
         r['ultima_inspecao']=dict(ultima) if ultima else None
         r['fisica']='nao_certificada';saida.append(r)
@@ -388,6 +404,12 @@ def executar(pedido,caminho=None):
 
 
 def cli(args):
+    if len(args)==2 and args[0]=='fontes':
+        if __package__:
+            from . import acervo_fontes
+        else:
+            import acervo_fontes
+        return acervo_fontes.importar(ler(args[1]))
     if len(args)==2 and args[0]=='coletar':
         if __package__:
             from . import acervo_coleta
@@ -400,7 +422,7 @@ def cli(args):
         import sys
         pedido=json.load(sys.stdin) if args[1]=='-' else ler(args[1])
         return executar(pedido)
-    raise ValueError('uso: acervo iniciar | resumo | buscar TERMO | pedido JSON|-')
+    raise ValueError('uso: acervo iniciar | resumo | buscar TERMO | pedido JSON|- | coletar JSON | fontes JSON')
 
 
 if __name__=='__main__':

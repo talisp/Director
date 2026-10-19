@@ -186,3 +186,54 @@ foram copiadas e verificadas antes da inspecao bem-sucedida. Historico do erro p
 Lote sintetico separado em R: comprovou adicao, modificacao, ausencia, erro e retomada
 com GLBs reais. Inventario da cena, level e navegacao permaneceram identicos; sem
 pacotes pendentes. Nao houve Hermes/LLM, download ou importacao de novos assets.
+
+## Catalogos externos — schema 3
+
+`acervo fontes PEDIDO.json` importa snapshots preparados por `acervo_fontes.py`:
+
+```json
+{"pasta":"R:/CINF/BD/Director/fontes/REVISOES_DO_SNAPSHOT"}
+```
+
+Para atualizar os metadados publicos, sem baixar malhas nem comprar pacotes:
+
+```
+python R:\CINF\BD\Director\ferramentas\acervo_fontes.py baixar R:\CINF\BD\Director\fontes
+```
+
+Leitura YAML usa PyYAML 6.0.3 (`requirements-acervo.txt`). Nesta instalacao, dependencia
+isolada em R:\CINF\BD\Director\dependencias, sem mudar ambientes Hermes ou instalar
+globalmente. Se nao encontrar PyYAML no Python, a ferramenta procura essa pasta.
+
+- ArtVIP original: API publica de arquivos, revisao fixa, um objeto por USD principal;
+  nao confunde USDs de recurso, origem ou materiais com novos objetos. Registra nomes,
+  grupos/subcategorias, arquivos da pasta, tamanhos, hashes LFS quando fornecidos e
+  revisao. A lista da pasta nao certifica fechamento de referencias USD/MDL externas.
+  Articulacao e uma declaracao do dataset, ainda nao inspecionada no Unreal.
+- Code4Scene: lista de pacotes e paletas text-to-scene. Pacotes ficam em `pacotes`;
+  objetos referenciados ficam em `objetos` ligados por `referencias_pacote`. Nao sao
+  registrados como baixados/importados. Caminhos Blueprint sao normalizados ao pacote,
+  preservando o spawn path original. Dimensoes sao declaracoes externas em cm, sem
+  sobrescrever medidas locais. Precos/licencas/versoes de engine permanecem historicos
+  e atribuídos a fonte, sem afirmar que os anuncios Fab foram conferidos agora.
+- Categorias originais e uma taxonomia pequena PT/EN sao pesquisaveis; sugestao de tag
+  nao e comprovacao de funcao. Nenhuma LLM foi utilizada para essas traducoes.
+- Coincidencias com assets locais usam prefixo de caminho literal (nao LIKE com `_`
+  como coringa), sem concluir posse, licenca ou igualdade da revisao. O cruzamento so
+  cobre as instalacoes registradas, nao toda a conta Fab ou o projeto cinematografico.
+
+Cada snapshot preserva revisoes e SHA-256. Importacao e transacional e repeticao do
+mesmo snapshot/importador reaproveita o resultado sem duplicar dados. Codigo4Scene
+nao distribui os pacotes 3D. O arquivo-fonte baixado pode conter gabaritos do benchmark:
+nao o fornecer ao agente em um teste Code4Scene. O SQL recebe apenas referencias de
+assets/pacotes, sem prompts completos nem rubricas de avaliacao.
+
+Em 19/10/2026 foram encontrados 476 USDs principais em ArtVIP e 2.959 caminhos unicos
+nas paletas Code4Scene. Foram lidas 150 tarefas; nove nao possuem paleta individual
+embutida. Portanto isso nao e um inventario completo de todos os assets de cada pack.
+49 registros de pacotes incluem 48 de terceiros e o Starter Content. Repositorios e
+manifestos de origem sao preservados em R:, sem redistribuir modelos no Git.
+As paletas contem 15.006 entradas brutas; repeticoes dentro do mesmo caso/caminho
+foram consolidadas em 14.844 vinculos de referencia. Nenhum desses numeros representa
+arquivos 3D baixados. O cruzamento inicial nao encontrou pastas coincidentes no
+laboratorio registrado; nao permite concluir que o usuario nao possui packs no Fab.

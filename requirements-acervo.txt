@@ -1,0 +1,2 @@
+# Somente para ler os catalogos YAML externos; SQLite usa a biblioteca padrao.
+PyYAML==6.0.3
