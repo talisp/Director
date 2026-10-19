@@ -227,7 +227,7 @@ class Operacoes(unittest.TestCase):
 
     def test_capacidades_e_texto_puro(self):
         cap = json.loads(json.dumps(OP.capacidades()))
-        self.assertEqual(sorted(cap["operacoes"]), ["colocar", "criar_sala", "mudar", "mudar_sala", "registrar_objeto", "remover"])
+        self.assertEqual(sorted(cap["operacoes"]), ["colocar", "criar_sala", "material_sala", "mudar", "mudar_sala", "registrar_objeto", "remover"])
 
 
 class Plano(unittest.TestCase):

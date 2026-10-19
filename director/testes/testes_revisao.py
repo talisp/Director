@@ -28,13 +28,14 @@ class Revisao(unittest.TestCase):
             pos=copy.deepcopy(ed.memoria['m']);fora=copy.deepcopy(ed.fora)
             def avaliacao(c,p,e,tipos=None):return {'ok':True,'veredito':'APROVADO','medidas':{'aprovado':True},'notas':p['notas'],'soma':sum(n['nota'] for n in p['notas'].values()),'perguntas':[]}
             with patch.object(R,'avaliar',side_effect=avaliacao),patch.object(R.V,'verificar',return_value={'aprovado':True}):
-                R.executar('t',{'acao':'iniciar','pedido':'mesa central','notas':notas(6)},ed)
+                R.executar('t',{'acao':'iniciar','pedido':'mesa central','notas':notas(6),'dispensados':['s.janela']},ed)
                 for n in range(3):
                     R.executar('t',{'acao':'corrigir','ficha':{'operacoes':[{'operacao':'mudar','id':'m','x_m':2.3}]}},ed)
                     baixas=notas(7);baixas['funcao']['nota']=4 # soma sobe, um item cai 2: deve recuar
                     r=R.executar('t',{'acao':'concluir','notas':baixas},ed)
                     self.assertTrue(r['recuou']);self.assertEqual(ed.memoria['m'],pos);self.assertEqual(ed.fora,fora)
                 self.assertEqual(r['estado'],'encerrada');self.assertEqual(r['rodadas'],3)
+                self.assertEqual(R.executar('t',{'acao':'estado'},ed)['revisao']['dispensados'],['s.janela'])
                 with self.assertRaisesRegex(ValueError,'encerrada'):R.executar('t',{'acao':'corrigir'},ed)
                 R.executar('t',{'acao':'iniciar','pedido':'outra revisao','notas':notas(6)},ed)
                 ed.memoria['m']['loc'][0]+=1

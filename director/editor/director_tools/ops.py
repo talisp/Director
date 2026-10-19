@@ -352,6 +352,10 @@ def inventory(variaveis: dict, detalhes: bool = False):
         for nome in variaveis.get(tipo, []):
             d["params"][nome] = round(float(a.get_editor_property(nome)), 3)
         d["pontos"] = _pontos(a)
+        if 'DIR_MATERIAL' in [str(t) for t in a.tags]:
+            mats=sorted({c.get_material(i).get_path_name().rsplit('.',1)[0] if c.get_material(i) else ''
+                for c in a.get_components_by_class(U.StaticMeshComponent) for i in range(c.get_num_materials())})
+            d['material']=mats[0] if len(mats)==1 else mats
         if tipo == "asset":
             c=a.get_components_by_class(U.StaticMeshComponent)[0]
             d["objeto"]={"asset":c.static_mesh.get_path_name().rsplit('.',1)[0],"simular":bool(c.is_simulating_physics()),
@@ -527,7 +531,48 @@ def _uma(a: dict, idx: dict) -> str:
         nav = U.NavigationSystemV1.get_navigation_system(_mundo_editor())
         if nav is not None:
             nav.on_navigation_bounds_updated(ator)
+    if 'material' in a:
+        comps=ator.get_components_by_class(U.StaticMeshComponent)
+        if not comps:raise ValueError('ator sem componente de malha para aplicar material')
+        tags=[str(t) for t in ator.tags];prefixo='DIR_MAT0:'
+        originais={}
+        for t in tags:
+            if t.startswith(prefixo):
+                nome,slot,path=json.loads(t[len(prefixo):]);originais[(nome,slot)]=path
+        if a['material'] is None:
+            if not originais:raise ValueError('material original nao registrado; nao adivinhar recuo')
+            for c in comps:
+                for i in range(c.get_num_materials()):
+                    key=(str(c.get_name()),i)
+                    if key not in originais:raise ValueError('componente mudou desde captura do material original')
+                    old=U.load_asset(originais[key]) if originais[key] else None
+                    if originais[key] and old is None:raise ValueError('asset do material original ausente')
+                    c.set_material(i,old)
+                    if c.get_material(i)!=old:raise ValueError('material original nao foi restaurado')
+            tags=[t for t in tags if t!='DIR_MATERIAL' and not t.startswith(prefixo)]
+        else:
+            material=U.load_asset(a['material'])
+            if material is None or not isinstance(material,U.MaterialInterface):raise ValueError('material inexistente ou classe incorreta')
+            if 'DIR_MATERIAL' not in tags:
+                for c in comps:
+                    for i in range(c.get_num_materials()):
+                        old=c.get_material(i);path=old.get_path_name().rsplit('.',1)[0] if old else ''
+                        tags.append(prefixo+json.dumps([str(c.get_name()),i,path],separators=(',',':')))
+                tags.append('DIR_MATERIAL')
+            for c in comps:
+                for i in range(c.get_num_materials()):c.set_material(i,material)
+        ator.set_editor_property('tags',tags)
     return "criado" if acao == "criar" else "atualizado"
+
+
+@op
+def material_info(caminho: str = ''):
+    if caminho:
+        m=U.load_asset(caminho)
+        return {'valido':m is not None and isinstance(m,U.MaterialInterface),'caminho':m.get_path_name().rsplit('.',1)[0] if m is not None else caminho}
+    reg=U.AssetRegistryHelpers.get_asset_registry()
+    return {'materiais':[{'nome':str(a.asset_name),'caminho':str(a.package_name)}
+        for a in reg.get_assets_by_path('/Game',recursive=True) if str(a.asset_class_path.asset_name) in ('Material','MaterialInstanceConstant')]}
 
 
 def _modelo_mesh(mesh):
@@ -651,7 +696,8 @@ def _acerto(hit) -> dict:
     oid, tipo = _etiquetas(ator) if ator else ("", "")
     return {"acertou": bool(d.get("blocking_hit")), "id": oid, "tipo": tipo,
             "rotulo": str(ator.get_actor_label()) if ator else "", "componente": str(comp.get_name()) if comp else "",
-            "distancia": round(float(d.get("distance", 0.0)), 2), "ponto": _v(d["impact_point"])}
+            "distancia": round(float(d.get("distance", 0.0)), 2), "ponto": _v(d["impact_point"]),
+            'normal':_v(d['impact_normal']) if d.get('impact_normal') is not None else None}
 
 
 @op

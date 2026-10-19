@@ -11,7 +11,7 @@ em ordem alfabética, e o vão posto por qualquer das duas corta essa parede.
 """
 from . import pecas as P
 import math
-from .operacoes import VAOS, trechos_de_parede, vao_no_mundo
+from .operacoes import VAOS, trechos_de_parede, vao_no_mundo,material_do_trecho
 from . import portas
 
 MARGEM_NAV = 300.0  # cm de área navegável em volta da sala (para o personagem chegar pela porta)
@@ -62,6 +62,8 @@ def _paredes(planta: dict) -> dict:
             nome = base + (f"_{contagem[base]}" if contagem[base] > 1 else "")
             loc = (ini, meio) if dx else (meio, ini)
             saida[nome] = _peca("parede", (loc[0], loc[1], s["z"]), giro, params)
+            material=material_do_trecho(planta,tr)
+            if material:saida[nome]['material']=material
             if v and v['tipo']=='passagem':
                 saida[nome]['passagem']=next(vid for vid in tr['vaos'] if objs[vid] is v)
     return saida
@@ -100,6 +102,9 @@ def derivar(planta: dict) -> dict:
             if o.get('teto'):
                 saida[f'{oid}.teto']=_peca('piso',(o['x']+o['largura']+esp,o['y']-esp,o['z']+o['altura']),0,
                     {'Largura':o['largura']+2*esp,'Comprimento':o['comprimento']+2*esp,'Espessura':ESPESSURA_PISO},rot=[0,180,180])
+            for alvo in ('piso','teto'):
+                if f'{oid}.{alvo}' in saida and alvo in o.get('materiais',{}):
+                    saida[f'{oid}.{alvo}']['material']=o['materiais'][alvo]['caminho']
             base = P.NATIVAS["nav"]["caixa_base"]
             tam = (o["largura"] + 2 * MARGEM_NAV, o["comprimento"] + 2 * MARGEM_NAV, o["altura"] + 2 * FOLGA_NAV_Z)
             saida[f"{oid}.nav"] = _peca("nav", (o["x"] + o["largura"] / 2, o["y"] + o["comprimento"] / 2, o["z"] + o["altura"] / 2),

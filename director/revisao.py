@@ -87,6 +87,7 @@ def executar(cena,pedido,editor):
         if not isinstance(pedido.get('pedido'),str) or not pedido['pedido'].strip():raise ValueError('informe pedido humano')
         p,inv=_conferir_atual(cena,editor);r=avaliar(cena,pedido,editor)
         estado={'cena':cena,'pedido':pedido['pedido'],'tipos':pedido.get('tipos',{}),'rodadas':0,
+            'dispensados':pedido.get('dispensados',[]),
             'estado':'aguardando_correcao','esperada':_hash(p),'fora':inv['fora'],
             'melhor_planta':p,'melhor_avaliacao':r,'historico':[{'rodada':0,'avaliacao':r}]}
         if not r['perguntas'] and all(n['nota']>=8 for n in r['notas'].values()):estado['estado']='encerrada'
@@ -108,7 +109,8 @@ def executar(cena,pedido,editor):
             'veredito':'AGUARDANDO_AVALIACAO' if r['ok'] else 'CORRECAO_RECUSADA','correcao':r}
     if acao!='concluir':raise ValueError('acao: avaliar, iniciar, estado, corrigir ou concluir')
     if estado['estado']!='aguardando_avaliacao':raise ValueError('nao ha correcao aguardando avaliacao')
-    r=avaliar(cena,pedido,editor,estado['tipos']);best=estado['melhor_avaliacao']
+    estado['dispensados']=pedido.get('dispensados',estado.get('dispensados',[]))
+    r=avaliar(cena,{**pedido,'dispensados':estado['dispensados']},editor,estado['tipos']);best=estado['melhor_avaliacao']
     piorou=r['soma']<best['soma'] or any(best['notas'][k]['nota']-r['notas'][k]['nota']>=2 for k in ITENS)
     rollback=None;apos_recuo=None
     if piorou:

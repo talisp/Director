@@ -56,6 +56,8 @@ def diferencas(alvo: dict, controlados: dict) -> list:
         if errados:
             difs.append({"id": pid, "o_que": "params", "alvo": errados, "real": {k: r.get("params", {}).get(k) for k in errados}})
         if _objeto_difere(p,r): difs.append({"id":pid,"o_que":"objeto","alvo":p.get("objeto"),"real":r.get("objeto")})
+        if 'material' in p and p['material']!=r.get('material'):difs.append({'id':pid,'o_que':'material','alvo':p['material'],'real':r.get('material')})
+        if 'material' not in p and 'material' in r:difs.append({'id':pid,'o_que':'material','alvo':'original','real':r['material']})
     for pid in controlados:
         if pid not in alvo:
             difs.append({"id": pid, "o_que": "sobra"})
@@ -82,12 +84,12 @@ def planejar(alvo: dict, controlados: dict) -> list:
         r = controlados.get(pid)
         if r is None:
             criar.append({"acao": "criar", "id": pid, "tipo": p["tipo"], "classe": p["classe"], "loc": p["loc"], "rot": p["rot"],
-                          "escala": p["escala"], "params": p["params"], **({"objeto":p["objeto"]} if "objeto" in p else {})})
+                          "escala": p["escala"], "params": p["params"], **({"objeto":p["objeto"]} if "objeto" in p else {}),**({'material':p['material']} if 'material' in p else {})})
             continue
         if r["classe"] != p["classe"]:  # recriação controlada: o identificador é o mesmo, o ator é outro
             remover.append({"acao": "remover", "id": pid})
             criar.append({"acao": "criar", "id": pid, "tipo": p["tipo"], "classe": p["classe"], "loc": p["loc"], "rot": p["rot"],
-                          "escala": p["escala"], "params": p["params"], "recriada": True, **({"objeto":p["objeto"]} if "objeto" in p else {})})
+                          "escala": p["escala"], "params": p["params"], "recriada": True, **({"objeto":p["objeto"]} if "objeto" in p else {}),**({'material':p['material']} if 'material' in p else {})})
             continue
         a = {"acao": "atualizar", "id": pid, "tipo": p["tipo"]}
         if _loc_difere(p["loc"], r["loc"]) or _rot_difere(p["rot"], r["rot"]):
@@ -98,6 +100,8 @@ def planejar(alvo: dict, controlados: dict) -> list:
         if errados:
             a["params"] = errados
         if _objeto_difere(p,r): a["objeto"]=p["objeto"]
+        if 'material' in p and (p['material']!=r.get('material') or len(a)>3):a['material']=p['material']
+        elif 'material' not in p and 'material' in r:a['material']=None
         if len(a) > 3:
             atualizar.append(a)
     return remover + atualizar + criar
