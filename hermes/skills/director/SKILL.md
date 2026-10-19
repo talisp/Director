@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.8
+version: 0.5.9
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -84,6 +84,17 @@ na escrivaninha. Não escreva script do editor para isso.
 **Peça fixa:** `"fixo":true` (padrão para as categorias box, box_chuveiro, chuveiro, vaso_sanitario, pia,
 bancada, divisoria, parede) registra sem simular física: o box é parte da casa, não um móvel que cai.
 O `verificar` só exige que ela fique parada.
+**Completar por etapas:** preserve os moveis aprovados. Para parede, `objeto` aceita
+`na_parede:norte|sul|leste|oeste`, `posicao_m` ao longo dela e `z_m` da base. Largura e
+altura seguem a parede, profundidade avanca para dentro. A ancora e fixa, cinco raios
+confirmam parede real e sobrepor porta/janela reprova; nao mude a janela para contornar.
+Para teto, crie primeiro a laje opcional com `mudar_sala` + `teto:true`; `no_teto:true`
+encosta o objeto por baixo. Alterar/remover teto com ancora dependente reprova.
+`apoios CENA {arquivo}` recebe `objeto`, `largura_m`, `profundidade_m`: nove candidatos
+para essa pegada, por raios nativos. E amostragem visivel de cima, NAO lista prateleiras
+ocultas. `sobre` permite empilhar assets; confirme estabilidade em Play. Para tapete/poster
+sem colisao use `colisao:false` (sem simulacao); nao diga que esse objeto pode interagir
+fisicamente. Reaplique so a etapa afetada e confira as identidades e a passagem.
 Malha dinamica pode virar StaticMesh pela GeometryScript nativa; comportamento de Blueprint nao e transferido.
 Use `mudar`/`remover` pelo ID para objetos registrados; mover o comodo nao autoriza apagar seu conteudo.
 Depois use `verificar` para confirmar geometria, apoio e fisica. Recusa da planta nao comprova falta de asset.

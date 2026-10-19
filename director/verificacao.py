@@ -131,6 +131,9 @@ def verificar(cena, pedido, editor, raiz=None):
                     "ate":[centro[0],centro[1],a["min"][2]-50]}])["medidas"][0]
         check["apoio"]=apoio
         check["apoio_proximo"]=bool(apoio.get("acertou")) and apoio.get("distancia",999)<=3
+        if o.get('ancora'):
+            from .objetos import medir_ancora
+            check['ancora']=medir_ancora(editor,o,s);check['apoio_proximo']=check['ancora']['confirmada']
         if not check["apoio_proximo"]: problemas.append({"ator":a["rotulo"],"tipo":"apoio_nao_confirmado"})
         sobreposicoes=[]
         nativas={path for c in a["componentes_fisicos"] for path in c.get("sobreposicoes_nativas",[])}

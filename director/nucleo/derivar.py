@@ -97,6 +97,9 @@ def derivar(planta: dict) -> dict:
             saida[f"{oid}.piso"] = _peca("piso", (o["x"] - esp, o["y"] - esp, o["z"]), 0.0,
                                          {"Largura": o["largura"] + 2 * esp, "Comprimento": o["comprimento"] + 2 * esp,
                                           "Espessura": ESPESSURA_PISO})
+            if o.get('teto'):
+                saida[f'{oid}.teto']=_peca('piso',(o['x']+o['largura']+esp,o['y']-esp,o['z']+o['altura']),0,
+                    {'Largura':o['largura']+2*esp,'Comprimento':o['comprimento']+2*esp,'Espessura':ESPESSURA_PISO},rot=[0,180,180])
             base = P.NATIVAS["nav"]["caixa_base"]
             tam = (o["largura"] + 2 * MARGEM_NAV, o["comprimento"] + 2 * MARGEM_NAV, o["altura"] + 2 * FOLGA_NAV_Z)
             saida[f"{oid}.nav"] = _peca("nav", (o["x"] + o["largura"] / 2, o["y"] + o["comprimento"] / 2, o["z"] + o["altura"] / 2),

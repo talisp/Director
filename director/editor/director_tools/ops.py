@@ -357,6 +357,7 @@ def inventory(variaveis: dict, detalhes: bool = False):
             d["objeto"]={"asset":c.static_mesh.get_path_name().rsplit('.',1)[0],"simular":bool(c.is_simulating_physics()),
                 "massa_kg":_massa(c),"amortecimento_linear":float(c.get_linear_damping()),
                 "amortecimento_angular":float(c.get_angular_damping()),"subir":c.get_editor_property("can_character_step_up_on")==U.CanBeCharacterBase.ECB_YES}
+            if c.get_collision_enabled()==U.CollisionEnabled.NO_COLLISION:d['objeto']['colisao']=False
         controlados[oid] = d
     return {"level": _level(), "controlados": controlados, "fora": sorted(fora, key=lambda x: x["caminho"]),
             "por_salvar": _sujos()}
@@ -516,7 +517,7 @@ def _uma(a: dict, idx: dict) -> str:
         if c.static_mesh!=mesh: c.set_static_mesh(mesh)
         c.set_mobility(U.ComponentMobility.MOVABLE)
         c.set_collision_profile_name("PhysicsActor")
-        c.set_collision_enabled(U.CollisionEnabled.QUERY_AND_PHYSICS)
+        c.set_collision_enabled(U.CollisionEnabled.QUERY_AND_PHYSICS if d.get('colisao',True) else U.CollisionEnabled.NO_COLLISION)
         c.set_mass_override_in_kg('',float(d["massa_kg"]),True)
         c.set_linear_damping(float(d["amortecimento_linear"]))
         c.set_angular_damping(float(d["amortecimento_angular"]))

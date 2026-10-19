@@ -28,6 +28,7 @@ COMANDOS = {
     "procurar": {"uso": "procurar TERMO [TERMO ...] | procurar consultar PEDIDO.json", "faz": "Atualiza e consulta cena, projeto e indice offline com sinonimos PT/EN; poucos candidatos e cena primeiro."},
     "catalogo": {"uso": "catalogo atualizar", "faz": "Gera indice local dos metadados atuais sem imprimir todo o catalogo."},
     "objeto": {"uso": "objeto CENA PEDIDO.json", "faz": "Adota, duplica, compoe ou coloca StaticMesh com identidade na planta e perfil fisico ajustavel."},
+    "apoios": {"uso":"apoios CENA PEDIDO.json", "faz":"Consulta pegada largura_m/profundidade_m em objeto registrado; candidatos por cinco raios nativos em amostra 3x3, sem criar objetos. Nao enumera prateleiras ocultas."},
     "preparar": {"uso": "preparar CENA_NOVA PASTA_SNAPSHOT", "faz": "Prepara copia historica em novo level e planta; nao executa pedido do operador."},
     "verificar": {"uso": "verificar CENA CONSULTAS.json", "faz": "Verifica contencao por geometria fisica, raios externos e rotas; informa limites e objetos fora da planta."},
     "relatorio": {"uso": "relatorio CENA [ID ...]", "faz": "Separa plano e medidas internas reais por raios; nao abre outra cena."},
@@ -125,7 +126,7 @@ def main(argv: list) -> None:
             r = {"ok": False, "motivo": "ensaio", "porque": str(e)}
         _sair(r, 0 if r.get("ok") else 2)
     aridade = {"contexto": (0, 0), "capacidades": (0, 0), "pecas": (0, 0), "fazer": (2, 2), "estado": (1, 1),
-               "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None), "relatorio": (1, None), "verificar": (2, 2), "preparar": (2, 2), "objeto": (2, 2), "procurar": (1,None), "catalogo": (1,1), "planejar": (2,2)}
+               "observar": (1, None), "medir": (2, 2), "assets": (1, None), "incorporar": (1, None), "relatorio": (1, None), "verificar": (2, 2), "preparar": (2, 2), "objeto": (2, 2), "apoios": (2,2), "procurar": (1,None), "catalogo": (1,1), "planejar": (2,2)}
     if modo not in aridade:
         _sair(_ajuda(modo), 2)
     minimo, maximo = aridade[modo]
@@ -135,7 +136,7 @@ def main(argv: list) -> None:
     if modo == "capacidades":
         _sair({**operacoes.capacidades(), "comandos": COMANDOS})
     try:
-        entrada = _ler_json(argv[2]) if modo in ("fazer", "medir", "verificar", "objeto", "planejar") else None
+        entrada = _ler_json(argv[2]) if modo in ("fazer", "medir", "verificar", "objeto", "apoios", "planejar") else None
     except (ValueError, OSError) as e:
         _sair({"ok": False, "motivo": "entrada_invalida", "porque": str(e), "tocou_na_cena": False}, 2)
     if modo == "planejar" and isinstance(entrada, dict) and (not entrada.get("sala") or any(
@@ -187,6 +188,9 @@ def main(argv: list) -> None:
             elif modo == "objeto":
                 from . import objetos
                 res = objetos.fazer(argv[1],entrada,p)
+            elif modo=='apoios':
+                from . import objetos
+                res=objetos.apoios(argv[1],entrada,p)
             elif modo == "planejar":
                 from . import planejamento
                 res = planejamento.planejar(argv[1],entrada,p)

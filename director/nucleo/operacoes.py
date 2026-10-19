@@ -37,7 +37,7 @@ class Invalida(ValueError):
     """A ficha pede algo que não fecha. A mensagem é para a pessoa (ou para a LLM tentar de novo)."""
 
 
-NUM, TXT = "numero", "texto"
+NUM, TXT, BOOL = "numero", "texto", "booleano"
 # campo -> (tipo, obrigatório, explicação). É isto que o agente lê em `capacidades`.
 OPERACOES: dict = {
     "registrar_objeto": {
@@ -53,12 +53,14 @@ OPERACOES: dict = {
                    "largura_m": (NUM, True, "medida interna no eixo leste-oeste, em metros"),
                    "comprimento_m": (NUM, True, "medida interna no eixo sul-norte, em metros"),
                    "altura_m": (NUM, False, "pé-direito; padrão 2,7"),
+                   "teto": (BOOL, False, "laje opcional acima do pe-direito; padrao sem teto"),
                    "x_m": (NUM, False, "canto sudoeste (fixo); padrão 0"), "y_m": (NUM, False, "canto sudoeste; padrão 0")},
     },
     "mudar_sala": {
         "descricao": "Muda as medidas de uma sala. O canto sudoeste fica onde está; móveis e vãos não saem do lugar.",
         "campos": {"id": (TXT, False, "sala; pode faltar se só existe uma"),
-                   "largura_m": (NUM, False, ""), "comprimento_m": (NUM, False, ""), "altura_m": (NUM, False, "")},
+                   "largura_m": (NUM, False, ""), "comprimento_m": (NUM, False, ""), "altura_m": (NUM, False, ""),
+                   "teto": (BOOL, False, "adiciona/remove apenas a laje; preserva os outros atores")},
     },
     "colocar": {
         "descricao": "Coloca porta, janela ou passagem sem folha numa parede; mesa no chao; prato ou copo sobre mesa.",
@@ -87,7 +89,8 @@ OPERACOES: dict = {
                    "peitoril_m": (NUM, False, ""), "angulo": (NUM, False, "porta: 0 fechada, 90 aberta"),
                    "dobradica": (TXT, False, "porta: inicio | fim"), "sentido": (TXT, False, "porta: dentro | fora"),
                    "x_m": (NUM, False, "mesa: medido do canto sudoeste da sala"), "y_m": (NUM, False, ""),
-                   "giro": (NUM, False, ""), "profundidade_m": (NUM, False, ""), "diametro_m": (NUM, False, "")},
+                   "giro": (NUM, False, ""), "profundidade_m": (NUM, False, ""), "diametro_m": (NUM, False, ""),
+                   "z_m": (NUM, False, "asset: altura da base relativa ao piso")},
     },
     "remover": {
         "descricao": "Remove uma peça pelo nome (uma sala só sai depois de vazia).",
@@ -138,6 +141,8 @@ def _conferir_campos(op: dict) -> dict:
         if campos[k][0] == NUM:
             if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):
                 raise Invalida(f"{nome}: {k} tem de ser um número (veio {v!r})")
+        elif campos[k][0] == BOOL:
+            if not isinstance(v,bool):raise Invalida(f'{nome}: {k} requer booleano')
         elif not isinstance(v, str) or not v.strip():
             raise Invalida(f"{nome}: {k} tem de ser um texto (veio {v!r})")
     for k, (_, obrig, _) in campos.items():
@@ -273,6 +278,7 @@ def _criar_sala(planta: dict, d: dict) -> str:
     planta["objetos"][oid] = {"tipo": "sala", "x": _cm(d, "x_m", 0.0), "y": _cm(d, "y_m", 0.0), "z": float(planta["base_z"]),
                               "largura": _cm(d, "largura_m"), "comprimento": _cm(d, "comprimento_m"),
                               "altura": _cm(d, "altura_m", PADROES["sala"]["altura"]), "parede": PADROES["sala"]["parede"]}
+    if 'teto' in d:planta['objetos'][oid]['teto']=d['teto']
     return f"sala {oid} criada"
 
 
@@ -282,6 +288,7 @@ def _mudar_sala(planta: dict, d: dict) -> str:
     for campo, chave in (("largura_m", "largura"), ("comprimento_m", "comprimento"), ("altura_m", "altura")):
         if campo in d:
             s[chave] = _cm(d, campo)
+    if 'teto' in d:s['teto']=d['teto']
     return f"sala {oid} com {s['largura'] / 100:g} x {s['comprimento'] / 100:g} m"
 
 
@@ -365,7 +372,7 @@ def _mudar(planta: dict, d: dict) -> str:
                "passagem": ("parede", "posicao_m", "largura_m", "altura_m"),
                "janela": ("parede", "posicao_m", "largura_m", "altura_m", "peitoril_m"),
                "mesa": ("x_m", "y_m", "giro", "largura_m", "profundidade_m", "altura_m"),
-               "asset": ("x_m", "y_m", "giro", "largura_m", "profundidade_m", "altura_m"),
+               "asset": ("x_m", "y_m", "z_m", "giro", "largura_m", "profundidade_m", "altura_m"),
                "prato": ("diametro_m", "altura_m"), "copo": ("diametro_m", "altura_m")}[tipo]
     for campo in d:
         if campo != "id" and campo not in aceitos:
@@ -393,6 +400,7 @@ def _mudar(planta: dict, d: dict) -> str:
             o["x"] = sala["x"] + _cm(d, "x_m")
         if "y_m" in d:
             o["y"] = sala["y"] + _cm(d, "y_m")
+        if 'z_m' in d:o['z']=sala['z']+_cm(d,'z_m')
         if "giro" in d:
             o["giro"] = float(d["giro"])
         for campo, chave in (("largura_m", "largura"), ("profundidade_m", "profundidade"), ("altura_m", "altura")):
@@ -416,6 +424,7 @@ def levar_junto(planta: dict, mesa_id: str, antes: dict, depois: dict) -> list:
     for oid, o in planta["objetos"].items():
         if o.get("sobre") != mesa_id:
             continue
+        anterior=copy.deepcopy(o)
         dx, dy = o["x"] - antes["x"], o["y"] - antes["y"]
         lx, ly = dx * math.cos(g0) + dy * math.sin(g0), -dx * math.sin(g0) + dy * math.cos(g0)
         o["x"] = depois["x"] + lx * math.cos(g1) - ly * math.sin(g1)
@@ -426,6 +435,7 @@ def levar_junto(planta: dict, mesa_id: str, antes: dict, depois: dict) -> list:
         else:  # asset apoiado: gira junto
             o["giro"] += depois["giro"] - antes["giro"]
         levados.append(oid)
+        if o['tipo'] in MOVEIS:levados.extend(levar_junto(planta,oid,anterior,o))
     return levados
 
 
@@ -455,11 +465,44 @@ def _registrar_objeto(planta, d):
     if min(m['tamanho'])<=0 or not isinstance(m.get('min_z'),(int,float)) or not math.isfinite(m['min_z']):raise Invalida('geometria precisa de dimensoes positivas')
     f=o.get('fisica',{})
     if not isinstance(f.get('simular'),bool) or not isinstance(f.get('subir'),bool):raise Invalida('fisica requer simular/subir booleanos')
+    if 'colisao' in f and not isinstance(f['colisao'],bool):raise Invalida('colisao requer booleano')
+    if f.get('colisao') is False and f['simular']:raise Invalida('sem colisao nao pode simular fisica')
     for k in ('massa_kg','amortecimento_linear','amortecimento_angular'):
         v=f.get(k)
         if isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) or v<0 or (k=='massa_kg' and v==0):raise Invalida('fisica invalida: '+k)
     planta["objetos"][oid]=o
     return "objeto "+oid+" registrado na planta"
+
+
+def conferir_ancora(planta,oid,o):
+    """Ancora e uma relacao persistente com parede/teto, nao apenas uma altura solta."""
+    a=o.get('ancora')
+    if not a:return
+    s=planta['objetos'][o['sala']]
+    if o['fisica']['simular']:raise Invalida(f'{oid}: objeto ancorado nao simula fisica')
+    if a['tipo']=='teto':
+        if not s.get('teto'):raise Invalida(f'{oid}: nao existe teto na sala')
+        if abs(o['z']+o['altura']+.5-s['z']-s['altura'])>.1:raise Invalida(f'{oid}: ancora fora da altura do teto')
+    elif a['tipo']=='parede':
+        lado=a['lado']
+        if lado not in LADOS:raise Invalida('lado da ancora invalido')
+        tangente=o['x'] if lado in ('sul','norte') else o['y']
+        eixo={'sul':o['y']-o['profundidade']/2-s['y'],
+              'norte':o['y']+o['profundidade']/2-s['y']-s['comprimento'],
+              'oeste':o['x']-o['profundidade']/2-s['x'],
+              'leste':o['x']+o['profundidade']/2-s['x']-s['largura']}[lado]
+        if abs(eixo)>.6:raise Invalida(f'{oid}: ancora nao encosta na parede {lado}')
+        giro={'sul':0,'norte':180,'oeste':-90,'leste':90}[lado]
+        if abs((o['giro']-giro+180)%360-180)>.01:raise Invalida('giro nao corresponde a ancora de parede')
+        chave=_linha(s,lado)[0]
+        for vid,v in planta['objetos'].items():
+            if v['tipo'] not in VAOS:continue
+            ch,ini,fim=vao_no_mundo(planta,v)
+            vs=planta['objetos'][v['sala']];base=vs['z']+v.get('peitoril',0)
+            if ch==chave and min(tangente+o['largura']/2,fim)>max(tangente-o['largura']/2,ini)+EPS and min(o['z']+o['altura'],base+v['altura'])>max(o['z'],base)+EPS:
+                raise Invalida(f'{oid}: ancora invade vao {vid}; escolha outra posicao/altura')
+    else:raise Invalida('ancora requer parede ou teto')
+    if o['z']<s['z'] or o['z']+o['altura']>s['z']+s['altura']+.1:raise Invalida(f'{oid}: ancora fora da altura do comodo')
 
 
 _FUNCOES = {"criar_sala": _criar_sala, "mudar_sala": _mudar_sala, "colocar": _colocar, "mudar": _mudar, "remover": _remover, "registrar_objeto": _registrar_objeto}
@@ -555,6 +598,7 @@ def conferir(planta: dict, final: bool = True) -> None:
             raise Invalida(f"{oid} ficaria fora de {o['sala']} (ou encostada na parede)")
         if o["tipo"]=="asset":
             invalido=min(o["largura"],o["profundidade"],o["altura"])<=0 or o["altura"]>s["altura"]
+            conferir_ancora(planta,oid,o)
         else:
             invalido=o["altura"] > s["altura"] - 20.0 or min(o["largura"], o["profundidade"]) < 30.0 or o["altura"] < 20.0
         if invalido:
@@ -563,6 +607,14 @@ def conferir(planta: dict, final: bool = True) -> None:
         apoio = o.get("sobre")
         # Entre operacoes da mesma ficha os moveis podem se cruzar (rearrumar um comodo); so o fim conta.
         for outro_id, (ox, oy, omx, omy, oapoio) in (caixas.items() if final else ()):
+            outro=objs[outro_id]
+            if o.get('fisica',{}).get('colisao') is False or outro.get('fisica',{}).get('colisao') is False:continue
+            if o.get('ancora') or outro.get('ancora'):
+                oz=o.get('z',s['z']);bz=outro.get('z',objs[outro['sala']]['z'])
+                if min(oz+o['altura'],bz+outro['altura'])<=max(oz,bz)+.01:continue
+                if abs(o['x']-ox)<mx+omx-.01 and abs(o['y']-oy)<my+omy-.01:
+                    raise Invalida(f'{oid} e {outro_id} se sobrepoem em altura e planta')
+                continue
             # 0,01 cm de tolerancia: moveis encostados (cadeira na mesa) com medidas como 55,00000000000001
             if oapoio == apoio and abs(o["x"] - ox) < mx + omx - .01 and abs(o["y"] - oy) < my + omy - .01:
                 raise Invalida(f"{oid} e {outro_id} ficariam um em cima do outro")
@@ -571,8 +623,13 @@ def conferir(planta: dict, final: bool = True) -> None:
         if o["tipo"] != "asset" or not o.get("sobre"):
             continue
         b = objs.get(o["sobre"])
-        if not b or b["tipo"] not in MOVEIS or b.get("sobre"):
-            raise Invalida(f"{oid}: o apoio {o['sobre']} precisa ser um movel no chao")
+        if not b or b['tipo'] not in MOVEIS or b.get('fisica',{}).get('colisao') is False:
+            raise Invalida(f"{oid}: o apoio {o['sobre']} precisa ter colisao e ser um movel registrado")
+        visitados={oid};cursor=o
+        while cursor.get('sobre'):
+            parent=cursor['sobre']
+            if parent in visitados:raise Invalida(f'{oid}: ciclo de apoios')
+            visitados.add(parent);cursor=objs.get(parent,{})
         x, y, mx, my, _ = caixas[oid]
         bx, by, bmx, bmy, _ = caixas[o["sobre"]]
         if x - mx < bx - bmx - 1e-6 or x + mx > bx + bmx + 1e-6 or y - my < by - bmy - 1e-6 or y + my > by + bmy + 1e-6:
