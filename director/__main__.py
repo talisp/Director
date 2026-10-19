@@ -36,7 +36,7 @@ COMANDOS = {
     "capacidades": {"uso": "capacidades", "faz": "Contrato das fichas, campos e padroes; sem Unreal."},
     "fazer": {"uso": "fazer CENA FICHA.json|-", "faz": "Cria a cena automaticamente se for nova; aplica, confere e salva a ficha."},
     "estado": {"uso": "estado CENA", "faz": "Resumo das diferencas entre planta e Unreal; somente leitura."},
-    "observar": {"uso": "observar CENA [ID ...] | observar CENA --texto [SALA]", "faz": "Objetos planejados e caixas reais; --texto desenha somente a planta desejada, offline. Nao abre outro level."},
+    "observar": {"uso": "observar CENA [ID ...] | observar CENA --texto [SALA] [--real]", "faz": "Objetos planejados e caixas reais; --texto e offline; --texto --real concilia moveis em memoria com o inventario, mantendo estrutura planejada explicita. Nao grava nem abre outro level."},
     "medir": {"uso": "medir CENA CONSULTAS.json|-", "faz": "Medidas do motor no level aberto. Coordenadas em cm; tipos: raio, varredura, caminho, nav.",
               "entrada": {"consultas": [{"tipo": "caminho", "de": [200, 200, 1], "ate": [930, 200, 1]}], "mundo": "editor"},
               "capsula": "varredura: raio=34, meia_altura=88 cm; de/ate sao CENTROS. O topo e centro.z + meia_altura. Ajuste ao personagem e ao vao.",
@@ -76,8 +76,10 @@ def main(argv: list) -> None:
     if argv and argv[0]=='observar' and '--texto' in argv:
         from . import planta_texto
         try:
-            if len(argv) not in (3,4) or argv[2]!='--texto':raise ValueError('uso: observar CENA --texto [SALA]')
-            r=planta_texto.cli(argv[1],argv[3] if len(argv)==4 else None);_sair(r)
+            extras=[a for a in argv[3:] if a!='--real']
+            if len(argv)<3 or argv[2]!='--texto' or len(extras)>1 or argv.count('--real')>1 or any(a.startswith('--') for a in extras):
+                raise ValueError('uso: observar CENA --texto [SALA] [--real]')
+            r=planta_texto.cli(argv[1],extras[0] if extras else None,real='--real' in argv);_sair(r)
         except Exception as e:_sair({'ok':False,'porque':str(e)},2)
     if argv and argv[0]=='planta2d':
         from . import espaco2d
