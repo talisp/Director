@@ -1,0 +1,89 @@
+{
+  "data": "2026-10-19",
+  "itens": 7,
+  "consultas": [
+    {
+      "consulta": "cama de solteiro",
+      "nomes": [
+        "bedSingle"
+      ],
+      "estados": [
+        "baixado_nao_importado"
+      ]
+    },
+    {
+      "consulta": "single bed",
+      "nomes": [
+        "bedSingle"
+      ],
+      "estados": [
+        "baixado_nao_importado"
+      ]
+    },
+    {
+      "consulta": "cadeira",
+      "nomes": [
+        "Ornate Royal Armchair",
+        "chairDesk"
+      ],
+      "estados": [
+        "baixado_nao_importado",
+        "importado"
+      ]
+    },
+    {
+      "consulta": "chair",
+      "nomes": [
+        "Ornate Royal Armchair",
+        "chairDesk"
+      ],
+      "estados": [
+        "baixado_nao_importado",
+        "importado"
+      ]
+    },
+    {
+      "consulta": "armario estreito",
+      "nomes": [
+        "Armario estreito de madeira / narrow wardrobe cabinet (variante uniforme 0.8)"
+      ],
+      "estados": [
+        "baixado_nao_importado"
+      ]
+    },
+    {
+      "consulta": "narrow wardrobe",
+      "nomes": [
+        "Armario estreito de madeira / narrow wardrobe cabinet (variante uniforme 0.8)"
+      ],
+      "estados": [
+        "baixado_nao_importado"
+      ]
+    },
+    {
+      "filtro": {
+        "minimo_cm": [
+          60,
+          40,
+          180
+        ],
+        "maximo_cm": [
+          90,
+          60,
+          220
+        ]
+      },
+      "nome": "Armario estreito de madeira / narrow wardrobe cabinet (variante uniforme 0.8)",
+      "dimensoes_cm": [
+        79.75467681884767,
+        57.78744412472938,
+        205.48580302856868
+      ],
+      "arquivo_sha256": "f5a76e0e3be9089c7efe60ca3be3d19b1a2b94d9371ae6711563802c781929a5",
+      "estado": "baixado_nao_importado",
+      "licenca": "CC0",
+      "proveniencia": "https://polyhaven.com/a/painted_wooden_cabinet_02 ; derivado local com escala uniforme 0.8; original 99.69 x 72.23 x 256.86 cm; nao certificado para roupas, abrir portas ou personagem"
+    }
+  ],
+  "limite": "candidatos; nao certifica funcao ou fisica dos itens nao importados"
+}
