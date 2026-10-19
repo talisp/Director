@@ -30,6 +30,48 @@ def _altura_de_apoio(editor,b,sobre,o,folga=2.0,irregular=3.0):
     return max(zs)
 
 
+def medir_ancora(editor,o,s):
+    """Cinco raios na pequena folga entre objeto e suporte; nunca usa bounds como contato."""
+    a=o['ancora'];qs=[]
+    if a['tipo']=='teto':
+        for dx,dy in [(0,0)]+[(x*o['largura']*.45,y*o['profundidade']*.45) for x in (-1,1) for y in (-1,1)]:
+            de=[o['x']+dx,o['y']+dy,o['z']+o['altura']+.25];qs.append({'tipo':'raio','de':de,'ate':[de[0],de[1],de[2]+20]})
+    else:
+        lado=a['lado'];normal={'sul':(0,1),'norte':(0,-1),'oeste':(1,0),'leste':(-1,0)}[lado]
+        tx,ty=normal[1],-normal[0]
+        for t,z in [(0,.5)]+[(v*.45,w) for v in (-1,1) for w in (.05,.95)]:
+            x=o['x']+tx*t*o['largura']-normal[0]*(o['profundidade']/2+.25)
+            y=o['y']+ty*t*o['largura']-normal[1]*(o['profundidade']/2+.25)
+            qs.append({'tipo':'raio','de':[x,y,o['z']+z*o['altura']],
+                'ate':[x-normal[0]*20,y-normal[1]*20,o['z']+z*o['altura']]})
+    med=editor.chamar('measure',consultas=qs)['medidas']
+    def valido(m):
+        return m.get('acertou') and m.get('distancia',999)<=3 and (
+            m.get('id')==o['sala']+'.teto' if a['tipo']=='teto' else m.get('tipo')=='parede')
+    return {'confirmada':len(med)==5 and all(valido(m) for m in med),'raios':med,'tipo':a['tipo']}
+
+
+def apoios(cena,pedido,editor):
+    """Candidatos por colisao nativa para uma pegada solicitada; nao extrai toda a malha."""
+    p=PL.carregar(C.CENAS,cena)
+    if editor.chamar('info')['level']!=p['nivel']:raise ValueError('abra a cena antes de consultar apoios')
+    oid=pedido['objeto'];b=p['objetos'][oid]
+    if b['tipo'] not in operacoes.MOVEIS:raise ValueError('apoio requer movel registrado')
+    w,h=pedido['largura_m']*100,pedido['profundidade_m']*100
+    if min(w,h)<=0 or not all(math.isfinite(v) for v in (w,h)):raise ValueError('pegada positiva e finita')
+    candidatos=[];recusados=0
+    for dx in (-.3,0,.3):
+        for dy in (-.3,0,.3):
+            g=math.radians(b['giro']);lx=dx*max(0,b['largura']-w);ly=dy*max(0,b['profundidade']-h)
+            o={'x':b['x']+lx*math.cos(g)-ly*math.sin(g),'y':b['y']+lx*math.sin(g)+ly*math.cos(g),
+               'giro':b['giro'],'largura':w,'profundidade':h}
+            try:z=_altura_de_apoio(editor,b,oid,o)
+            except ValueError:recusados+=1;continue
+            candidatos.append({'centro_cm':[o['x'],o['y']],'base_z_cm':z,'giro':b['giro']})
+    return {'ok':True,'objeto':oid,'pegada_cm':[w,h],'candidatos':candidatos,'recusados':recusados,
+        'limite':'amostra 3x3 por colisao visivel de cima; nao enumera prateleiras ocultas, nao comprova estabilidade em Play'}
+
+
 def fazer(cena,pedido,editor):
     p=PL.carregar(C.CENAS,cena)
     if editor.chamar('info')['level']!=p['nivel']: raise ValueError('abra a cena antes de criar/adotar objeto')
@@ -51,6 +93,20 @@ def fazer(cena,pedido,editor):
        'z':s['z'] if 'x_m' in pedido or 'y_m' in pedido else base,'giro':pedido.get('giro',g),
        'categoria':pedido.get('categoria','generico')}
     for i,k in enumerate(('largura','profundidade','altura')): o[k]=pedido.get(k+'_m',tam[i]/100)*100
+    if 'z_m' in pedido:o['z']=s['z']+pedido['z_m']*100
+    ancora=pedido.get('na_parede') or ('teto' if pedido.get('no_teto') else None)
+    if ancora:
+        if pedido.get('sobre'):raise ValueError('escolha ancora ou sobre')
+        if ancora=='teto':
+            o['ancora']={'tipo':'teto'};o['z']=s['z']+s['altura']-o['altura']-.5
+        else:
+            if ancora not in operacoes.LADOS:raise ValueError('na_parede: sul, norte, oeste ou leste')
+            if 'z_m' not in pedido:raise ValueError('ancora de parede requer z_m da base')
+            o['ancora']={'tipo':'parede','lado':ancora};o['giro']={'sul':0,'norte':180,'oeste':-90,'leste':90}[ancora]
+            pos=pedido.get('posicao_m',operacoes.lado_cm(s,ancora)/200)*100
+            n=o['profundidade']/2+.5
+            o['x'],o['y']={'sul':(s['x']+pos,s['y']+n),'norte':(s['x']+pos,s['y']+s['comprimento']-n),
+                         'oeste':(s['x']+n,s['y']+pos),'leste':(s['x']+s['largura']-n,s['y']+pos)}[ancora]
     sobre=pedido.get('sobre')
     if sobre:
         # Apoiado em outro movel: na altura do tampo, no centro dele se x_m/y_m faltarem.
@@ -60,12 +116,13 @@ def fazer(cena,pedido,editor):
         if 'x_m' not in pedido:o['x']=b['x']
         if 'y_m' not in pedido:o['y']=b['y']
         o['z']=_altura_de_apoio(editor,b,sobre,o);o['sobre']=sobre
-    fixo=pedido.get('fixo',o['categoria'] in FIXOS)
+    fixo=pedido.get('fixo',bool(ancora) or pedido.get('colisao') is False or o['categoria'] in FIXOS)
     if fixo and pedido.get('simular') is True:raise ValueError('fixo e simular ao mesmo tempo: escolha um')
     massa=pedido.get('massa_kg',MASSAS.get(o['categoria'],MASSAS['generico']))
     if not isinstance(massa,(int,float)) or isinstance(massa,bool) or not math.isfinite(massa) or massa<=0: raise ValueError('massa_kg precisa ser positiva e finita')
     o['fisica']={'simular':pedido.get('simular',not fixo),'massa_kg':massa,'amortecimento_linear':pedido.get('amortecimento_linear',.5),
                  'amortecimento_angular':pedido.get('amortecimento_angular',1.0),'subir':pedido.get('subir',False)}
+    if 'colisao' in pedido:o['fisica']['colisao']=pedido['colisao']
     if acao in ('adotar','duplicar'):
         if not a: raise ValueError('informe ator para adotar/duplicar')
         o[acao]=a['caminho']
@@ -74,6 +131,9 @@ def fazer(cena,pedido,editor):
     ficha={'pedido':pedido.get('pedido','objeto '+acao),'operacoes':[{'operacao':'registrar_objeto','id':pedido['id'],'modelo_json':json.dumps(o)}]}
     try:operacoes.aplicar_ficha(p,ficha)
     except operacoes.Invalida as exc:return {'ok':False,'motivo':'recusado','porque':str(exc),'objeto_criado':False}
+    if ancora:
+        med=medir_ancora(editor,o,s)
+        if not med['confirmada']:return {'ok':False,'motivo':'ancora_nao_confirmada_no_editor','apoio':med,'objeto_criado':False}
     res=executor.executar(cena,ficha,editor,C.CENAS,C.LAB_DIR,C.WORK+'/restauracao')
     res['fisica']={'simula':o['fisica']['simular'],'fixo':bool(fixo),**({'sobre':sobre} if sobre else {})}
     res['massa']={'kg':massa,'origem':'informada' if 'massa_kg' in pedido else 'perfil_estimado','categoria':o['categoria']}
