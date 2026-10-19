@@ -77,8 +77,8 @@ _TIME_SLEEP = re.compile(r"\btime\.sleep\(\s*(\d+(?:\.\d+)?)\s*\)")
 _UNIDADE = {"": 1, "s": 1, "m": 60, "h": 3600, "d": 86400}
 
 # Comandos do Director que mexem no editor. Cena "*" = qualquer cena (navegação, peças, script no editor).
-_DIRECTOR = re.compile(r"-m\s+director\s+(fazer|objeto|verificar|incorporar|preparar|navegacao|pecas|ensaio\s+executar)\b\s*([^\s;|&>\"']*)")
-_POR_CENA = {"fazer", "objeto", "verificar", "incorporar", "preparar"}
+_DIRECTOR = re.compile(r"-m\s+director\s+(fazer|objeto|verificar|revisar|material|incorporar|preparar|navegacao|pecas|ensaio\s+executar)\b\s*([^\s;|&>\"']*)")
+_POR_CENA = {"fazer", "objeto", "verificar", "revisar", "material", "incorporar", "preparar"}
 
 
 def maior_espera(texto: str) -> float:

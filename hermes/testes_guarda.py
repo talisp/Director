@@ -96,6 +96,8 @@ class MesmaCena(unittest.TestCase):
         self.assertEqual(G.cenas_alteradas("python -m director navegacao n.json"), {"*"})
         self.assertEqual(G.cenas_alteradas("python -m director ensaio executar ID t.py"), {"*"})
         self.assertEqual(G.cenas_alteradas("python -m director ensaio criar nome p.txt"), set())
+        self.assertEqual(G.cenas_alteradas('python -m director revisar sala pedido.json'),{'sala'})
+        self.assertEqual(G.cenas_alteradas('python -m director material sala pedido.json'),{'sala'})
 
     def test_segunda_varredura_na_mesma_cena_e_barrada(self):
         r = G._regra("terminal", {"command": LACO_1652, "background": True}, rodando=[LACO_1651])
