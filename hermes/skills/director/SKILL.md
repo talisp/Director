@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.9
+version: 0.5.10
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -98,6 +98,22 @@ fisicamente. Reaplique so a etapa afetada e confira as identidades e a passagem.
 Malha dinamica pode virar StaticMesh pela GeometryScript nativa; comportamento de Blueprint nao e transferido.
 Use `mudar`/`remover` pelo ID para objetos registrados; mover o comodo nao autoriza apagar seu conteudo.
 Depois use `verificar` para confirmar geometria, apoio e fisica. Recusa da planta nao comprova falta de asset.
+
+## Revisao depois de medir
+
+`revisar CENA PEDIDO.json` registra seis notas 0..10 com justificativa: `realismo`, `funcao`,
+`arrumacao`, `completude`, `seguiu_pedido`, `passagem`. Informe `origem` (sessao/modelo),
+`tipos` por sala e as opcoes usuais em `verificar`. `acao:avaliar` so consulta: medidas
+reprovadas limitam funcao/passagem/seguiu_pedido a 3. Completude pendente limita sua nota
+a 5 e gera perguntas; nao acrescente janela/ventilacao sem decisao do usuario.
+
+Para corrigir com recuo automatico: `acao:iniciar` com pedido humano e notas; depois
+`acao:corrigir` com `ficha` normal; depois `acao:concluir` com novas notas/origem.
+Nunca aplique correcao por fora desse ciclo enquanto ele estiver ativo. Soma menor OU
+queda de 2 pontos num item recua para o melhor estado e verifica novamente. No maximo
+tres rodadas; pare antes se todas notas >=8 e nenhuma pergunta pendente. Consulte
+`acao:estado` para retomar. Interferencia externa ou interrupcao em aplicar/recuar exige
+conferir estado antes de prosseguir, nao repetir automaticamente. Nota nao substitui PA.
 
 Na raiz, use `{{PYTHON}} -m director ...` (caminhos com espaços exigem aspas conforme o shell).
 
