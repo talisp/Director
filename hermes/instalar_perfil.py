@@ -25,6 +25,10 @@ ARQUIVOS = ("SOUL.md", os.path.join("skills", "director", "SKILL.md"))
 
 def pasta_do_perfil(nome: str) -> str:
     base = os.environ.get("HERMES_HOME") or os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "hermes")
+    # Dentro de uma conversa, Hermes entrega HERMES_HOME ja apontando ao perfil.
+    # Nao produzir profiles/director/profiles/director nem diagnosticar ausencia falsa.
+    if Path(base).parent.name.lower() == "profiles":
+        base = str(Path(base).parent.parent)
     return os.path.join(base, "profiles", nome)
 
 
