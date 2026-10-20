@@ -149,7 +149,13 @@ def caracteristica(c,oid,nome,valor,procedencia,evidencia):
         c.execute('INSERT OR REPLACE INTO caracteristicas VALUES(?,?,?,?,?)',(oid,nome,dump(valor),procedencia,evidencia))
 
 
-def indexar_busca(c):
+def indexar_busca(c,objetos=None):
+    if objetos is not None:
+        for oid in set(objetos):
+            c.execute('DELETE FROM busca WHERE objeto=?',(oid,))
+            c.execute("""INSERT INTO busca(objeto,texto) SELECT o.id,o.nome||' '||coalesce(group_concat(t.texto,' '),'')
+                FROM objetos o LEFT JOIN tags t ON t.objeto=o.id WHERE o.id=? GROUP BY o.id""",(oid,))
+        return
     c.execute('DELETE FROM busca')
     c.execute("""INSERT INTO busca(objeto,texto)
       SELECT o.id,o.nome||' '||coalesce(group_concat(t.texto,' '),'')
@@ -346,7 +352,9 @@ def buscar(c,pedido):
             r['pacote']=dict(pacote) if pacote else None
         ultima=c.execute('SELECT estado,versao,criado_em FROM inspecoes WHERE objeto=? ORDER BY id DESC LIMIT 1',(r['id'],)).fetchone()
         r['ultima_inspecao']=dict(ultima) if ultima else None
-        r['fisica']='nao_certificada';saida.append(r)
+        r['verificacoes']=[dict(v) for v in c.execute(
+            'SELECT capacidade,resultado,versao,criado_em FROM verificacoes WHERE objeto=? ORDER BY id DESC LIMIT 3',(r['id'],))]
+        r['fisica']='consultar_verificacoes_e_escopo' if r['verificacoes'] else 'nao_certificada';saida.append(r)
     return {'ok':True,'resultados':saida,'total':len(rows),'limitado':len(rows)>limite,
             'limite':'disponibilidade por ultima observacao; licenca/caracteristicas nao equivalem a funcionamento testado'}
 
@@ -369,6 +377,9 @@ def resumo(c):
 
 def executar(pedido,caminho=None):
     acao=pedido.get('acao','resumo');leitura=acao in ('resumo','buscar','detalhe','instancias')
+    if acao in ('planejar_download','baixar','importar','sincronizar','rotular','inspecionar_usd'):
+        from . import acervo_operacao
+        return acervo_operacao.executar(pedido,caminho)
     with abrir(caminho,escrita=not leitura) as c:
         if acao=='resumo':return resumo(c)
         if acao=='buscar':return buscar(c,pedido)
