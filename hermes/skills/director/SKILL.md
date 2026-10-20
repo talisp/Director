@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.11
+version: 0.5.12
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -69,6 +69,44 @@ afeta a grade de todo o level, mesmo com escopo regiao. O backup/restaurar inclu
 O contrato de ficha atual contém `criar_sala`, `mudar_sala`, `colocar`, `mudar` e `remover`. Use-o quando atender ao pedido. O mesmo `criar_sala` aceita sala, quarto, corredor e outros cômodos retangulares: o nome da categoria não precisa de uma macro. Para um pedido fora do contrato, investigue o Unreal e a ponte no laboratório, em vez de responder apenas que não existe uma operação. Experimentos pequenos e reversíveis podem usar código temporário. Distinga um experimento de uma alteração permanente no Director.
 
 ## Operação direta, sem reler o código a cada pedido
+
+### Consultar e alimentar o acervo 3D
+
+Antes de compor: examine a cena com `procurar TERMO` e consulte
+`acervo buscar TERMO`. O primeiro ve o projeto atual; o segundo inclui arquivos
+locais e catalogos remotos. SQL fica em `R:/CINF/BD/Director/acervo.sqlite3`.
+Nao envie o banco inteiro ao contexto. Leia os oito candidatos; refine a consulta
+e use `acervo pedido JSON` com `acao:detalhe` e `objeto:ID_SQL` para o selecionado.
+`importado_snapshot` e observacao anterior, nao prova que o asset ainda existe:
+confirme pelo motor antes de colocar. `baixado` nao quer dizer importado; Fab pode
+ser apenas referencia a um pacote. Tags sao pistas, nao capacidades comprovadas.
+
+Pedidos `acervo pedido JSON`:
+- `{"acao":"planejar_download","objeto":"ID_SQL"}` mostra lote ArtVIP/revisao/bytes/licenca,
+  sem baixar. So execute `baixar` com `autorizar_download:true`, `origem` da autorizacao
+  e `max_bytes` depois de conferir escopo/espaco/licenca e autorizacao existente.
+  Salva apenas em R:/CINF/BD. Nao baixa HSSD autenticado nem compra pacotes Fab.
+- `{"acao":"importar","objeto":"ID_SQL","arquivo":"R:/CINF/BD/.../modelo.glb",
+  "destino":"/Game/Director/Acervo/IdentificadorNovo","origem":"sessao/ensaio"}`
+  importa GLB/glTF pelo motor e registra todas as malhas no mesmo candidato. Nao
+  sobrescreve destino existente. Modelo pode trazer varias malhas: inspecione a
+  estrutura antes de unir; merge rigido perde juntas/partes moveis. Nao componha
+  gaveta/porta articulada como bloco rigido quando o pedido exigir abrir.
+- `inspecionar_usd` com `objeto` e `arquivo` le dependencias, unidades, malhas e
+  juntas pelo OpenUSD do Unreal; nao certifica que juntas funcionem no Chaos.
+- `sincronizar` com `cena` captura a planta persistida. Depois de operacoes
+  `fazer`, `objeto`, `incorporar` e `material` bem-sucedidas pela CLI, a captura e
+  automatica. Se `acervo.ok:false`, a cena pode ter sido salva corretamente:
+  repita apenas a sincronizacao, nunca a alteracao da cena por essa falha SQL.
+- `promover` requer `instancia`, `nome`, `origem`; guarda uma receita candidata
+  e dependencias explicitamente. Nao promove todo ator nem promete prefab portavel.
+
+Um resultado `ok:true` nestas operacoes nao e veredito de atendimento ao pedido.
+Informe medidas, partes, verificacoes e limites. Registre testes com `acao:verificacao`,
+`objeto`, `capacidade`, `resultado`, `versao` e `evidencia`. Nao aprove o modelo
+inteiro por uma simulacao curta. Rotulos PT/EN por taxonomia sao sugestoes; descricoes
+individuais e capacidades ainda exigem inspecao. Codigo experimental que melhora
+um caso nao vira automaticamente ferramenta permanente.
 
 `objeto CENA PEDIDO.json` adota, duplica, coloca asset ou compoe pecas, ja registrando
 o resultado na planta. Exemplo: `{"acao":"adotar","id":"cadeira","ator":"Cadeira_mesa1","sala":"sala1","categoria":"cadeira"}`.

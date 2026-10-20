@@ -75,7 +75,8 @@ O download autorizado deve salvar em R:, e registrar o ID selecionado no catalog
 
 Pode fornecer `sha256` esperado. O comando verifica o arquivo e vincula ao candidato
 remoto sem criar outra identidade. Nao verifica dependencias ou executa importacao.
-Baixador autenticado e importacao automatica no editor ainda nao fazem parte desta entrega.
+Baixador autenticado HSSD nao faz parte desta entrega. Desde 20/10, importacao
+explicita GLB/glTF e download seletivo ArtVIP estao em `acervo_operacao.py` (abaixo).
 Depois da importacao futura, registrar explicitamente o mesmo `objeto`:
 
 ```json
@@ -108,8 +109,9 @@ precise reunir varios objetos independentes exige definir seu conjunto antes de 
 nao presume que o nome de um ator contenha toda a composicao.
 Mudanca na planta do alvo antes da promocao exige nova sincronizacao.
 
-Essa captura e explicita. Nao ha monitoramento em segundo plano, hook no executor,
-reinstalacao de perfil nem mudanca no Hermes publicado nesta entrega.
+Promocao a receita continua explicita. Desde 20/10, a CLI sincroniza a planta
+depois de `fazer`, `objeto`, `incorporar` e `material` bem-sucedidos. Chamadas diretas
+a modulos ou edicoes externas exigem `sincronizar`/coleta; nao ha monitor em segundo plano.
 
 ## Recuperacao
 
@@ -237,3 +239,51 @@ As paletas contem 15.006 entradas brutas; repeticoes dentro do mesmo caso/caminh
 foram consolidadas em 14.844 vinculos de referencia. Nenhum desses numeros representa
 arquivos 3D baixados. O cruzamento inicial nao encontrou pastas coincidentes no
 laboratorio registrado; nao permite concluir que o usuario nao possui packs no Fab.
+
+## Operacao do acervo — 20/10/2026
+
+Use a CLI da instalacao fixa publicada, nao Python arbitrario do editor:
+`python -m director acervo pedido PEDIDO.json`. As novas acoes abaixo nao estao na
+copia congelada anterior em R:; ela conserva o inventario/consulta anteriores.
+
+1. `{"acao":"planejar_download","objeto":"ID_SQL"}`: plano ArtVIP com revisao fixa,
+   arquivos/tamanhos/hash/licenca declarada. Sem rede nem download neste planejamento.
+2. `{"acao":"baixar","objeto":"ID_SQL","autorizar_download":true,
+   "origem":"autorizacao/sessao","max_bytes":100000}`: baixa apenas o selecionado,
+   preserva estrutura e verifica SHA256 LFS ou hash Git dos arquivos pequenos.
+   Cache por arquivo verificado; recusa divergencias em vez de sobrescrever.
+   Lock nativo por objeto, transacao SQL ao final e temporarios na pasta R:.
+   Destino padrao `R:/CINF/BD/ArtVIP/REVISAO/`; sem aceite/autenticacao HSSD nem compra Fab.
+3. `{"acao":"importar","objeto":"ID_SQL","arquivo":"R:/CINF/BD/.../modelo.glb",
+   "destino":"/Game/Director/Acervo/NomeNovo","origem":"ensaio/sessao"}`:
+   revalida hash/dependencias glTF e usa `AssetImportTask`/Interchange instalado.
+   Recusa pasta existente, Play ou pacotes pendentes. Salva apenas assets novos;
+   nunca presume mesh unico nem cria atores. Mais de uma malha pode pertencer ao
+   mesmo candidato. Falha pode deixar assets novos parciais: confira o destino;
+   nao repita importacao nem apague automaticamente assets para esconder o erro.
+4. `{"acao":"inspecionar_usd","objeto":"ID_SQL","arquivo":"R:/.../modelo.usd"}`:
+   usa pxr incluido no Unreal para ler unidades, malhas, juntas e fechamento de
+   dependencias. Nao importa/simula juntas no Chaos. Requer plugin USD disponivel.
+5. `{"acao":"sincronizar","cena":"NOME"}`: captura somente planta persistida e
+   referencias de meshes. Instancias sao snapshots historicos, nao assets novos;
+   `estado_cena` registra o conjunto atual e a revisao, sem apagar versoes antigas.
+   A CLI chama esta captura depois de mutacoes bem-sucedidas. Se SQL falhar, conserva
+   sucesso da cena e retorna `acervo.ok:false` com instrucao de repetir so o registro.
+6. `{"acao":"rotular"}`: aliases de categorias existentes em lote, com procedencia
+   `sugerida`. Nao afirma material, funcao, articulacao ou dimensao pelo nome.
+
+A consulta inclui as tres verificacoes mais recentes e seus escopos; resultado
+parcial nao deve ser interpretado como certificacao universal de fisica. O download
+verifica arquivos da pasta do objeto; somente a inspecao USD verifica referencias
+resolvidas naquele ambiente. Um objeto com dependencias ausentes nao esta pronto.
+
+Fontes de API: docstrings do UE 5.8.3 instalado consultadas em 20/10;
+`AssetImportTask` e `AssetTools.import_asset_tasks` testados no laboratorio.
+`GLTFImportOptions` nao existe nessa instalacao: nao foi usado um caminho antigo
+com essa classe. USD inspecionado via `pxr` fornecido pelo plugin USDCore instalado.
+
+Os arquivos de origem, banco, caches, copias, evidencias e backups ficam em R:.
+Os pacotes `.uasset/.umap` novos pertencem ao Content do projeto laboratorio
+existente; nao se moveu o projeto nem alterou o projeto cinematografico.
+
+Provas, numeros e limites: [piloto de operacao](acervo-operacao-2026-10-20.md).
