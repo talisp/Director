@@ -68,12 +68,36 @@ def _conferir_atual(cena,editor,esperada=None):
 def avaliar(cena,pedido,editor,tipos=None):
     origem=pedido.get('origem')
     if not isinstance(origem,str) or not origem.strip():raise ValueError('informe origem da avaliacao (sessao/modelo ou usuario)')
+    referencias=referencias_layout(pedido.get('referencias_layout',[]))
     p=PL.carregar(C.CENAS,cena)
     pendencias=perguntas(p,tipos if tipos is not None else pedido.get('tipos',{}),pedido.get('dispensados',[]))
     medidas=V.verificar(cena,pedido.get('verificar',{}),editor)
     notas=pontuar(pedido['notas'],medidas,pendencias)
     return {**de_verificacao(medidas),'ok':True,'cena':cena,'origem':origem,'notas':notas,'soma':sum(n['nota'] for n in notas.values()),
-        'perguntas':pendencias,'medidas':medidas,'limite':'notas de realismo/arrumacao sao opiniao; sucesso de ferramenta nao e PA'}
+        'perguntas':pendencias,'medidas':medidas,'referencias_layout':referencias,
+        'limite':'notas de realismo/arrumacao sao opiniao; sucesso de ferramenta nao e PA'}
+
+
+def referencias_layout(ids,db=None):
+    """Referencia solicitada, compacta e somente leitura; nunca altera notas ou cena."""
+    if not isinstance(ids,list) or len(ids)>3 or any(not isinstance(i,str) for i in ids):
+        raise ValueError('referencias_layout deve conter ate tres IDs do acervo')
+    if not ids:return []
+    from . import acervo as A
+    resultado=[]
+    with A.abrir(db) as c:
+        for oid in dict.fromkeys(ids):
+            row=c.execute('SELECT o.nome,c.valor_json,c.evidencia FROM objetos o JOIN caracteristicas c '
+                'ON o.id=c.objeto WHERE o.id=? AND o.fonte=? AND o.tipo=? AND c.nome=?',
+                (oid,'spatiallm-dataset','amostra_layout','estatisticas_layout')).fetchone()
+            if row is None:raise ValueError('referencia layout ausente ou tipo incorreto: '+oid)
+            s=json.loads(row[1])
+            resultado.append({'id':oid,'nome':row[0],'fonte':'SpatialLM Dataset / Manycore Research',
+                'revisao_fonte':row[2],'licenca':s['licenca_dados'],
+                'amostra':{k:s[k] for k in ('quartos_unicos','criterio_dormitorio','dormitorios','dormitorios_com_janela')},
+                'distancia_centro_cama_porta_xy':s['distancia_centro_cama_porta_xy'],
+                'escopo':s['escopo'],'limite':'referencia estatistica opcional; nao altera notas, nao certifica circulacao e nao obriga janela ou distancia'})
+    return resultado
 
 
 def executar(cena,pedido,editor):

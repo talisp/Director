@@ -1,0 +1,12 @@
+{
+  "README.md": "0927abe1c348681f6482eb82478cf5b36d80fd200ae90baa6be0a7de6bc38fdc",
+  "SKILL.md": "40b0d7d1023b385f982f95a1b7428790650006b21af5101629a4eb27814f52ba",
+  "references/ARQUIVOS.md": "f937bbd70402c1aa919dee6978e453f1b1ead3af8aab6d426b2a27fda45a4c01",
+  "references/PROTOCOLO.md": "795e0c1c6910f3427ee4d107bd63398595d512257a68898b23fb911697d93515",
+  "references/RUBRICA.md": "5b7aaa3d4840e013d75a8373233c37072220ae41ec2032ba7b122ee973a4f6c9",
+  "scripts/fila.py": "325973a6f43afd12c960a7b179f519ba7d10aa5f1e2527a4504685a9b44f5c39",
+  "scripts/medir_contexto.py": "f55d3a4717e2d700be09e22428672f891b96cf26e841a76725b2ec42777cf3c4",
+  "scripts/teste_skill.py": "6526290145f85c48cabb841975f530eb20c0cc2a6420a65ffc75ec50e599bcd9",
+  "scripts/verificar_avaliacao.py": "5bbd7475db5dbad63fd78b0b8f0b996341cfec51c4f45abb421046cad2f141fd",
+  "templates/AVALIACAO.md": "84535effa6cb76df806118b563acdd6807a2db181f1226610fea931a31ebbf89"
+}

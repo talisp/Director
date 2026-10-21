@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "problema": "<gargalo concreto>",
+  "issue": "<URL issue Director>",
+  "pedido": "<pedido humano>",
+  "commit_director": "<SHA completo observado>",
+  "repo": "https://github.com/<owner>/<repo>",
+  "commit_fonte": "<SHA completo da fonte>",
+  "arquivos_funcoes": [
+    "<arquivo:funcao>"
+  ],
+  "licenca": {
+    "id": "<SPDX ou NAO_VERIFICADA>",
+    "fonte": "<URL>",
+    "conferida_em": "<data>"
+  },
+  "classe": "inspiracao",
+  "integracao_autorizada": false,
+  "estado": "proposta",
+  "capacidade_existente": "<o que o Director ja faz>",
+  "acrescimo": "<diferenca necessaria>",
+  "hipotese": "<afirmacao refutavel>",
+  "evidencias": [
+    {
+      "tipo": "CODIGO",
+      "referencia": "<arquivo:funcao e URL/commit>",
+      "observado": "<o que foi lido, nao alegacao de execucao>"
+    }
+  ],
+  "variacao": {
+    "executada": false,
+    "evidencia": "<teste pendente>"
+  },
+  "teste_aceitacao": "<criterios definidos antes>",
+  "limites": "<nao verificado>",
+  "recuperacao": "<como retornar>",
+  "dependencias": "<licenca, pacotes e custo>",
+  "orcamento": {
+    "limites": {
+      "repos": 1,
+      "chamadas": 20,
+      "dados_bytes": 1000000
+    },
+    "consumido": {
+      "repos": 0,
+      "chamadas": 0,
+      "dados_bytes": 0
+    }
+  },
+  "operador": {
+    "pre_condicoes": "<estado necessario>",
+    "procedimento": "<passos curtos>",
+    "esperado": "<evidencias de sucesso>",
+    "quando_pedir_ajuda": "<limites da tentativa>"
+  }
+}
