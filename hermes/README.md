@@ -51,3 +51,13 @@ ou cartão por comando. Discussão e crítica não autorizam alteração por si 
 - **O Hermes edita a skill sozinho** depois das conversas (revisão automática; registro em `skills/.curator_ledger.jsonl` do perfil). Parte das mudanças é boa, parte é errada. O que for bom é trazido para cá e reinstalado; o que for errado é desfeito ao reinstalar.
 - **Política antiga de aprovação:** após alterações não solicitadas, foi introduzido um cartão por comando. Essa política foi substituída em 16/10, a pedido do Talis: o perfil experimental executa tarefas autorizadas sem esses cartões. Uma discussão continua não sendo uma ordem de alterar a cena.
 - **Corredores e passagens:** o contrato aceita cômodos estreitos e paredes compartilhadas. Nos testes de 17/10, uma montagem leste–oeste teve passagem física e trajeto completo após reconstrução nativa da navegação; outra montagem norte–sul continuou com caminho parcial. A navegação ainda requer investigação, mesmo quando a geometria passa nas verificações.
+# Pesquisa de engenharia
+
+`skills/director-research` contem a fonte versionada 0.3.1 da skill de pesquisa,
+com vinculo ao gargalo, ficha de operador, evidencias e limite por lote.
+`python hermes/instalar_pesquisa.py hermes-dev` compara a instalacao;
+`--aplicar` faz backup e atualiza somente se o perfil estiver ocioso e sem conflitos.
+Fila/estudos e skill de operacao do perfil Director sao preservados.
+Provas e limites da entrega: [pilotos e auditoria de issues](../docs/conclusao-pilotos-2026-10-21.md).
+Antes de novos ensaios Luna, resolver a divergencia de rota registrada na issue #81.
+
