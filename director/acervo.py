@@ -449,7 +449,9 @@ def cli(args):
         return executar(pedido)
     if len(args)==2 and args[0]=='pedido':
         import sys
-        pedido=json.load(sys.stdin) if args[1]=='-' else ler(args[1])
+        entrada=args[1]
+        pedido=json.load(sys.stdin) if entrada=='-' else json.loads(entrada) if entrada.lstrip().startswith('{') else ler(entrada)
+        if not isinstance(pedido,dict):raise ValueError('pedido deve ser um objeto JSON; use arquivo, JSON entre aspas ou - para entrada padrao')
         return executar(pedido)
     raise ValueError('uso: acervo iniciar | resumo | buscar TERMO | pedido JSON|- | coletar JSON | fontes JSON')
 

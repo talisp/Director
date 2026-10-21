@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.13
+version: 0.5.14
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -88,6 +88,11 @@ e um filtro implicito. JSON equivalente: `{"acao":"buscar","texto":"mesa","fonte
 ArtVIP para escolher dentro do orcamento; confirme com `planejar_download` antes de baixar.
 Uma lista truncada de outras fontes nao prova ausencia do modelo desejado.
 
+`acervo pedido` aceita caminho de arquivo JSON, um objeto JSON literal em um unico
+argumento entre aspas, ou `-` com JSON na entrada padrao. Prefira literal/entrada
+padrao para pedidos curtos; se precisar de arquivo temporario, salve em R:/CINF/BD,
+nao em work/ do checkout em C:. Exemplo de argumento: `'{"acao":"detalhe","objeto":"ID_SQL"}'`.
+
 Pedidos `acervo pedido JSON`:
 - `{"acao":"planejar_download","objeto":"ID_SQL"}` mostra lote ArtVIP/revisao/bytes/licenca,
   sem baixar. So execute `baixar` com `autorizar_download:true`, `origem` da autorizacao
@@ -97,6 +102,8 @@ Pedidos `acervo pedido JSON`:
   "origem":"usuario/data/pedido","max_bytes":1048576}`. Repetir verifica os hashes e
   reutiliza arquivos; nao cria outro objeto SQL. A autorizacao ja dada para o lote
   dispensa nova pergunta. Consulte `detalhe` depois; baixar nao aprova fisica.
+  O arquivo principal entra em `arquivos` do SQL; dependencias e hashes do lote
+  ficam no manifesto de download. Nao diga que cada dependencia virou objeto/indexado.
 - Se uma conversao autorizada criou outro arquivo, registre-o antes de importar:
   `{"acao":"arquivo","objeto":"ID_SQL_ORIGINAL","caminho":"R:/CINF/BD/.../derivado.glb",
   "origem":"ensaio/conversao/original/limites","licenca":"LICENCA_ORIGINAL"}`.
