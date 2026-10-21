@@ -210,7 +210,9 @@ def ficha(p,db=None):
         rows=[dict(r) for r in c.execute('SELECT * FROM metadados WHERE variante=?',(v['id'],))]
         valores={r['nome']:json.loads(r['valor_json']) for r in rows}
         deps=valores.get('dependencias_ausentes',[])
-        if deps:out['bloqueios'].append({'dependencias_ausentes':deps})
+        if deps:
+            out['bloqueios'].append({'dependencias_ausentes':deps})
+            out['proxima_acao']='resolver dependencias ausentes antes de importar; medidas sao apenas da geometria carregada'
         if validade=='vigente':
             out['geometria']={'caixa_stage_cm':valores.get('caixa_stage_cm'),'up_axis':valores.get('up_axis'),
                 'origem':'medida OpenUSD','referencial':'AABB mundial, eixos da fonte, tempo padrao; cm'}

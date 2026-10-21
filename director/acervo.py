@@ -430,6 +430,9 @@ def resumo(c):
 
 def executar(pedido,caminho=None):
     acao=pedido.get('acao','resumo');leitura=acao in ('resumo','buscar','detalhe','instancias')
+    if acao=='detalhe' and 'assunto' in pedido:
+        from . import acervo_preparacao
+        return acervo_preparacao.ficha({**pedido,'acao':'ficha'},caminho)
     if acao in ('preparar','ficha','anotar','preparacao'):
         from . import acervo_preparacao
         return acervo_preparacao.executar(pedido,caminho)

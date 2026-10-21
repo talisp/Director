@@ -71,6 +71,7 @@ class Preparacao(unittest.TestCase):
         self.inspecao['dependencias_ausentes']=['faltou.usd']
         with patch.object(O,'importar',side_effect=AssertionError('nao importar')):
             r=self.preparar(importar=True);self.assertFalse(r['ok']);self.assertTrue(r['bloqueios'])
+        self.assertIn('resolver dependencias',self.ficha()['proxima_acao'])
 
     def test_importacao_e_reuso_entre_pedidos_com_conferencia(self):
         with patch.object(O,'importar',return_value={'ok':True,'malhas':[{'asset':'/Game/Teste'}]}) as imp,patch.object(O,'conferir_importacao',return_value={'ok':True}) as conferir:
@@ -128,6 +129,12 @@ class Preparacao(unittest.TestCase):
         self.assertEqual(r['preparo']['validade'],'vigente')
         self.assertEqual(self.ficha(assunto='animacoes')['animacoes']['estado'],'desconhecido')
         self.assertLess(len(A.dump(self.ficha())),2500)
+
+    def test_detalhe_com_assunto_nao_despeja_ficha_legada(self):
+        self.preparar()
+        r=A.executar({'acao':'detalhe','objeto':self.oid,'assunto':'partes'},self.db)
+        self.assertEqual(len(r['partes']),1);self.assertNotIn('tags',r['objeto'])
+        with self.assertRaises(ValueError):A.executar({'acao':'detalhe','objeto':self.oid,'assunto':'errado'},self.db)
 
     def test_migracao_backup_e_rollback(self):
         legacy=self.root/'legacy.sqlite3'
