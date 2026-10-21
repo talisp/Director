@@ -1,5 +1,9 @@
 # Acervo SQL local
 
+Decisoes de metadados e exposicao compacta a LLM, apos releitura de SceneSmith e
+Code4Scene: [estudo de 21/10](metadados-acervo-2026-10-21.md). Trata de proposta
+de evolucao; as consultas atuais abaixo continuam com seus limites documentados.
+
 SQLite da biblioteca padrao do Python; sem servidor, pacotes novos ou inferencia.
 Destino padrao: `R:\CINF\BD\Director\acervo.sqlite3`. Pode ser escolhido por
 `DIRECTOR_ACERVO_DB`. Se R: nao existir, a operacao falha; nao cria um acervo em C:.
