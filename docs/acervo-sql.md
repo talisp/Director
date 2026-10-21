@@ -1,6 +1,6 @@
 # Acervo SQL local
 
-Decisoes de metadados e exposicao compacta a LLM, apos releitura de SceneSmith e
+Estudo de metadados e exposicao compacta a LLM, apos releitura de SceneSmith e
 Code4Scene: [estudo de 21/10](metadados-acervo-2026-10-21.md). Trata de proposta
 de evolucao; as consultas atuais abaixo continuam com seus limites documentados.
 

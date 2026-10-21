@@ -61,7 +61,7 @@ licencas dos datasets. Codigo/documentacao lidos; nao executamos SceneSmith.
   `_calculate_bbox_score` calcula distancia L1; menor e melhor. Nao e probabilidade
   de sucesso. O contrato de resultado articulado descreve bbox_score com outra
   convencao; a formula e ordenacao precisam ser conferidas por backend.
-- [ArticulatedMeshMetadata/load_source_data](https://github.com/nepfaff/scenesmith/blob/67cc408fd38334b4a926efef45e284302ed5055b/scenesmith/agent_utils/articulated_retrieval_server/data_loader.py):
+- [ArticulatedMeshMetadata/load_preprocessed_data](https://github.com/nepfaff/scenesmith/blob/67cc408fd38334b4a926efef45e284302ed5055b/scenesmith/agent_utils/articulated_retrieval_server/data_loader.py):
   le `metadata_index.yaml` com descricao, montagem piso/parede/teto, manipulavel e
   bounding boxes do pre-processado. E um candidato concreto para aproveitar dados
   prontos sem estimar tudo novamente. Disponibilidade desse indice separado dos
