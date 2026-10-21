@@ -61,6 +61,16 @@ licencas dos datasets. Codigo/documentacao lidos; nao executamos SceneSmith.
   `_calculate_bbox_score` calcula distancia L1; menor e melhor. Nao e probabilidade
   de sucesso. O contrato de resultado articulado descreve bbox_score com outra
   convencao; a formula e ordenacao precisam ser conferidas por backend.
+- [ArticulatedMeshMetadata/load_source_data](https://github.com/nepfaff/scenesmith/blob/67cc408fd38334b4a926efef45e284302ed5055b/scenesmith/agent_utils/articulated_retrieval_server/data_loader.py):
+  le `metadata_index.yaml` com descricao, montagem piso/parede/teto, manipulavel e
+  bounding boxes do pre-processado. E um candidato concreto para aproveitar dados
+  prontos sem estimar tudo novamente. Disponibilidade desse indice separado dos
+  arquivos grandes ainda nao foi confirmada. O loader usa `yaml.unsafe_load`;
+  nao copiar essa desserializacao para dados externos: normalizar formato/tipos
+  com leitura segura, preservando revisao e vinculo ao derivado correspondente.
+- [HssdMeshMetadata](https://github.com/nepfaff/scenesmith/blob/67cc408fd38334b4a926efef45e284302ed5055b/scenesmith/agent_utils/hssd_retrieval/data_loader.py):
+  indice basico tem ID/nome/up/front/WordNet. O ranking dimensional abre a malha;
+  ter somente esse indice nao equivale a ter medidas ou superficies prontas.
 - [HsmSupportSurfaceData e loader](https://github.com/nepfaff/scenesmith/blob/67cc408fd38334b4a926efef45e284302ed5055b/scenesmith/agent_utils/hssd_retrieval/support_surface_loader.py):
   area, normal, cantos, horizontalidade e folga vertical, com tratamento de OBB e
   conversao de eixos. Nosso `support_region:true` do HSSD e apenas uma pista:
@@ -198,5 +208,5 @@ inteiros. Superficies HSM/artefatos pre-processados do SceneSmith merecem piloto
 posterior, com acesso por objeto e compatibilidade real, sem assumir porte direto.
 
 Pesquisa local: R:/CINF/BD/Director/pesquisa-metadados-20261021, com revisoes,
-arvores e quinze arquivos MD/Python selecionados. Apenas leitura do SQL e das
+arvores e dezessete arquivos MD/Python selecionados. Apenas leitura do SQL e das
 fontes; nenhum teste Unreal/Hermes, download de modelo ou migracao nesta rodada.
