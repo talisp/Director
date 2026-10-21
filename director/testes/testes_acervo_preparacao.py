@@ -66,11 +66,15 @@ class Preparacao(unittest.TestCase):
         r=self.preparar();self.assertFalse(r['ok']);self.assertEqual(r['etapa'],'inspecionando')
         self.mockinspect.side_effect=None
         with patch.object(O.urllib.request,'urlopen',side_effect=AssertionError('nao baixar')):self.assertTrue(self.preparar()['ok'])
+        with A.abrir(self.db) as c:
+            historico=[json.loads(r[0]) for r in c.execute("SELECT dados_json FROM registros WHERE entidade='etapa_preparacao'")]
+        self.assertTrue(any(r['erro']=='ponte caiu' for r in historico))
 
     def test_dependencias_ausentes_impedem_importacao(self):
         self.inspecao['dependencias_ausentes']=['faltou.usd']
         with patch.object(O,'importar',side_effect=AssertionError('nao importar')):
             r=self.preparar(importar=True);self.assertFalse(r['ok']);self.assertTrue(r['bloqueios'])
+        self.assertIn('resolver dependencias',self.ficha()['proxima_acao'])
 
     def test_importacao_e_reuso_entre_pedidos_com_conferencia(self):
         with patch.object(O,'importar',return_value={'ok':True,'malhas':[{'asset':'/Game/Teste'}]}) as imp,patch.object(O,'conferir_importacao',return_value={'ok':True}) as conferir:
@@ -110,6 +114,9 @@ class Preparacao(unittest.TestCase):
         self.assertFalse(r['validado'])
         r=A.executar({'acao':'anotar','objeto':self.oid,'origem':'teste','texto':'dimensao inventada; DROP TABLE objetos'},self.db)
         self.assertFalse(r['validado'])
+        self.assertGreater(r['anotacao'],0)
+        notas=self.ficha(assunto='anotacoes')['anotacoes']
+        self.assertEqual(len(notas),2);self.assertTrue(all(not n['validado'] for n in notas))
         with self.assertRaises(ValueError):A.executar({'acao':'anotar','objeto':'nao existe','origem':'teste','texto':'x'},self.db)
         with A.abrir(self.db) as c:
             self.assertEqual(c.execute('SELECT count(*) FROM verificacoes').fetchone()[0],0)
@@ -128,6 +135,12 @@ class Preparacao(unittest.TestCase):
         self.assertEqual(r['preparo']['validade'],'vigente')
         self.assertEqual(self.ficha(assunto='animacoes')['animacoes']['estado'],'desconhecido')
         self.assertLess(len(A.dump(self.ficha())),2500)
+
+    def test_detalhe_com_assunto_nao_despeja_ficha_legada(self):
+        self.preparar()
+        r=A.executar({'acao':'detalhe','objeto':self.oid,'assunto':'partes'},self.db)
+        self.assertEqual(len(r['partes']),1);self.assertNotIn('tags',r['objeto'])
+        with self.assertRaises(ValueError):A.executar({'acao':'detalhe','objeto':self.oid,'assunto':'errado'},self.db)
 
     def test_migracao_backup_e_rollback(self):
         legacy=self.root/'legacy.sqlite3'

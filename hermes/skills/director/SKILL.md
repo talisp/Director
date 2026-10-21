@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.17
+version: 0.5.18
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -99,7 +99,7 @@ Pedidos `acervo pedido JSON`:
 - Fluxo preferido sob demanda: `buscar` -> `ficha` -> `preparar` -> comparar candidatos.
   `{"acao":"ficha","objeto":"ID_SQL"}` retorna dimensoes com referencial, validade,
   bloqueios e limites. Para detalhes, `assunto`: geometria, partes, fisica, animacoes,
-  superficies, importacao ou origem. Desconhecido nao significa reprovado.
+  superficies, importacao, origem ou anotacoes. Desconhecido nao significa reprovado.
   Se faltarem medidas e houver autorizacao de aquisicao, use
   `{"acao":"preparar","objeto":"ID_SQL","autorizar_download":true,
   "origem":"usuario/sessao/pedido","pedido_id":"identificador-do-pedido","sessao":"ID_HERMES"}`.
@@ -116,7 +116,9 @@ Pedidos `acervo pedido JSON`:
   Queda na etapa importando exige conferencia da pasta retornada antes de repetir.
   `{"acao":"preparacao","id":"ID_RETORNADO"}` consulta etapas, erro e registros.
   Dados obsoletos nao orientam a escolha atual; prepare novamente apos revisar a causa.
-  `anotar` com objeto/texto/origem guarda proposta nao validada. `verificacao` declarada
+  `anotar` com objeto/texto/origem guarda proposta nao validada e devolve ID. Confira
+  `ficha` com `assunto:"anotacoes"` antes de afirmar que salvou uma nota; menciona-la
+  na resposta nao grava o SQL. `verificacao` declarada
   pelo agente tambem e anotacao: nao fabrica prova de motor. Nunca escreva SQL direto
   ou altere as tabelas para aprovar um candidato. As evidencias antigas sao historicas,
   sem vigencia de variante demonstrada; uma gaveta USD nao comprova articulacao Chaos.

@@ -1,6 +1,6 @@
 # Director: como retomar o trabalho
 
-Atualizado em 18/10/2026. Leia primeiro o [objetivo](OBJETIVO.md), o [README](../README.md)
+Atualizado em 21/10/2026. Leia primeiro o [objetivo](OBJETIVO.md), o [README](../README.md)
 e o [pipeline autorizado](pipeline-2026-10-18.md). O pipeline define a ordem; encontrar
 um problema novo não autoriza trocar de frente sem registrar causa, dependência e prioridade.
 
@@ -27,6 +27,12 @@ um problema novo não autoriza trocar de frente sem registrar causa, dependênci
    a prova e as limitações na própria issue; publique antes de atualizar a instalação do operador.
 
 ## Evidências atuais
+
+- [Acervo sob demanda e SQL v4](acervo-sob-demanda.md): dados/cache/backups em R:,
+  migração aditiva, fichas por assunto, validade e retomada. Não abrir SQL direto pelo
+  agente nem tratar declaração como prova. Após migrar, versões antigas do código
+  não suportam escrita v4. Modelo real deve ser consultado no endpoint/configuração;
+  o perfil padrão e a substituição por chamada de teste podem ser diferentes.
 
 - [Composição de salas e passagens](composicao-salas.md); [portas e verificação 2D](portas-e-2d.md).
 - [Biblioteca](biblioteca-piloto.md); [observação](observacao-textual.md); [diagnósticos](diagnosticos.md).
