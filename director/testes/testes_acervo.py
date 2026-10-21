@@ -134,7 +134,8 @@ class Acervo(unittest.TestCase):
         with self.assertRaises(ValueError):self.runp({'acao':'verificacao','objeto':oid,'resultado':'aprovado'})
         self.runp({'acao':'verificacao','objeto':oid,'resultado':'nao_testado','capacidade':'colisao','versao':'sha1','evidencia':'inspecao-pendente'})
         self.runp({'acao':'tags','objeto':oid,'origem':'teste','tags':[{'texto':'cadeira','idioma':'pt'}]})
-        self.assertEqual(self.runp({'acao':'detalhe','objeto':oid})['objeto']['verificacoes'][0]['resultado'],'nao_testado')
+        self.assertEqual(self.runp({'acao':'detalhe','objeto':oid})['objeto']['verificacoes'],[])
+        with A.abrir(self.db) as c:self.assertEqual(c.execute('SELECT count(*) FROM anotacoes_acervo').fetchone()[0],1)
 
 
 if __name__=='__main__':unittest.main()

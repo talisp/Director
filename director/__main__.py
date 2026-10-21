@@ -18,7 +18,7 @@ from .nucleo import executor, operacoes, pecas
 from . import consultas
 
 COMANDOS = {
-    "acervo": {"uso":"acervo iniciar | resumo | buscar [--fonte FONTE] [--disponibilidade remoto|baixado|importado_snapshot|receita] TERMO | pedido JSON|- | coletar JSON | fontes JSON", "faz":"SQL em R:\\CINF\\BD; consulta, coleta incremental, download ArtVIP e importacao nativa GLB/glTF ou USD com modo_usd:malhas explicito. Nao cria atores nem certifica articulacoes."},
+    "acervo": {"uso":"acervo iniciar | resumo | buscar [--fonte FONTE] [--disponibilidade remoto|baixado|importado_snapshot|receita] TERMO | pedido JSON|- | coletar JSON | fontes JSON", "faz":"SQL em R:\\CINF\\BD. Acoes preparar/ficha/preparacao/anotar: aquisicao ArtVIP sob demanda, medidas USD, variantes, validade e retomada. preparar com importar:true importa malhas; nao cria atores nem certifica articulacoes. Operacoes anteriores continuam disponiveis."},
     "contexto": {"uso": "contexto", "faz": "Leitura: identifica level aberto, cena e fonte de plantas; nao escolhe sala fixa nem troca level."},
     "vincular": {"uso": "vincular PASTA_CENAS", "faz": "Valida todas as plantas no laboratorio salvo, preserva as fontes e ativa estado compartilhado entre checkouts. Nao escolhe maior revisao nem altera atores."},
     "planta2d": {"uso":"planta2d CENA SALA", "faz":"Filtro offline de contencao, areas livres e regioes de passagem; sem Unreal."},

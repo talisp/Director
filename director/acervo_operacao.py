@@ -196,6 +196,14 @@ def importar(pedido,db=None,editor=None):
     return {'objeto':oid,**resultado,'limite':'malhas importadas; nao instancia na cena, nao certifica estabilidade, articulacao ou escala humana'}
 
 
+def conferir_importacao(resultado,editor=None):
+    from .ponte import Ponte
+    if editor is None:
+        with Ponte('acervo-conferir') as ponte:return conferir_importacao(resultado,ponte)
+    codigo=Path(__file__).with_name('editor').joinpath('acervo_importacao.py').read_text(encoding='utf-8')
+    return editor.chamar('dev_exec',codigo=codigo+'\nresultado=conferir('+repr(resultado['malhas'])+')')['resultado']
+
+
 def executar(pedido,db=None):
     acao=pedido['acao']
     if acao=='planejar_download':return planejar_download(pedido['objeto'],db)

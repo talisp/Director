@@ -6,7 +6,13 @@ O Director busca transformar pedidos como “crie uma cozinha anexa à sala” o
 
 O destino são **cenas e animações para vídeos de referência**, usados depois em ferramentas de geração de vídeo por IA. Nesta etapa, a prioridade é construir e modificar cenários com coerência espacial, preservação e possibilidade de interação. A aparência final pode ser simples. A exportação do vídeo será feita manualmente pelo usuário no Unreal.
 
-**Estado em 18/10/2026: protótipo experimental.** Há capacidades testadas no laboratório, mas ainda não há comprovação de atendimento confiável a todos os pedidos por uma LLM. As limitações e as pendências fazem parte desta entrega.
+**Estado em 21/10/2026: protótipo experimental.** Há capacidades testadas no laboratório, mas ainda não há comprovação de atendimento confiável a todos os pedidos por uma LLM. As limitações e as pendências fazem parte desta entrega.
+
+O [acervo sob demanda](docs/acervo-sob-demanda.md) permite procurar no catálogo SQL,
+baixar apenas candidatos necessários, medir o USD pelo Unreal e guardar variantes e
+evidências. A ficha compacta indica validade e limites; sugestões da LLM não certificam
+física. A aquisição automática desta etapa atende ArtVIP. HSSD e pacotes Fab continuam
+dependendo de acesso e aquisição. Os dados ficam em `R:\CINF\BD` no ambiente local.
 
 - [Objetivo e critérios de trabalho](docs/OBJETIVO.md)
 - [Pipeline autorizado e pendências](docs/pipeline-2026-10-18.md) · [issue de acompanhamento #48](https://github.com/talisp/Director/issues/48)

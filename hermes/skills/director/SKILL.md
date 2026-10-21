@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.16
+version: 0.5.17
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -96,6 +96,30 @@ padrao para pedidos curtos; se precisar de arquivo temporario, salve em R:/CINF/
 nao em work/ do checkout em C:. Exemplo de argumento: `'{"acao":"detalhe","objeto":"ID_SQL"}'`.
 
 Pedidos `acervo pedido JSON`:
+- Fluxo preferido sob demanda: `buscar` -> `ficha` -> `preparar` -> comparar candidatos.
+  `{"acao":"ficha","objeto":"ID_SQL"}` retorna dimensoes com referencial, validade,
+  bloqueios e limites. Para detalhes, `assunto`: geometria, partes, fisica, animacoes,
+  superficies, importacao ou origem. Desconhecido nao significa reprovado.
+  Se faltarem medidas e houver autorizacao de aquisicao, use
+  `{"acao":"preparar","objeto":"ID_SQL","autorizar_download":true,
+  "origem":"usuario/sessao/pedido","pedido_id":"identificador-do-pedido","sessao":"ID_HERMES"}`.
+  O codigo baixa ArtVIP em R:, verifica hashes/dependencias, inspeciona USD pelo motor
+  e grava metadados no SQL. Repetir reutiliza arquivos/medidas vigentes. Compare poucos
+  candidatos relevantes; nao baixe todo o catalogo nem procure outra fonte sem necessidade.
+  Nao precisa outra aprovacao para cada etapa ja autorizada do pedido.
+  O limite vem do operador (padrao 10 MiB por candidato); nao mande SQL, caminho de DB,
+  URL, destino, max_bytes, dimensoes nem aprovacao nesta operacao. Se o lote exceder o
+  limite, relate o bloqueio em vez de contornar. HSSD/Fab continuam exigindo acesso/aquisicao.
+  Para importar tambem as malhas em pasta nova do laboratorio, acrescente `"importar":true`.
+  Isso nao coloca o objeto na cena nem monta juntas Chaos. Antes de usar, consulte
+  `ficha` assunto importacao; conferir assets e posicionar continuam passos distintos.
+  Queda na etapa importando exige conferencia da pasta retornada antes de repetir.
+  `{"acao":"preparacao","id":"ID_RETORNADO"}` consulta etapas, erro e registros.
+  Dados obsoletos nao orientam a escolha atual; prepare novamente apos revisar a causa.
+  `anotar` com objeto/texto/origem guarda proposta nao validada. `verificacao` declarada
+  pelo agente tambem e anotacao: nao fabrica prova de motor. Nunca escreva SQL direto
+  ou altere as tabelas para aprovar um candidato. As evidencias antigas sao historicas,
+  sem vigencia de variante demonstrada; uma gaveta USD nao comprova articulacao Chaos.
 - `{"acao":"planejar_download","objeto":"ID_SQL"}` mostra lote ArtVIP/revisao/bytes/licenca,
   sem baixar. So execute `baixar` com `autorizar_download:true`, `origem` da autorizacao
   e `max_bytes` depois de conferir escopo/espaco/licenca e autorizacao existente.
@@ -336,7 +360,7 @@ lista com arquivos, licenca, proveniencia; blender opcional para FBX). Requer
 offline; `procurar cadeira` inclui esses candidatos ao atualizar. Baixado nao
 significa importado nem com fisica; confira escala artistica, licenca e geometria.
 Nao escolha estante como guarda-roupa apenas pelo alias. Kenney da amostra requer
-reescalonamento. Banco/RAG permanente ainda nao decidido.
+reescalonamento. O acervo SQLite/FTS em R: e a consulta persistente; nao precisa de outro RAG/MCP.
 
 `play_start`/`play_stop` devolvem `controle_cpu.aplicado`, `atual`, `anterior` e
 `restaurado`. Falha desse controle nao significa que Play falhou. O valor e
