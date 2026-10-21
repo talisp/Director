@@ -83,7 +83,8 @@ def _baixar(pedido,db=None):
         A.arquivo(c,principal,licenca=plano['licenca'],origem=pedido['origem'],objeto_id=plano['objeto'])
         A.registro(c,'download',plano['objeto'],{'plano':plano,'arquivos':saidas},pedido['origem']);A.indexar_busca(c,[plano['objeto']])
     return {'ok':True,'objeto':plano['objeto'],'principal':str(principal),'arquivos':saidas,
-            'bytes':plano['bytes'],'limite':plano['limite']}
+            'bytes':plano['bytes'],'limite':plano['limite'],
+            'registro_sql':{'arquivo_indexado':str(principal),'dependencias':'hashes e caminhos no manifesto de download; nao sao objetos separados'}}
 
 
 def sincronizar(cena,db=None):

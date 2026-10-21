@@ -15,7 +15,8 @@ ArtVIP retorna `bytes_download` do lote catalogado (ou null se desconhecido), pa
 triagem por orcamento. Confirme revisao, arquivos e licenca em `planejar_download`.
 `python -m director acervo resumo` informa contagens e integridade.
 `python -m director acervo pedido PEDIDO.json` executa uma operacao explicita;
-`pedido -` le JSON da entrada padrao. Consultas sao offline; `baixar` acessa a rede
+`pedido -` le JSON da entrada padrao; um objeto JSON literal em um unico argumento
+entre aspas tambem e aceito, sem criar arquivo temporario. Consultas sao offline; `baixar` acessa a rede
 apenas com autorizacao explicita do lote.
 `acervo coletar PEDIDO.json` tambem oferece leitura do laboratorio ja aberto; nao inicia o editor.
 Nomes/categorias em ingles e aliases PT/EN atuais do Director permitem busca inicial.

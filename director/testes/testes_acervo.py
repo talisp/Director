@@ -1,4 +1,5 @@
 import json
+import io
 from pathlib import Path
 import tempfile
 import unittest
@@ -75,6 +76,16 @@ class Acervo(unittest.TestCase):
             executar.assert_called_once_with({'acao':'buscar','fonte':'artvip','disponibilidade':'remoto','texto':'mesa'})
         for args in [['buscar','--fonte'],['buscar','--outro','x'],['buscar','--fonte','a','--fonte','b']]:
             with self.assertRaises(ValueError):A.cli(args)
+
+    def test_cli_pedido_literal_arquivo_ou_stdin_equivalentes(self):
+        pedido={'acao':'buscar','texto':'mesa','fonte':'artvip'}
+        texto=json.dumps(pedido);arquivo=self.gravar('pedido.json',pedido)
+        for entrada in (texto,arquivo,'-'):
+            with patch.object(A,'executar',return_value={'ok':True}) as executar,patch('sys.stdin',io.StringIO(texto)):
+                self.assertTrue(A.cli(['pedido',entrada])['ok'])
+                executar.assert_called_once_with(pedido)
+        with patch('sys.stdin',io.StringIO('[]')):
+            with self.assertRaises(ValueError):A.cli(['pedido','-'])
 
     def test_snapshot_nao_vira_modelo_e_promocao_guarda_revisoes(self):
         p=self.gravar('cenas/sala/planta.json',{'nivel':'/Game/L_sala','objetos':{
