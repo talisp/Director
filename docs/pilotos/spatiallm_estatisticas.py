@@ -51,7 +51,7 @@ with zipfile.ZipFile(root/'spatiallm/layout/chunk_000.zip') as z:
   ds=[min(math.hypot(b.position_x-d.position_x,b.position_y-d.position_y) for d in layout.doors) for b in camas] if layout.doors else []
   quartos[key]={'id':ident,'sample':meta['sample'],'tipo':meta['room_type'],'janelas':len(layout.windows),'portas':len(layout.doors),'camas':len(camas),'distancias_centros_xy':ds}
   if ds and not variacoes:
-   
+
    layout.translate([2.0,-3.0,0.0]);depois=[min(math.hypot(b.position_x-d.position_x,b.position_y-d.position_y) for d in layout.doors) for b in camas]
    layout.rotate(math.pi/2);girado=[min(math.hypot(b.position_x-d.position_x,b.position_y-d.position_y) for d in layout.doors) for b in camas]
    variacoes=[{'id':ident,'teste':'translacao','erro_max':max(abs(a-b) for a,b in zip(ds,depois))}, {'id':ident,'teste':'rotacao_90','erro_max':max(abs(a-b) for a,b in zip(ds,girado))}]
