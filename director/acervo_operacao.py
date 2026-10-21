@@ -81,7 +81,7 @@ def _baixar(pedido,db=None):
     principal=raiz/plano['revisao']/plano['principal']
     with A.abrir(db,escrita=True) as c:
         A.arquivo(c,principal,licenca=plano['licenca'],origem=pedido['origem'],objeto_id=plano['objeto'])
-        A.registro(c,'download',plano['objeto'],{'plano':plano,'arquivos':saidas},pedido['origem']);A.indexar_busca(c)
+        A.registro(c,'download',plano['objeto'],{'plano':plano,'arquivos':saidas},pedido['origem']);A.indexar_busca(c,[plano['objeto']])
     return {'ok':True,'objeto':plano['objeto'],'principal':str(principal),'arquivos':saidas,
             'bytes':plano['bytes'],'limite':plano['limite']}
 

@@ -330,13 +330,16 @@ def buscar(c,pedido):
     if not 1<=limite<=50:raise ValueError('limite deve ser 1..50')
     filtro=pedido.get('disponibilidade')
     if filtro not in (None,'importado_snapshot','baixado','remoto','receita'):raise ValueError('disponibilidade invalida')
+    fonte=pedido.get('fonte')
+    if fonte is not None and not c.execute('SELECT 1 FROM fontes WHERE id=?',(fonte,)).fetchone():
+        raise ValueError('fonte desconhecida; consulte fontes em acervo resumo')
     q=' OR '.join('"'+t+'"' for t in sorted(termos))
     rows=c.execute("""SELECT o.*,f.licenca,bm25(busca) AS rank,
        CASE WHEN EXISTS(SELECT 1 FROM instalacoes i WHERE i.objeto=o.id) THEN 'importado_snapshot'
          WHEN EXISTS(SELECT 1 FROM arquivos a WHERE a.objeto=o.id AND presente=1) THEN 'baixado'
          WHEN o.tipo='receita' THEN 'receita' ELSE 'remoto' END AS disponibilidade
        FROM busca JOIN objetos o ON o.id=busca.objeto JOIN fontes f ON f.id=o.fonte
-       WHERE busca MATCH ?""",(q,)).fetchall()
+       WHERE busca MATCH ? AND (? IS NULL OR o.fonte=?)""",(q,fonte,fonte)).fetchall()
     rows=[dict(x) for x in rows if filtro is None or x['disponibilidade']==filtro]
     ordem={'importado_snapshot':0,'baixado':1,'receita':2,'remoto':3}
     rows.sort(key=lambda x:(ordem[x['disponibilidade']],x['rank'],x['id']))
@@ -347,6 +350,9 @@ def buscar(c,pedido):
         if r['fonte']=='artvip':
             principal=c.execute("SELECT valor_json FROM caracteristicas WHERE objeto=? AND nome='arquivo_principal' ORDER BY rowid DESC LIMIT 1",(r['id'],)).fetchone()
             r['arquivo_remoto']=json.loads(principal[0]) if principal else None
+            lote=c.execute("SELECT valor_json FROM caracteristicas WHERE objeto=? AND nome='arquivos' ORDER BY rowid DESC LIMIT 1",(r['id'],)).fetchone()
+            arquivos=json.loads(lote[0]) if lote else []
+            r['bytes_download']=sum(x['bytes'] for x in arquivos) if arquivos and all(isinstance(x.get('bytes'),int) and x['bytes']>=0 for x in arquivos) else None
         if r['fonte']=='code4scene':
             pacote=c.execute('SELECT p.nome,p.url,p.licenca FROM referencias_pacote ref JOIN pacotes p ON p.id=ref.pacote WHERE ref.objeto=? LIMIT 1',(r['id'],)).fetchone()
             r['pacote']=dict(pacote) if pacote else None
@@ -428,7 +434,19 @@ def cli(args):
             import acervo_coleta
         return acervo_coleta.executar(ler(args[1]))
     if len(args)==1 and args[0] in ('iniciar','resumo'):return executar({'acao':args[0]})
-    if args and args[0]=='buscar':return executar({'acao':'buscar','texto':' '.join(args[1:])})
+    if args and args[0]=='buscar':
+        # Mantem termos posicionais; fonte e disponibilidade sao filtros, nao palavras OR.
+        pedido={'acao':'buscar'};termos=[];i=1
+        while i<len(args):
+            if args[i] in ('--fonte','--disponibilidade'):
+                chave=args[i][2:]
+                if i+1>=len(args) or args[i+1].startswith('--'):raise ValueError('falta valor de '+args[i])
+                if chave in pedido:raise ValueError('filtro repetido: '+args[i])
+                pedido[chave]=args[i+1];i+=2
+            elif args[i].startswith('--'):raise ValueError('filtro desconhecido: '+args[i])
+            else:termos.append(args[i]);i+=1
+        pedido['texto']=' '.join(termos)
+        return executar(pedido)
     if len(args)==2 and args[0]=='pedido':
         import sys
         pedido=json.load(sys.stdin) if args[1]=='-' else ler(args[1])

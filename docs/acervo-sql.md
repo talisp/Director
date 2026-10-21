@@ -8,9 +8,15 @@ O banco, indices e downloads nao entram no Git.
 ## Consulta pelo agente
 
 `python -m director acervo buscar cadeira` devolve ate oito candidatos compactos.
+`python -m director acervo buscar --fonte artvip --disponibilidade remoto mesa`
+filtra antes de limitar os resultados; `ArtVIP mesa` como texto combina palavras com OR,
+nao seleciona uma fonte. Os mesmos filtros existem no JSON de `acao:buscar`.
+ArtVIP retorna `bytes_download` do lote catalogado (ou null se desconhecido), para
+triagem por orcamento. Confirme revisao, arquivos e licenca em `planejar_download`.
 `python -m director acervo resumo` informa contagens e integridade.
 `python -m director acervo pedido PEDIDO.json` executa uma operacao explicita;
-`pedido -` le JSON da entrada padrao. Essas operacoes sao offline.
+`pedido -` le JSON da entrada padrao. Consultas sao offline; `baixar` acessa a rede
+apenas com autorizacao explicita do lote.
 `acervo coletar PEDIDO.json` tambem oferece leitura do laboratorio ja aberto; nao inicia o editor.
 Nomes/categorias em ingles e aliases PT/EN atuais do Director permitem busca inicial.
 Nao foram geradas descricoes bilingues por LLM para o acervo inteiro.

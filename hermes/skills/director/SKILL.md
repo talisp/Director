@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.12
+version: 0.5.13
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -81,11 +81,27 @@ e use `acervo pedido JSON` com `acao:detalhe` e `objeto:ID_SQL` para o seleciona
 confirme pelo motor antes de colocar. `baixado` nao quer dizer importado; Fab pode
 ser apenas referencia a um pacote. Tags sao pistas, nao capacidades comprovadas.
 
+Para uma fonte especifica, use `acervo buscar --fonte artvip --disponibilidade remoto mesa`.
+Nao escreva `ArtVIP mesa` como texto: os termos sao combinados com OR e a fonte nao
+e um filtro implicito. JSON equivalente: `{"acao":"buscar","texto":"mesa","fonte":"artvip",
+"disponibilidade":"remoto","limite":8}`. `bytes_download` informa o lote catalogado
+ArtVIP para escolher dentro do orcamento; confirme com `planejar_download` antes de baixar.
+Uma lista truncada de outras fontes nao prova ausencia do modelo desejado.
+
 Pedidos `acervo pedido JSON`:
 - `{"acao":"planejar_download","objeto":"ID_SQL"}` mostra lote ArtVIP/revisao/bytes/licenca,
   sem baixar. So execute `baixar` com `autorizar_download:true`, `origem` da autorizacao
   e `max_bytes` depois de conferir escopo/espaco/licenca e autorizacao existente.
   Salva apenas em R:/CINF/BD. Nao baixa HSSD autenticado nem compra pacotes Fab.
+  Exemplo: `{"acao":"baixar","objeto":"ID_SQL","autorizar_download":true,
+  "origem":"usuario/data/pedido","max_bytes":1048576}`. Repetir verifica os hashes e
+  reutiliza arquivos; nao cria outro objeto SQL. A autorizacao ja dada para o lote
+  dispensa nova pergunta. Consulte `detalhe` depois; baixar nao aprova fisica.
+- Se uma conversao autorizada criou outro arquivo, registre-o antes de importar:
+  `{"acao":"arquivo","objeto":"ID_SQL_ORIGINAL","caminho":"R:/CINF/BD/.../derivado.glb",
+  "origem":"ensaio/conversao/original/limites","licenca":"LICENCA_ORIGINAL"}`.
+  Preserve original, evidencia da conversao e perdas; nao replique o importador para
+  contornar o erro de arquivo nao registrado. Registro nao prova preservacao de juntas.
 - `{"acao":"importar","objeto":"ID_SQL","arquivo":"R:/CINF/BD/.../modelo.glb",
   "destino":"/Game/Director/Acervo/IdentificadorNovo","origem":"sessao/ensaio"}`
   importa GLB/glTF pelo motor e registra todas as malhas no mesmo candidato. Nao
