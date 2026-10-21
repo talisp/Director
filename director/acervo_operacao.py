@@ -136,8 +136,13 @@ def rotular(pedido,db=None):
 
 def inspecionar_usd(pedido,db=None,editor=None):
     from .ponte import Ponte
-    p=Path(pedido['arquivo']).absolute()
     with A.abrir(db) as c:d=A.detalhe(c,pedido['objeto'])['objeto']
+    arquivo=pedido.get('arquivo')
+    if not arquivo:
+        candidatos=[f['caminho'] for f in d['arquivos'] if f['presente'] and Path(f['caminho']).suffix.lower() in ('.usd','.usda','.usdc')]
+        if len(candidatos)!=1:raise ValueError('informe arquivo: esperado um unico USD registrado presente; encontrados '+str(len(candidatos)))
+        arquivo=candidatos[0]
+    p=Path(arquivo).absolute()
     f=next((f for f in d['arquivos'] if Path(f['caminho']).resolve()==p.resolve()),None)
     if f is None or hashlib.sha256(p.read_bytes()).hexdigest()!=f['sha256']:raise ValueError('USD ausente do acervo ou alterado')
     if p.suffix.lower() not in ('.usd','.usda','.usdc'):raise ValueError('requer USD')
@@ -157,10 +162,17 @@ def importar(pedido,db=None,editor=None):
     from .acervo_coleta import assinatura_arquivo
     oid=pedido['objeto']
     with A.abrir(db) as c:d=A.detalhe(c,oid)['objeto']
-    p=Path(pedido['arquivo']).absolute()
+    arquivo=pedido.get('arquivo')
+    if not arquivo:
+        candidatos=[f['caminho'] for f in d['arquivos'] if f['presente'] and Path(f['caminho']).suffix.lower() in ('.glb','.gltf','.usd','.usda','.usdc')]
+        if len(candidatos)!=1:raise ValueError('informe arquivo: esperado um unico modelo registrado presente; encontrados '+str(len(candidatos)))
+        arquivo=candidatos[0]
+    p=Path(arquivo).absolute()
     atual=next((f for f in d['arquivos'] if Path(f['caminho']).resolve()==p.resolve() and f['presente']),None)
     if atual is None:raise ValueError('arquivo deve estar registrado para este objeto')
-    if p.suffix.lower() not in ('.glb','.gltf'):raise ValueError('piloto aceita glTF/GLB; USD/articulacoes exigem inspecao especifica')
+    usd=p.suffix.lower() in ('.usd','.usda','.usdc')
+    if p.suffix.lower() not in ('.glb','.gltf','.usd','.usda','.usdc'):raise ValueError('requer glTF/GLB ou USD')
+    if usd and pedido.get('modo_usd')!='malhas':raise ValueError('USD requer modo_usd:malhas; importa geometria, nao promete hierarquia de atores nem articulacoes Chaos')
     if hashlib.sha256(p.read_bytes()).hexdigest()!=atual['sha256']:raise ValueError('arquivo mudou; reinspecione antes de importar')
     assinatura_arquivo(p,p.parent.resolve())
     destino=pedido['destino']
@@ -172,7 +184,7 @@ def importar(pedido,db=None,editor=None):
     antes=editor.chamar('info')
     if antes['em_play'] or antes['por_salvar']:raise ValueError('editor em Play ou com pacotes pendentes')
     codigo=Path(__file__).with_name('editor').joinpath('acervo_importacao.py').read_text(encoding='utf-8')
-    resultado=editor.chamar('dev_exec',codigo=codigo+'\nresultado=importar('+repr(str(p))+','+repr(destino)+')')['resultado']
+    resultado=editor.chamar('dev_exec',codigo=codigo+'\nresultado=importar('+repr(str(p))+','+repr(destino)+',usd='+repr(usd)+')')['resultado']
     depois=editor.chamar('info')
     resultado['preservacao']={'mesmo_level':antes['level']==depois['level'],'sem_play':not depois['em_play'],'sem_pendencias':not depois['por_salvar']}
     if not all(resultado['preservacao'].values()):resultado['ok']=False
@@ -180,7 +192,7 @@ def importar(pedido,db=None,editor=None):
     # N meshes pertencem ao mesmo candidato; nenhuma suposicao de mesh unico.
     with A.abrir(db,escrita=True) as c:
         for mesh in resultado['malhas']:A.asset(c,str(Path(C.LAB_UPROJECT).resolve()),mesh['asset'],origem=pedido['origem'],objeto_id=oid)
-        A.registro(c,'importacao_unreal',oid,resultado,pedido['origem']);A.indexar_busca(c)
+        A.registro(c,'importacao_unreal',oid,resultado,pedido['origem']);A.indexar_busca(c,[oid])
     return {'objeto':oid,**resultado,'limite':'malhas importadas; nao instancia na cena, nao certifica estabilidade, articulacao ou escala humana'}
 
 

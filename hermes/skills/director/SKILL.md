@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.14
+version: 0.5.15
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -32,6 +32,8 @@ platforms: [windows]
 - **Uma alteração por cena de cada vez.** A guarda barra um segundo comando que altera a
   mesma cena enquanto outro roda em segundo plano. Nunca mude a sala na cena para "testar"
   tamanhos: use `planejar` com `sala` + `minimo_cm`/`maximo_cm`, que não toca na cena.
+  Todas as chamadas ao Unreal, inclusive leitura USD, compartilham a trava: execute
+  sequencialmente, sem `&`, jobs paralelos ou duas importacoes simultaneas.
 
 Raiz: `{{DIRECTOR}}`. Python do Director: `{{PYTHON}}`. Use `python -m director` a partir da raiz; para o laboratório, `python -m director.lab`. Ao retomar, consulte `contexto`: ele informa o level aberto e o caminho real da planta. Nao assuma que a cena e `sala` nem leia uma copia de planta do checkout quando houver fonte vinculada. Consulte `capacidades`, `estado <cena>` e `api TERMO` antes de concluir que falta uma operacao ou escrever codigo experimental. A ficha atual usa metros; a planta persistida usa centímetros.
 
@@ -117,6 +119,16 @@ Pedidos `acervo pedido JSON`:
   gaveta/porta articulada como bloco rigido quando o pedido exigir abrir.
 - `inspecionar_usd` com `objeto` e `arquivo` le dependencias, unidades, malhas e
   juntas pelo OpenUSD do Unreal; nao certifica que juntas funcionem no Chaos.
+  Pode omitir `arquivo` se houver exatamente um USD registrado presente para esse
+  ID: prefira `{"acao":"inspecionar_usd","objeto":"ID_SQL"}` para nao copiar UNC.
+  `caixa_stage_cm` e a AABB do USD, no eixo nativo, nao medida do resultado importado.
+  `importar` aceita USD original com `modo_usd:"malhas"` explicito: importador nativo,
+  sem Blender, sem criar atores e sem juntar partes. Nao preserva automaticamente
+  montagem de atores/juntas Chaos. Falta de dependencias recusa antes da importacao.
+  Tambem pode omitir `arquivo` em `importar` quando houver um unico modelo registrado:
+  `{"acao":"importar","objeto":"ID_SQL","modo_usd":"malhas",
+  "destino":"/Game/Director/Acervo/NomeNovo","origem":"sessao/ensaio"}`.
+  Em caso de varios modelos/derivados, escolha o arquivo explicitamente; nao adivinhe.
 - `sincronizar` com `cena` captura a planta persistida. Depois de operacoes
   `fazer`, `objeto`, `incorporar` e `material` bem-sucedidas pela CLI, a captura e
   automatica. Se `acervo.ok:false`, a cena pode ter sido salva corretamente:

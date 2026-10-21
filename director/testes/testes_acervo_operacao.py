@@ -1,3 +1,4 @@
+import ast
 import hashlib
 import io
 import json
@@ -94,6 +95,39 @@ class Operacao(unittest.TestCase):
         r=O.inspecionar_usd({'objeto':self.oid,'arquivo':str(f)},self.db,Editor())
         self.assertFalse(r['ok'])
         with A.abrir(self.db) as c:self.assertEqual(c.execute('select count(*) from verificacoes').fetchone()[0],0)
+
+    def test_usd_por_id_nao_adivinha_entre_dois_arquivos(self):
+        f=self.root/'primeiro.usd';f.write_bytes(b'primeiro')
+        A.executar({'acao':'arquivo','objeto':self.oid,'caminho':str(f),'origem':'teste'},self.db)
+        class Editor:
+            def chamar(self,nome,**kwargs):
+                self.codigo=kwargs['codigo'];return {'resultado':{'dependencias_ausentes':[],'meshes':1}}
+        editor=Editor();r=O.inspecionar_usd({'objeto':self.oid},self.db,editor)
+        self.assertTrue(r['ok'])
+        chamado=ast.literal_eval(ast.parse(editor.codigo).body[-1].value.args[0])
+        self.assertEqual(Path(chamado).resolve(),f.resolve())
+        f2=self.root/'segundo.usda';f2.write_bytes(b'segundo')
+        A.executar({'acao':'arquivo','objeto':self.oid,'caminho':str(f2),'origem':'teste'},self.db)
+        with self.assertRaisesRegex(ValueError,'encontrados 2'):O.inspecionar_usd({'objeto':self.oid},self.db,editor)
+        f.write_bytes(b'mudou')
+        with self.assertRaisesRegex(ValueError,'alterado'):O.inspecionar_usd({'objeto':self.oid,'arquivo':str(f)},self.db,editor)
+
+    def test_importar_usd_exige_escopo_explicito_e_nao_prova_juntas(self):
+        f=self.root/'modelo.usd';f.write_bytes(self.raw)
+        A.executar({'acao':'arquivo','objeto':self.oid,'caminho':str(f),'origem':'teste'},self.db)
+        pedido={'objeto':self.oid,'arquivo':str(f),'destino':'/Game/Director/Acervo/Teste','origem':'teste'}
+        with self.assertRaisesRegex(ValueError,'modo_usd'):O.importar(pedido,self.db,object())
+        class Editor:
+            def chamar(self,nome,**kwargs):
+                if nome=='info':return {'em_play':False,'por_salvar':[],'level':'/Game/Director/Cenas/L_teste'}
+                self.codigo=kwargs['codigo']
+                return {'resultado':{'ok':True,'malhas':[{'asset':'/Game/Director/Acervo/Teste/Malha'}]}}
+        editor=Editor();sem_caminho={k:v for k,v in pedido.items() if k!='arquivo'}
+        r=O.importar({**sem_caminho,'modo_usd':'malhas'},self.db,editor)
+        self.assertTrue(r['ok']);self.assertIn('usd=True',editor.codigo)
+        with A.abrir(self.db) as c:
+            self.assertEqual(c.execute('select objeto from instalacoes').fetchone()[0],self.oid)
+            self.assertEqual(c.execute('select count(*) from verificacoes').fetchone()[0],0)
 
 
 if __name__=='__main__':unittest.main()

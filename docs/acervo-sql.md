@@ -21,6 +21,10 @@ apenas com autorizacao explicita do lote.
 `acervo coletar PEDIDO.json` tambem oferece leitura do laboratorio ja aberto; nao inicia o editor.
 Nomes/categorias em ingles e aliases PT/EN atuais do Director permitem busca inicial.
 Nao foram geradas descricoes bilingues por LLM para o acervo inteiro.
+Em 21/10, inspecao USD/importacao podem selecionar arquivo pelo ID SQL quando
+existe um unico modelo elegivel registrado. USD importa malhas pelo motor com
+`modo_usd:malhas` explicito, sem criar atores nem prometer juntas Chaos. Medidas e
+limites reais: [ensaio USD](acervo-usd-2026-10-21.md).
 FTS5 e SQL parametrizado; nao entrega o banco inteiro ao agente.
 Uma copia congelada de `acervo.py` e do vocabulario pode ser instalada em
 `R:\CINF\BD\Director\ferramentas`; aceita os mesmos argumentos diretamente:
