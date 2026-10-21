@@ -12,7 +12,7 @@ from . import acervo as A
 from . import acervo_operacao as O
 from .acervo_coleta import hash_arquivo, trava_escopo
 
-VERSAO='1'
+VERSAO='2'
 LIMITE_PADRAO=10*1024*1024
 ASSUNTOS={'resumo','geometria','partes','fisica','animacoes','superficies','importacao','origem','anotacoes'}
 
@@ -96,9 +96,12 @@ def _registrar(db,oid,baixado,r,assinatura):
             if nome in r:_metadado(c,vid,'geometria',nome,r[nome],
                                    'declaracao_fonte' if nome in ('up_axis','metros_por_unidade') else 'medida','OpenUSD',evidencia,
                                    'cm' if nome=='caixa_stage_cm' else None,r.get('caixa_escopo'))
-        for j in r.get('juntas',[]):
+        for j in r.get('partes',[])+r.get('juntas',[]):
             c.execute('INSERT OR REPLACE INTO partes_modelo VALUES(?,?,?,?,?)',
-                (vid,j['path'],None,j['tipo'],A.dump({**j,'origem_tipo':'declaracao_fonte','limite':'nao comprova junta Chaos'})))
+                (vid,j['path'],j.get('pai'),j['tipo'],A.dump({**j,'origem_tipo':'declaracao_fonte','limite':'nao comprova montagem no Unreal ou junta Chaos'})))
+        if r.get('transformacoes_referencial'):
+            _metadado(c,vid,'partes','transformacoes_referencial',r['transformacoes_referencial'],
+                      'configuracao','OpenUSD',evidencia)
         # Nao certifica fisica. Somente teste objetivo de dependencias da fonte.
         resultado='reprovado' if r.get('dependencias_ausentes') else 'aprovado'
         cap=A.identidade(vid,'dependencias_fonte',evidencia)
@@ -122,13 +125,15 @@ def preparar(p,db=None):
         if plano['licenca'].lower() not in ('apache-2.0','apache-2.0 declarada','apache2','apache-2.0 (declarada)'):
             raise ValueError('licenca nao reconhecida para preparo automatico; revisar fonte')
         if plano['bytes']>limite:raise ValueError('lote acima do limite do operador; nao baixar, pedir revisao do limite')
-        jid=A.identidade('preparar',oid,plano,p.get('pedido_id','avulso'))
+        jid=A.identidade('preparar',oid,plano,p.get('pedido_id','avulso'),_assinatura([]))
         with A.abrir(db) as c:
-            old=c.execute('SELECT * FROM preparacoes WHERE id=?',(jid,)).fetchone() if c.execute("SELECT 1 FROM sqlite_master WHERE name='preparacoes'").fetchone() else None
+            existe=c.execute("SELECT 1 FROM sqlite_master WHERE name='preparacoes'").fetchone()
+            old=c.execute('SELECT * FROM preparacoes WHERE id=?',(jid,)).fetchone() if existe else None
+            incerto=c.execute("SELECT id,dados_json FROM preparacoes WHERE objeto=? AND etapa='importando' LIMIT 1",(oid,)).fetchone() if existe else None
         dados=json.loads(old['dados_json']) if old else {}
         # Queda depois do inicio da importacao e ambigua: verificar assets existentes.
-        if old and old['etapa']=='importando':
-            return {'ok':False,'preparacao':jid,'estado':'requer_conferencia','destino':dados.get('destino'),
+        if incerto:
+            return {'ok':False,'preparacao':incerto['id'],'estado':'requer_conferencia','destino':json.loads(incerto['dados_json']).get('destino'),
                     'proxima_acao':'conferir pasta nativa e registro antes de repetir; importacao pode ter ocorrido'}
         try:
             _persistir(db,jid,oid,p,'baixando','em_andamento',dados)
@@ -184,8 +189,12 @@ def preparar(p,db=None):
 
 
 def ficha(p,db=None):
-    _campos(p,('acao','objeto','assunto'));oid=p.get('objeto');assunto=p.get('assunto','resumo')
+    _campos(p,('acao','objeto','assunto','parte','limite_partes'));oid=p.get('objeto');assunto=p.get('assunto','resumo')
     if assunto not in ASSUNTOS:raise ValueError('assunto deve ser '+', '.join(sorted(ASSUNTOS)))
+    if ('parte' in p or 'limite_partes' in p) and assunto!='partes':raise ValueError('parte/limite_partes requer assunto:partes')
+    if 'parte' in p:_texto(p['parte'],'parte',1000)
+    limite=p.get('limite_partes',12)
+    if type(limite) is not int or not 1<=limite<=50:raise ValueError('limite_partes deve ser 1..50')
     with A.abrir(db) as c:
         _conhecido(c,oid)
         obj=dict(c.execute('SELECT o.id,o.nome,o.fonte,f.licenca FROM objetos o JOIN fontes f ON f.id=o.fonte WHERE o.id=?',(oid,)).fetchone())
@@ -226,9 +235,23 @@ def ficha(p,db=None):
         else:out['proxima_acao']='repreparar/revisar arquivo; medidas historicas nao devem orientar escolha atual'
         if assunto=='geometria':out['metadados']=rows # valor historico identificado pela validade acima
         if assunto=='origem':out['origem']=config
-        partes=c.execute('SELECT caminho,tipo,dados_json FROM partes_modelo WHERE variante=? ORDER BY caminho',(v['id'],)).fetchall()
-        out['juntas_declaradas']=len(partes)
-        if assunto=='partes':out['partes']=[dict(r) for r in partes]
+        partes=c.execute('SELECT caminho,pai,tipo,dados_json FROM partes_modelo WHERE variante=? ORDER BY caminho',(v['id'],)).fetchall()
+        out['juntas_declaradas']=sum('Joint' in r['tipo'] for r in partes)
+        out['partes_totais']=len(partes)
+        if assunto=='partes':
+            selecionadas=[r for r in partes if r['caminho']==p['parte']] if 'parte' in p else partes[:limite]
+            if 'parte' in p and not selecionadas:raise ValueError('parte inexistente nesta variante; consulte assunto:partes')
+            out['partes']=[]
+            for r in selecionadas:
+                d=json.loads(r['dados_json']);resumo={k:r[k] for k in ('caminho','pai','tipo')}
+                if 'parte' in p:resumo['dados']=d
+                else:
+                    resumo['caixa_stage_cm']=d.get('caixa_stage_cm')
+                    resumo['corpos_declarados']=d.get('relacoes_fisica_declaradas',{})
+                out['partes'].append(resumo)
+            out['partes_limitadas']='parte' not in p and len(partes)>limite
+            out['transformacoes_referencial']=valores.get('transformacoes_referencial','nao coletado')
+            out['limite_partes']='matrizes e atributos completos somente com parte:CAMINHO; fonte declarada, nao montagem Unreal/Chaos validada'
         if assunto in ('resumo','fisica'):
             out['capacidades']=[{**dict(r),'validade':validade} for r in c.execute(
                 'SELECT capacidade,resultado,escopo_json,metodo,evidencia FROM capacidades_modelo WHERE variante=?',(v['id'],))]
