@@ -32,6 +32,7 @@ def importar(arquivo,destino,usd=False):
             malhas.append({'asset':a.get_path_name().rsplit('.',1)[0],'prim_paths':caminhos,
                 'dimensoes_cm':[2*b.box_extent.x,2*b.box_extent.y,2*b.box_extent.z],
                 'centro_cm':[b.origin.x,b.origin.y,b.origin.z],
+                'complexidade_colisao':str(sub.get_collision_complexity(a)),
                 'colisoes_simples':sub.get_simple_collision_count(a),'convexos':sub.get_convex_collision_count(a)})
     return {'ok':bool(malhas) and not falhas,'malhas':malhas,'assets':list(paths),'falhas':falhas,
             'formato':'usd_malhas' if usd else 'gltf','articulacao_chaos':'nao_validada',

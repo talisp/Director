@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.15
+version: 0.5.16
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -129,6 +129,9 @@ Pedidos `acervo pedido JSON`:
   `{"acao":"importar","objeto":"ID_SQL","modo_usd":"malhas",
   "destino":"/Game/Director/Acervo/NomeNovo","origem":"sessao/ensaio"}`.
   Em caso de varios modelos/derivados, escolha o arquivo explicitamente; nao adivinhe.
+  Contagem zero de simples/convexos nao prova ausencia de colisao: confira
+  `complexidade_colisao`, raios e ensaio fisico. `CTF_USE_COMPLEX_AS_SIMPLE` pode
+  servir de apoio fixo; nao aprova simulacao dinamica dessa malha nem articulacoes.
 - `sincronizar` com `cena` captura a planta persistida. Depois de operacoes
   `fazer`, `objeto`, `incorporar` e `material` bem-sucedidas pela CLI, a captura e
   automatica. Se `acervo.ok:false`, a cena pode ter sido salva corretamente:
