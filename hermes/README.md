@@ -60,4 +60,3 @@ com vinculo ao gargalo, ficha de operador, evidencias e limite por lote.
 Fila/estudos e skill de operacao do perfil Director sao preservados.
 Provas e limites da entrega: [pilotos e auditoria de issues](../docs/conclusao-pilotos-2026-10-21.md).
 Antes de novos ensaios Luna, resolver a divergencia de rota registrada na issue #81.
-
