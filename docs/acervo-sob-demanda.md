@@ -67,7 +67,8 @@ de dependências da fonte. Não existe `fisica_ok` global.
 ## Validade e observação compacta
 
 `ficha` com objeto retorna resumo; `assunto` permite geometria, partes, física,
-animações, superfícies, importação ou origem. A busca inclui um recorte compacto.
+animações, superfícies, importação, origem ou anotações. `detalhe` com `assunto`
+também entrega esse recorte, evitando despejar a ficha legada. A busca inclui um recorte compacto.
 As leituras conferem hashes das entradas e dependências resolvidas, revisão do
 catálogo, versão do coletor/script e Build.version instalado. Dados alterados ficam
 obsoletos, sem apagar o histórico; o resumo não oferece dimensões obsoletas como atuais.
@@ -85,7 +86,8 @@ ou interação física. A consulta offline de importação é explicitamente um 
 ## Falha e recuperação
 
 - Queda no download/inspeção: corrigir a causa e repetir o mesmo pedido. Arquivos
-  válidos são reutilizados; cada tentativa persiste etapa/erro.
+  válidos são reutilizados; cada tentativa persiste etapa/erro e histórico em registros,
+  preservando o erro anterior depois da retomada.
 - Arquivo divergente: revisar origem. Não sobrescrever silenciosamente nem registrar
   a medida anterior como vigente.
 - Checkpoint `importando`, inclusive após queda da ponte/SQL: conferir pasta nativa
@@ -102,8 +104,8 @@ orienta não fazer isso; não se afirma que há sandbox de sistema operacional.
 
 ## Evidências da implementação
 
-16 testes novos de preparação e 34 regressões dos módulos de acervo/coleta/fontes/
-operação: 50 testes distintos aprovados. Incluem migração/backup/rollback,
+17 testes novos de preparação e 34 regressões dos módulos de acervo/coleta/fontes/
+operação: 51 testes distintos aprovados. Incluem migração/backup/rollback,
 arquivos e dependências alterados, retomada, identidade entre pedidos, importação
 incerta, assets alterados, recusa de SQL/medidas e declarações sem certificação.
 São verificações determinísticas; não equivalem a Pedidos Atendidos por uma LLM.
@@ -115,7 +117,37 @@ Inventário antes/depois idêntico; sem criação de atores. SQL: quick_check ok
 foreign_key_check vazio. Evidências locais:
 `R:/CINF/BD/Director/evolucao-sob-demanda-20261021/`.
 
-Publicação, teste na instalação estável e sessão real do Hermes serão registrados
-com seus resultados observados. O PR #77 permanece a prova anterior, isolada;
-ele não demonstra que este código estava implementado nem que Qwen foi testado.
+Na instalação estável: migração do SQL principal para v4, 14.507 modelos e oito
+verificações antigas preservados, table4 importado e reutilizado sem nova importação;
+cabinet005 preparado. Quick_check ok, FK check vazio e inventário preservado.
+
+Hermes real, perfil director e ferramentas normais, endpoint local anunciando
+`glm-5.3-flash` e substituição por chamada, sem alterar padrão Luna do perfil:
+
+- Sessão `local-2446bd364b9e335a3dcc9b11399a97e08b46b3a49486ec15f8b88fe0e675d992`,
+  44,330 s: procurou chair2, baixou 1.583.440 bytes, mediu
+  49,13 × 83,53 × 88,89 cm e registrou dados. Três materiais MDL externos ausentes
+  bloquearam a importação. Relatou corretamente o bloqueio e não inventou juntas Chaos.
+  Aquisição/diagnóstico atendidos; objetivo de importar não atendido por dependências.
+- Sessão `local-5b270164741a2c3f48e46c73057ea9cf0040f46068de6e962183b3c3f3f929d6`,
+  28,762 s: preparou/importou cabinet005 (sete malhas), repetiu o mesmo pedido e
+  reutilizou os assets após conferência nativa. Porém omitiu a chamada `anotar` pedida,
+  embora a resposta dissesse que a hipótese de 80 kg ficava anotada. Pedido completo:
+  **PARCIAL**. Não transformar sucesso de importação em PA integral.
+
+O caso motivou retorno com ID na gravação da nota e consulta `ficha assunto:anotacoes`
+(cinco últimas, texto até 1.000 caracteres, sempre não validado). A skill 0.5.18 exige
+conferir essa leitura antes de alegar persistência. Isso não prova que o modelo
+deixará de omitir requisitos sem assistência. Issue #4 acompanha a lacuna.
+
+Bounds de malhas isoladas do cabinet005 chegam a 2.540 cm, enquanto a AABB da fonte
+montada mede 90 × 50,4 × 190 cm. Referenciais e transformações de montagem diferem:
+não concluir erro de escala do conjunto apenas por essa comparação. Importar malhas
+não produz automaticamente montagem utilizável/articulada. Essa etapa permanece fora
+da entrega; não há prova de armário corretamente montado/posicionado na cena.
+
+O PR #77 permanece a prova anterior, isolada; #78 implementa o fluxo e #79 registra
+correções dos retornos/observação. Não foi feito benchmark Qwen Q8/Q4 ou teste de
+uma hora com contexto saturado. Evidências de conclusão/correção dirigida ficam
+também nas issues #75, #36 e #48.
 

@@ -66,6 +66,9 @@ class Preparacao(unittest.TestCase):
         r=self.preparar();self.assertFalse(r['ok']);self.assertEqual(r['etapa'],'inspecionando')
         self.mockinspect.side_effect=None
         with patch.object(O.urllib.request,'urlopen',side_effect=AssertionError('nao baixar')):self.assertTrue(self.preparar()['ok'])
+        with A.abrir(self.db) as c:
+            historico=[json.loads(r[0]) for r in c.execute("SELECT dados_json FROM registros WHERE entidade='etapa_preparacao'")]
+        self.assertTrue(any(r['erro']=='ponte caiu' for r in historico))
 
     def test_dependencias_ausentes_impedem_importacao(self):
         self.inspecao['dependencias_ausentes']=['faltou.usd']
@@ -111,6 +114,9 @@ class Preparacao(unittest.TestCase):
         self.assertFalse(r['validado'])
         r=A.executar({'acao':'anotar','objeto':self.oid,'origem':'teste','texto':'dimensao inventada; DROP TABLE objetos'},self.db)
         self.assertFalse(r['validado'])
+        self.assertGreater(r['anotacao'],0)
+        notas=self.ficha(assunto='anotacoes')['anotacoes']
+        self.assertEqual(len(notas),2);self.assertTrue(all(not n['validado'] for n in notas))
         with self.assertRaises(ValueError):A.executar({'acao':'anotar','objeto':'nao existe','origem':'teste','texto':'x'},self.db)
         with A.abrir(self.db) as c:
             self.assertEqual(c.execute('SELECT count(*) FROM verificacoes').fetchone()[0],0)

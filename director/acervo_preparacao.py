@@ -14,7 +14,7 @@ from .acervo_coleta import hash_arquivo, trava_escopo
 
 VERSAO='1'
 LIMITE_PADRAO=10*1024*1024
-ASSUNTOS={'resumo','geometria','partes','fisica','animacoes','superficies','importacao','origem'}
+ASSUNTOS={'resumo','geometria','partes','fisica','animacoes','superficies','importacao','origem','anotacoes'}
 
 
 def _campos(p,permitidos):
@@ -39,6 +39,9 @@ def _persistir(db,jid,oid,pedido,etapa,estado,dados,erro=None,variante=None):
             estado=excluded.estado,dados_json=excluded.dados_json,erro=excluded.erro,atualizado_em=excluded.atualizado_em''',
             (jid,oid,variante,pedido.get('pedido_id','avulso'),pedido.get('sessao','nao_informada'),
              etapa,estado,A.dump(dados),erro,A.agora()))
+        A.registro(c,'etapa_preparacao',jid,{'etapa':etapa,'estado':estado,'erro':erro,
+            'variante':variante,'pedido_id':pedido.get('pedido_id','avulso'),
+            'sessao':pedido.get('sessao','nao_informada'),'dados':dados},pedido.get('origem','controlador'))
 
 
 def _assinatura(arquivos):
@@ -147,7 +150,7 @@ def preparar(p,db=None):
             ficha_atual=ficha({'objeto':oid,'assunto':'resumo'},db)
             if ficha_atual['bloqueios']:
                 _persistir(db,jid,oid,p,'inspecionado','bloqueado',dados,variante=vid)
-                return {'ok':False,'preparacao':jid,**ficha_atual,'ok':False,'proxima_acao':'resolver dependencias; nao importar nem inventar medidas'}
+                return {'preparacao':jid,**ficha_atual,'ok':False,'proxima_acao':'resolver dependencias; nao importar nem inventar medidas'}
             if p.get('importar'):
                 with A.abrir(db) as c:
                     anteriores=c.execute('SELECT etapa,dados_json FROM preparacoes WHERE variante=? ORDER BY atualizado_em DESC',(vid,)).fetchall()
@@ -197,6 +200,10 @@ def ficha(p,db=None):
             WHERE objeto=? AND id=(SELECT max(id) FROM verificacoes x WHERE x.objeto=v.objeto AND x.capacidade=v.capacidade)
             ORDER BY capacidade''',(oid,))]
         if out['verificacoes_legadas']:out['limite_legado']='evidencias anteriores sem vinculo de variante; vigencia nao demonstrada'
+        if assunto=='anotacoes':
+            out['anotacoes']=[{**dict(r),'texto':r['texto'][:1000],'truncado':len(r['texto'])>1000,'validado':False}
+                for r in c.execute('SELECT id,texto,origem,criado_em FROM anotacoes_acervo WHERE objeto=? ORDER BY id DESC LIMIT 5',(oid,))] if existe else []
+            out['limite_anotacoes']='cinco ultimas; propostas nao validadas, texto limitado a 1000 caracteres'
         if not v:return out
         db_real=db
         try:catalogo=A.identidade(O.planejar_download(oid,db_real))
@@ -242,9 +249,11 @@ def executar(p,db=None):
         _campos(p,('acao','objeto','texto','origem'));_texto(p.get('texto'),'texto',4000);_texto(p.get('origem'),'origem')
         with A.abrir(db,escrita=True) as c:
             _conhecido(c,p.get('objeto'))
-            c.execute('INSERT INTO anotacoes_acervo(objeto,texto,origem,criado_em) VALUES(?,?,?,?)',
+            cursor=c.execute('INSERT INTO anotacoes_acervo(objeto,texto,origem,criado_em) VALUES(?,?,?,?)',
                 (p['objeto'],p['texto'],p['origem'],A.agora()))
-        return {'ok':True,'validado':False,'limite':'anotacao; nao altera medidas nem certifica capacidades'}
+            aid=cursor.lastrowid
+        return {'ok':True,'anotacao':aid,'validado':False,'proxima_acao':'conferir ficha com assunto:anotacoes',
+                'limite':'anotacao; nao altera medidas nem certifica capacidades'}
     if acao=='preparacao':
         _campos(p,('acao','id'));_texto(p.get('id'),'id',64)
         with A.abrir(db) as c:
