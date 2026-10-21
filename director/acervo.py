@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import sqlite3
 import unicodedata
-from contextlib import contextmanager
+from contextlib import contextmanager, closing
 
 PADRAO = r'R:\CINF\BD\Director\acervo.sqlite3'
 SCHEMA = """
@@ -76,7 +76,34 @@ CREATE TABLE IF NOT EXISTS referencias_pacote(
  PRIMARY KEY(objeto,pacote,caminho,origem));
 CREATE TABLE IF NOT EXISTS catalogos_importados(
  chave TEXT PRIMARY KEY, resultado_json TEXT NOT NULL, importado_em TEXT NOT NULL);
-PRAGMA user_version=3;
+CREATE TABLE IF NOT EXISTS variantes(
+ id TEXT PRIMARY KEY, objeto TEXT NOT NULL REFERENCES objetos(id), assinatura TEXT NOT NULL,
+ configuracao_json TEXT NOT NULL, criado_em TEXT NOT NULL, UNIQUE(objeto,assinatura));
+CREATE TABLE IF NOT EXISTS preparacoes(
+ id TEXT PRIMARY KEY, objeto TEXT NOT NULL REFERENCES objetos(id), variante TEXT REFERENCES variantes(id),
+ pedido_id TEXT NOT NULL, sessao TEXT NOT NULL, etapa TEXT NOT NULL, estado TEXT NOT NULL,
+ dados_json TEXT NOT NULL, erro TEXT, atualizado_em TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS metadados(
+ id TEXT PRIMARY KEY, variante TEXT NOT NULL REFERENCES variantes(id), assunto TEXT NOT NULL,
+ nome TEXT NOT NULL, valor_json TEXT NOT NULL, unidade TEXT, referencial TEXT,
+ origem_tipo TEXT NOT NULL CHECK(origem_tipo IN ('medida','declaracao_fonte','simulacao','configuracao','sugestao_llm','usuario')),
+ metodo TEXT NOT NULL, evidencia TEXT NOT NULL, criado_em TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS partes_modelo(
+ variante TEXT NOT NULL REFERENCES variantes(id), caminho TEXT NOT NULL, pai TEXT,
+ tipo TEXT NOT NULL, dados_json TEXT NOT NULL, PRIMARY KEY(variante,caminho));
+CREATE TABLE IF NOT EXISTS capacidades_modelo(
+ id TEXT PRIMARY KEY, variante TEXT NOT NULL REFERENCES variantes(id), capacidade TEXT NOT NULL,
+ resultado TEXT NOT NULL CHECK(resultado IN ('aprovado','reprovado','nao_testado','erro')),
+ escopo_json TEXT NOT NULL, metodo TEXT NOT NULL, evidencia TEXT NOT NULL, criado_em TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS derivados_modelo(
+ objeto TEXT NOT NULL REFERENCES objetos(id), original TEXT NOT NULL, derivado TEXT NOT NULL,
+ assinatura_original TEXT NOT NULL, assinatura_derivado TEXT NOT NULL,
+ metodo TEXT NOT NULL, perdas_json TEXT NOT NULL, criado_em TEXT NOT NULL,
+ PRIMARY KEY(objeto,derivado,assinatura_derivado));
+CREATE TABLE IF NOT EXISTS anotacoes_acervo(
+ id INTEGER PRIMARY KEY, objeto TEXT NOT NULL REFERENCES objetos(id), texto TEXT NOT NULL,
+ origem TEXT NOT NULL, criado_em TEXT NOT NULL);
+PRAGMA user_version=4;
 """
 
 
@@ -114,8 +141,20 @@ def abrir(caminho=None, escrita=False):
         c.execute('PRAGMA foreign_keys=ON')
         if escrita:
             versao=c.execute('PRAGMA user_version').fetchone()[0]
-            if versao not in (0,1,2,3):raise ValueError('versao de acervo nao suportada')
-            c.executescript(SCHEMA)
+            if versao not in (0,1,2,3,4):raise ValueError('versao de acervo nao suportada')
+            if versao in (1,2,3):
+                # Backup consistente antes de qualquer DDL; nunca sobrescreve a copia anterior.
+                backup=p.with_name(p.name+'.antes-v4.sqlite3')
+                from .acervo_coleta import trava_escopo
+                with trava_escopo(p,'migracao-v4'):
+                    if not backup.exists():
+                        parcial=backup.with_name(backup.name+'.part')
+                        try:
+                            with closing(sqlite3.connect(str(parcial))) as destino:c.backup(destino)
+                            os.replace(parcial,backup)
+                        finally:
+                            if parcial.exists():parcial.unlink()
+            c.executescript('BEGIN IMMEDIATE;\n'+SCHEMA)
         yield c
         if escrita:c.commit()
     except BaseException:
@@ -360,7 +399,15 @@ def buscar(c,pedido):
         r['ultima_inspecao']=dict(ultima) if ultima else None
         r['verificacoes']=[dict(v) for v in c.execute(
             'SELECT capacidade,resultado,versao,criado_em FROM verificacoes WHERE objeto=? ORDER BY id DESC LIMIT 3',(r['id'],))]
-        r['fisica']='consultar_verificacoes_e_escopo' if r['verificacoes'] else 'nao_certificada';saida.append(r)
+        r['fisica']='nao_certificada'
+        # Projecao compacta. O detalhe por assunto continua disponivel em ficha.
+        if c.execute("SELECT 1 FROM sqlite_master WHERE name='variantes'").fetchone():
+            from .acervo_preparacao import ficha
+            f=ficha({'objeto':r['id']},c.execute('PRAGMA database_list').fetchone()['file'])
+            r['preparo']={k:f[k] for k in ('variante','validade','geometria','bloqueios')}
+            r['verificacoes']=f['verificacoes_legadas']
+            if r['verificacoes']:r['limite_verificacoes']='historico sem vigencia de variante demonstrada'
+        saida.append(r)
     return {'ok':True,'resultados':saida,'total':len(rows),'limitado':len(rows)>limite,
             'limite':'disponibilidade por ultima observacao; licenca/caracteristicas nao equivalem a funcionamento testado'}
 
@@ -383,6 +430,9 @@ def resumo(c):
 
 def executar(pedido,caminho=None):
     acao=pedido.get('acao','resumo');leitura=acao in ('resumo','buscar','detalhe','instancias')
+    if acao in ('preparar','ficha','anotar','preparacao'):
+        from . import acervo_preparacao
+        return acervo_preparacao.executar(pedido,caminho)
     if acao in ('planejar_download','baixar','importar','sincronizar','rotular','inspecionar_usd'):
         from . import acervo_operacao
         return acervo_operacao.executar(pedido,caminho)
@@ -412,11 +462,13 @@ def executar(pedido,caminho=None):
         elif acao=='verificacao':
             for k in ['evidencia','versao','capacidade']:
                 if not pedido.get(k):raise ValueError(k+' obrigatorio')
-            c.execute('INSERT INTO verificacoes(objeto,capacidade,resultado,evidencia,versao,criado_em) VALUES(?,?,?,?,?,?)',
-                      (pedido['objeto'],pedido['capacidade'],pedido['resultado'],pedido['evidencia'],pedido['versao'],agora()))
-            r={'registrado':True}
+            # Texto enviado pelo agente nao e atestado do motor. Preserva a alegacao,
+            # mas impede que resultado/versao/evidencia inventados certifiquem capacidade.
+            c.execute('INSERT INTO anotacoes_acervo(objeto,texto,origem,criado_em) VALUES(?,?,?,?)',
+                      (pedido['objeto'],dump(pedido),'verificacao_declarada_nao_validada',agora()))
+            r={'registrado':True,'validado':False,'limite':'declaracao preservada como anotacao; nao e verificacao medida'}
         else:raise ValueError('acao desconhecida')
-        indexar_busca(c)
+        if acao!='verificacao':indexar_busca(c,[r['objeto']] if r.get('objeto') else [pedido['objeto']] if acao=='tags' else None)
         return {'ok':not bool(r.get('erros')),**r}
 
 

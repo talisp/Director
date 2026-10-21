@@ -2,6 +2,24 @@
 import unreal as U
 
 
+def conferir(malhas):
+    sub=U.get_editor_subsystem(U.StaticMeshEditorSubsystem)
+    divergencias=[]
+    for m in malhas:
+        a=U.load_asset(m['asset'])
+        if not isinstance(a,U.StaticMesh):
+            divergencias.append({'asset':m['asset'],'motivo':'ausente ou classe diferente'});continue
+        b=a.get_bounds()
+        atual={'dimensoes_cm':[2*b.box_extent.x,2*b.box_extent.y,2*b.box_extent.z],
+            'centro_cm':[b.origin.x,b.origin.y,b.origin.z],
+            'complexidade_colisao':str(sub.get_collision_complexity(a)),
+            'colisoes_simples':sub.get_simple_collision_count(a),'convexos':sub.get_convex_collision_count(a)}
+        for k,v in atual.items():
+            if m.get(k)!=v:divergencias.append({'asset':m['asset'],'campo':k,'atual':v,'anterior':m.get(k)})
+    return {'ok':bool(malhas) and not divergencias,'divergencias':divergencias,
+        'limite':'confere bounds e configuracao de colisao; nao prova forma completa, materiais nem fisica em simulacao'}
+
+
 def importar(arquivo,destino,usd=False):
     if U.EditorAssetLibrary.does_directory_exist(destino):raise ValueError('destino ja existe; nao sobrescrever nem repetir importacao')
     if usd:
