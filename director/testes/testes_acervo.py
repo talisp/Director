@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 from director import acervo as A
 
 
@@ -48,6 +49,32 @@ class Acervo(unittest.TestCase):
         self.runp({'acao':'hssd','indice':p})
         r=self.runp({'acao':'buscar','texto':'cadeira'})
         self.assertEqual([x['nome'] for x in r['resultados']],['wood chair'])
+
+    def test_fonte_filtra_antes_do_limite_e_bytes_nao_sao_medidas(self):
+        with A.abrir(self.db,escrita=True) as c:
+            for fonte in ('artvip','outra'):
+                A.fonte(c,fonte)
+                for i in range(9):
+                    oid=A.objeto(c,fonte,str(i),'table')
+                    if fonte=='artvip':A.caracteristica(c,oid,'arquivos',[{'bytes':20},{'bytes':30}],'teste','teste')
+            A.indexar_busca(c)
+        r=self.runp({'acao':'buscar','texto':'mesa','fonte':'artvip','disponibilidade':'remoto','limite':2})
+        self.assertEqual(r['total'],9);self.assertTrue(r['limitado'])
+        self.assertEqual(len(r['resultados']),2)
+        self.assertTrue(all(x['fonte']=='artvip' and x['bytes_download']==50 and x['fisica']=='nao_certificada' for x in r['resultados']))
+        with self.assertRaises(ValueError):self.runp({'acao':'buscar','texto':'mesa','fonte':'inexistente'})
+        with A.abrir(self.db,escrita=True) as c:
+            oid=r['resultados'][0]['id']
+            A.caracteristica(c,oid,'arquivos',[{'bytes':None}],'teste','teste')
+        r=self.runp({'acao':'buscar','texto':'mesa','fonte':'artvip','limite':50})
+        self.assertIsNone(next(x for x in r['resultados'] if x['id']==oid)['bytes_download'])
+
+    def test_cli_filtros_explicitos_nao_entram_no_texto(self):
+        with patch.object(A,'executar',return_value={'ok':True}) as executar:
+            A.cli(['buscar','--fonte','artvip','mesa','--disponibilidade','remoto'])
+            executar.assert_called_once_with({'acao':'buscar','fonte':'artvip','disponibilidade':'remoto','texto':'mesa'})
+        for args in [['buscar','--fonte'],['buscar','--outro','x'],['buscar','--fonte','a','--fonte','b']]:
+            with self.assertRaises(ValueError):A.cli(args)
 
     def test_snapshot_nao_vira_modelo_e_promocao_guarda_revisoes(self):
         p=self.gravar('cenas/sala/planta.json',{'nivel':'/Game/L_sala','objetos':{
