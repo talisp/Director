@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "problema": "Obter evidencia quantitativa de interiores sem baixar nuvens de pontos ou usar uma receita por ambiente.",
+  "issue": "https://github.com/talisp/Director/issues/15",
+  "pedido": "Pesquisar estatisticas de quartos para apoiar planejamento e revisao, sem converter frequencias em regras obrigatorias.",
+  "commit_director": "28f51755521b6fb5106a645fbfe42d11a89799af",
+  "repo": "https://github.com/manycore-research/SpatialLM",
+  "commit_fonte": "8913c44d84a450c53e9340b13317f8cf7144a738",
+  "arquivos_funcoes": [
+    "spatiallm/layout/layout.py:from_str",
+    "spatiallm/layout/entity.py:Door,Window,Bbox",
+    "dataset/layout/chunk_000.zip; split.csv; revisao ab8de0983f48490a0a8850baa32308982d6fbacc"
+  ],
+  "licenca": {
+    "id": "LicenseRef-Llama-3.2-Community (codigo); CC-BY-NC-4.0 (dataset)",
+    "fonte": "https://huggingface.co/datasets/manycore-research/SpatialLM-Dataset/blob/ab8de0983f48490a0a8850baa32308982d6fbacc/LICENSE",
+    "conferida_em": "2026-10-21"
+  },
+  "classe": "inspiracao",
+  "integracao_autorizada": false,
+  "estado": "verificado_no_ensaio",
+  "capacidade_existente": "SQL e caracteristicas com procedencia; planejamento e revisao deterministicas.",
+  "acrescimo": "Resumo consultavel de amostra com deduplicacao por scene_id/room_id. Nao integra o leitor oficial nem um novo planejador.",
+  "hipotese": "Um unico chunk de layouts permite calcular contagens e distancias cama-porta sem baixar pointclouds; translacao e rotacao conjunta preservam a distancia.",
+  "evidencias": [
+    {
+      "tipo": "CODIGO",
+      "referencia": "commit_fonte, layout.py e entity.py",
+      "observado": "Entidades com paredes, portas, janelas e caixas; leitor oficial exige SciPy e pode descartar linhas com excecao."
+    },
+    {
+      "tipo": "TESTE_ISOLADO",
+      "referencia": "docs/pilotos/spatiallm-resumo-20261021.json; docs/pilotos/spatiallm_estatisticas.py",
+      "observado": "Leitor independente restrito validou 2000 arquivos; 506 comodos distintos; zero falhas de contagem; nao executou codigo do dataset."
+    }
+  ],
+  "variacao": {
+    "executada": true,
+    "evidencia": "Resumo: translacao erro 0; rotacao conjunta 90 graus erro 4.44e-16, em um caso. Testa nossa medida de distancia, nao o leitor oficial."
+  },
+  "teste_aceitacao": "Sem pointcloud ou GPU; arquivos do chunk validos; quartos deduplicados; medicao declarada; erro das duas invariancias menor que 1e-9.",
+  "limites": "Primeiro chunk nao aleatorio. Dormitorio significa room_type contendo bedroom. Unidades metricas nao certificadas. Distancia centro-centro nao prova acessibilidade. Integracao da revisao e Hermes pendente.",
+  "recuperacao": "Resultados append-only com procedencia; nao alterou atores ou nivel. Em parse invalido rejeitar lote antes de registro.",
+  "dependencias": "Dados CC-BY-NC-4.0, uso nao comercial autorizado; codigo oficial nao incorporado por licenca/dependencia. Script independente apenas stdlib.",
+  "orcamento": {
+    "limites": {
+      "repos": 1,
+      "chamadas": 0,
+      "dados_bytes": 16777216
+    },
+    "consumido": {
+      "repos": 1,
+      "chamadas": 0,
+      "dados_bytes": 13528810
+    }
+  },
+  "operador": {
+    "pre_condicoes": "Tres arquivos locais com procedencia; limite de lote. Chamadas no orcamento desta ficha significam inferencias LLM, nao HTTP.",
+    "procedimento": "Ler chunk e CSV; validar gramatica; deduplicar quartos; calcular resumo; conferir invariancias; guardar fonte e limites no SQL.",
+    "esperado": "Resumo com denominadores e evidencias, sem alegar validacao do pedido humano ou importacao Unreal.",
+    "quando_pedir_ajuda": "Acesso gated, licenca desconhecida, limite de dados ou arquivo fora da gramatica: parar lote, preservar fila; nao instalar dependencias ou ampliar pesquisa automaticamente."
+  }
+}

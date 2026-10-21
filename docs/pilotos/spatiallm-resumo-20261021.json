@@ -1,0 +1,62 @@
+{
+  "dataset_revision": "ab8de0983f48490a0a8850baa32308982d6fbacc",
+  "code_revision": "8913c44d84a450c53e9340b13317f8cf7144a738",
+  "arquivos_layout": 2000,
+  "quartos_unicos": 506,
+  "tipos_quartos": {
+    "bathroom": 76,
+    "laundry room": 19,
+    "living room": 83,
+    "kitchen": 78,
+    "living and dining room": 16,
+    "living room with dining area": 36,
+    "study room": 6,
+    "home office": 19,
+    "balcony": 4,
+    "bedroom with home office": 6,
+    "primary bathroom": 1,
+    "dining room": 5,
+    "bedroom": 65,
+    "other": 1,
+    "foyer": 3,
+    "game room": 1,
+    "office": 2,
+    "pantry": 1,
+    "master bedroom": 43,
+    "children's bedroom": 30,
+    "primary bedroom": 3,
+    "secondary bedroom": 2,
+    "media room": 1,
+    "child room": 3,
+    "guest room": 2
+  },
+  "criterio_dormitorio": "room_type contem bedroom; guest room e child room nao incluidos",
+  "dormitorios": 149,
+  "dormitorios_com_janela": 120,
+  "dormitorios_com_porta": 148,
+  "dormitorios_com_cama": 134,
+  "distancia_centro_cama_porta_xy": {
+    "n": 134,
+    "mediana": 2.588135055944747,
+    "minimo": 1.3761811438017575,
+    "maximo": 4.371620711416065,
+    "unidade": "unidade nativa layout; conversao metrica nao validada neste piloto",
+    "limite": "centro a centro em XY, nao passagem livre nem caminho navegavel"
+  },
+  "falhas": [],
+  "variacoes": [
+    {
+      "id": "scene_000039_00_0",
+      "teste": "translacao",
+      "erro_max": 0.0
+    },
+    {
+      "id": "scene_000039_00_0",
+      "teste": "rotacao_90",
+      "erro_max": 4.440892098500626e-16
+    }
+  ],
+  "escopo": "primeiro chunk; amostra nao aleatoria, nao estatistica populacional",
+  "licenca_dados": "CC-BY-NC-4.0",
+  "leitor": "independente restrito; leitor oficial nao executado por falta de SciPy; codigo oficial tem LicenseRef-Llama-3.2-Community e nao foi incorporado"
+}
