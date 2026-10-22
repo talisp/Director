@@ -6,8 +6,12 @@ PASTA=Path(__file__).parent/'correcoes'
 BACKUPS=Path('R:/CINF/BD/Director/backups-hermes-rota')
 
 
-def _git(repo,*args):
-    return subprocess.run(['git','-C',str(repo),*args],capture_output=True,text=True)
+def _git(repo,*args,entrada=None):
+    # Nao usar stdin text no Windows: traduz LF para CRLF antes do git apply.
+    r=subprocess.run(['git','-C',str(repo),*args],capture_output=True,
+                     input=entrada.encode('utf-8') if entrada is not None else None)
+    r.stdout=r.stdout.decode('utf-8',errors='replace');r.stderr=r.stderr.decode('utf-8',errors='replace')
+    return r
 
 
 def conferir(repo,aplicar=False):
@@ -22,13 +26,14 @@ def conferir(repo,aplicar=False):
     if any(v!='base' for v in arquivos.values()):raise ValueError('mudanca local ou aplicacao parcial; comparar, nao sobrescrever')
     head=_git(repo,'rev-parse','HEAD')
     if head.returncode or head.stdout.strip()!=m['base']:raise ValueError('versao Hermes diferente; revalidar correcao antes de aplicar')
-    patch=str((PASTA/'rota-native.patch').resolve())
-    if _git(repo,'apply','--check',patch).returncode:raise ValueError('patch nao aplica; arquivos preservados')
+    # Checkout Windows pode converter o patch para CRLF; git apply recebe LF por stdin.
+    patch=(PASTA/'rota-native.patch').read_text(encoding='utf-8')
+    if _git(repo,'apply','--check','-',entrada=patch).returncode:raise ValueError('patch nao aplica; arquivos preservados')
     if not aplicar:return {'ok':True,'estado':'aplicavel','arquivos':arquivos}
     backup=BACKUPS/datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f');backup.mkdir(parents=True)
     for rel in arquivos:
         b=backup/rel;b.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(repo/rel,b)
-    if _git(repo,'apply',patch).returncode:raise ValueError('falha na aplicacao; inspecionar backup '+str(backup))
+    if _git(repo,'apply','-',entrada=patch).returncode:raise ValueError('falha na aplicacao; inspecionar backup '+str(backup))
     r=conferir(repo);return {**r,'backup':str(backup),'gateway_reiniciado':False}
 
 

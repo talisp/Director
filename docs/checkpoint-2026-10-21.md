@@ -9,15 +9,17 @@ dos commits. Este documento e a issue #48 preservam a ordem em caso de interrupc
 
 | Passo | Estado inicial desta rodada | Prova para concluir / dependencia |
 |---|---|---|
-| 1. Consolidar correcoes locais | Em fechamento | Publicar hierarquia USD, skill 0.5.20, medidor e patch Hermes; testar reaplicacao e instalar em pasta estavel |
-| 2. Aquisicao Hermes/Luna | Pendente sucesso positivo | Buscar remoto, planejar, baixar autorizado e registrar; lote de 200 KB foi corretamente recusado, nao e sucesso de download |
-| 3. Preservacao e reutilizacao | Pendente | Comparar identidades/arquivos anteriores; repetir pedido sem duplicar ou baixar novamente |
-| 4. Recusa e recuperacao | Parcial, testes deterministas existentes | Conferir regressao de interrupcao, dependencia, arquivo divergente, entrada invalida e metadado desconhecido; registrar limites reais |
-| 5. Publicacao e instalacao | Continua em cada bloco | PR com evidencias, merge e fast-forward do Director-publicado; comentarios nas issues, sem fechar criterios nao testados |
+| 1. Consolidar correcoes locais | Entregue PR #83; ajuste CRLF na entrega seguinte | Hierarquia, skill, medidor e patch instalados. Regressao publicada detectou CRLF no reaplicador, corrigido com teste dedicado |
+| 2. Aquisicao Hermes/Luna | Concluido no escopo offline | Download real de 5 arquivos / 1.337.456 bytes, registro conferido; antes tambem recusou teto insuficiente |
+| 3. Preservacao e reutilizacao | Concluido no escopo offline | Cinco arquivos reutilizados; identidades e arquivos anteriores preservados; SQL integro |
+| 4. Recusa e recuperacao | Validado offline; sem certificacao universal | Hash divergente, orcamento/autorizacao, dependencia, entrada indevida, retomada e falha SQL cobertos por testes; novo caso de queda na segunda dependencia |
+| 5. Publicacao e instalacao | Continua em cada bloco | PR #83 incorporado/instalado c9bab4b; segunda entrega documenta o ensaio e corrige CRLF; comentarios por criterio |
 | 6. Uso real em cena | Bloqueado por restricao expressa | Nao executar agora: importacao, escala, apoio, colisao, montagem, identidade e preservacao requerem Unreal |
-| 7. PA e contexto | Parcial | Medir pedido completo e custo sem confundir bytes/replay com tokens cobrados; PA espacial completo depende do passo 6 |
+| 7. PA e contexto | Offline medido; espacial pendente | PA offline atendido em 33,635 s, 5 chamadas/6 ferramentas; bytes/cache registrados. Comparacao controlada e PA espacial dependem de nova bateria |
 
 ## Evidencias ja conferidas
+
+Relatorio do bloco seguinte: [aquisicao, preservacao, contexto e limites](acervo-offline-luna-2026-10-21.md).
 
 - Fonte publicada de partida: 6ba4eaa (PR #82). Trabalho de hierarquia: 62a400c.
 - 25 testes de preparacao/referencias/medidor e 4 de rota nativa passaram.

@@ -19,10 +19,10 @@ class Manutencao(unittest.TestCase):
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_bytes(raw)
         original = M._git
-        def git(repo, *args):
+        def git(repo, *args, **kwargs):
             if args == ('rev-parse', 'HEAD'):
                 return subprocess.CompletedProcess(args, 0, self.manifesto['base'] + '\n', '')
-            return original(repo, *args)
+            return original(repo, *args, **kwargs)
         self.addCleanup(patch.stopall)
         patch.object(M, '_git', side_effect=git).start()
         patch.object(M, 'BACKUPS', Path(self.tmp.name) / 'backups').start()
@@ -49,6 +49,15 @@ class Manutencao(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'versao Hermes diferente'):
                 M.conferir(self.repo, aplicar=True)
         self.assertFalse(M.BACKUPS.exists())
+
+    def test_patch_crlf_do_checkout_windows(self):
+        pasta = Path(self.tmp.name) / 'patch-windows'
+        pasta.mkdir()
+        (pasta / 'rota-native.json').write_text(json.dumps(self.manifesto))
+        texto = (M.PASTA / 'rota-native.patch').read_text(encoding='utf-8')
+        (pasta / 'rota-native.patch').write_bytes(texto.replace('\n', '\r\n').encode('utf-8'))
+        with patch.object(M, 'PASTA', pasta):
+            self.assertEqual(M.conferir(self.repo, aplicar=True)['estado'], 'ja_corrigido')
 
 
 if __name__ == '__main__':
