@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.20
+version: 0.5.21
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -412,6 +412,11 @@ somente em parede externa nao faz parte desta implementacao parcial da #29.
 
 ## Restricao de sessao e consultas offline (0.5.20)
 Se o usuario disser sem Unreal, nao execute contexto, estado, observar, preparar, inspecionar_usd, importar, comandos lab ou qualquer ponte, mesmo para conferir. Acervo buscar, planejar_download, baixar, ficha e anotar funcionam sem editor; baixar exige autorizacao/licenca/limite e guarda em R:. Nao escreva SQL diretamente nem afirme fisica aprovada.
+
+## Pedido, evidencia e consultas economicas (0.5.21)
+Em ensaios ou pedidos com varias exigencias, mantenha uma lista curta no registro de pedido/ensaio/revisao ja existente: requisitos, IDs envolvidos, resultado por requisito e evidencia com revisao/arquivo. Preserve os requisitos validos quando chegar uma correcao. Nao crie outro banco ou arquivo de controle por chamada simples. Medida desconhecida permanece pendente; nota ou declaracao do modelo nao substitui prova do motor.
+
+Consulte primeiro `ajuda COMANDO` ou `COMANDO --help`: use o exemplo e campos do contrato. Se o contrato da versao atual ja foi consultado, nao releia capacidades, codigo e API generica antes de executar a mesma operacao. Consulte `api` quando precisar escrever Python fora do contrato existente. `objeto` e `verificar` recebem arquivo JSON; uma ficha pronta ainda precisa ser executada. Ao atingir o limite de rodadas, diga qual etapa ficou pendente e preserve o arquivo para retomada; nao declare PA por sucesso parcial. Duas repeticoes da mesma falha sem evidencia nova exigem parar e relatar.
 
 Hierarquia USD: `acervo pedido` com `acao:ficha, objeto:ID, assunto:partes` devolve contagem total e ate 12 partes. `limite_partes` aceita 1..50. Para matriz/atributos completos de uma parte, acrescente `parte:CAMINHO_EXATO`. Fonte declarada nao certifica montagem Unreal ou junta Chaos. Coletor novo pode exigir reinspecao: em sessao sem Unreal, relate como pendente; nao contorne a restricao.
 
