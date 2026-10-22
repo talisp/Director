@@ -1,0 +1,6 @@
+name: director-contexto
+version: "0.1.0"
+description: "Mede apenas tamanhos e repeticao do contexto via hook nativo; nao grava prompts nem modifica requisicoes."
+author: "Talis / Codex"
+provides_hooks:
+  - pre_api_request

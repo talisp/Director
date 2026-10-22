@@ -142,6 +142,39 @@ class Preparacao(unittest.TestCase):
         self.assertEqual(len(r['partes']),1);self.assertNotIn('tags',r['objeto'])
         with self.assertRaises(ValueError):A.executar({'acao':'detalhe','objeto':self.oid,'assunto':'errado'},self.db)
 
+    def test_hierarquia_matrizes_detalhe_seletivo_e_sem_chaos(self):
+        matriz=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[10,20,30,1]]
+        self.inspecao['partes']=[{'path':'/mesa','pai':'/','tipo':'Xform','transformacao_mundial':matriz},
+            {'path':'/mesa/tampo','pai':'/mesa','tipo':'Mesh','transformacao_local':matriz,'caixa_stage_cm':{'dimensoes':[100,50,5]}}]
+        self.inspecao['transformacoes_referencial']='eixos nativos; tempo padrao'
+        r=self.preparar();self.assertTrue(r['ok']);self.assertEqual(r['juntas_declaradas'],1);self.assertEqual(r['partes_totais'],3)
+        resumo=self.ficha(assunto='partes');self.assertNotIn('transformacao_local',A.dump(resumo))
+        d=self.ficha(assunto='partes',parte='/mesa/tampo')['partes'][0]
+        self.assertEqual(d['pai'],'/mesa');self.assertEqual(d['dados']['transformacao_local'],matriz)
+        self.assertEqual(self.ficha()['fisica'],'nao_testada')
+
+    def test_partes_limite_nao_oculta_contagem_nem_aceita_parte_inventada(self):
+        self.inspecao['partes']=[{'path':'/parte'+str(i),'pai':'/','tipo':'Mesh'} for i in range(30)]
+        self.preparar();r=self.ficha(assunto='partes')
+        self.assertEqual(len(r['partes']),12);self.assertTrue(r['partes_limitadas']);self.assertEqual(r['partes_totais'],31)
+        with self.assertRaises(ValueError):self.ficha(assunto='partes',parte='/inventada')
+        with self.assertRaises(ValueError):self.ficha(assunto='partes',limite_partes=True)
+        with self.assertRaises(ValueError):self.ficha(parte='/mesa')
+
+    def test_novo_coletor_nao_herda_importacao_da_variante_antiga(self):
+        with patch.object(O,'importar',return_value={'ok':True,'malhas':[{'asset':'/Game/Teste'}]}):
+            velho=self.preparar(importar=True)
+        with patch.object(P,'VERSAO','nova'):
+            novo=self.preparar();self.assertTrue(novo['ok']);self.assertNotEqual(velho['preparacao'],novo['preparacao'])
+            self.assertNotEqual(velho['variante'],novo['variante'])
+            dados=self.ficha(assunto='importacao')['importacoes']
+            self.assertTrue(all(d['resultado'] is None for d in dados))
+
+    def test_importacao_incerta_bloqueia_tambem_apos_troca_coletor(self):
+        with patch.object(O,'importar',side_effect=RuntimeError('queda')):self.preparar(importar=True)
+        with patch.object(P,'VERSAO','nova'),patch.object(O,'baixar',side_effect=AssertionError('nao repetir')):
+            self.assertEqual(self.preparar()['estado'],'requer_conferencia')
+
     def test_migracao_backup_e_rollback(self):
         legacy=self.root/'legacy.sqlite3'
         with closing(sqlite3.connect(legacy)) as c:

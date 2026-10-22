@@ -1,0 +1,71 @@
+diff --git a/gateway/session_local.py b/gateway/session_local.py
+index b6d460e374..f1e69bd5bd 100644
+--- a/gateway/session_local.py
++++ b/gateway/session_local.py
+@@ -5,6 +5,7 @@ Source and supported launch settings are frozen per route, never process env.
+ from __future__ import annotations
+ 
+ import uuid
++import weakref
+ 
+ from gateway.config import Platform, PlatformConfig
+ from gateway.platforms.base import BasePlatformAdapter, SendResult
+@@ -35,6 +36,9 @@ class LocalSessionAdapter(BasePlatformAdapter):
+         return source.platform, source.chat_id, source.user_id, source.profile, source.chat_type
+ 
+     def register_source(self, source):
++        # Canonical identity must retain this profile's native transport, just as
++        # BasePlatformAdapter.build_source does for messaging adapters.
++        source._transport_adapter_ref = weakref.ref(self)
+         self.sources[source.chat_id] = source, self._identity(source)
+ 
+     async def connect(self, *, is_reconnect=False):
+diff --git a/gateway/session_policy.py b/gateway/session_policy.py
+index e6a3d1c223..b9b9ad80ff 100644
+--- a/gateway/session_policy.py
++++ b/gateway/session_policy.py
+@@ -354,6 +354,17 @@ def _apply_launch_overrides(params, config):
+     from urllib.parse import urlsplit
+     from hermes_cli.config import resolve_turn_limit
+     from hermes_constants import parse_reasoning_effort
++    model = config.setdefault('model', {})
++    if 'provider' in params and params['provider'] != model.get('provider'):
++        # A provider pick must not inherit the preceding provider's endpoint or
++        # credential hints. Explicit launch fields are applied below/at runtime.
++        for key in ('base_url', 'api_key', 'api_key_from', 'key_env', 'api_key_env',
++                    'api_mode', 'default_headers', 'context_length'):
++            model.pop(key, None)
++    if 'model' in params:
++        if params['model'] != model.get('default'):
++            model.pop('context_length', None)
++        model['default'] = params['model']
+     for key in ('provider', 'base_url'):
+         if key in params:
+             value = params[key]
+@@ -715,7 +726,8 @@ def policy_for_source(runner, source):
+             # reinterpret a LOCAL route as a default CLI launch.
+             raise RuntimeStoreError('storage_unavailable')
+         return policy
+-    return None
++    raise RuntimeStoreError('invalid_local_source', field='source',
++                            detail='local launch policy is unavailable; refusing profile-default inference')
+ 
+ 
+ @contextmanager
+diff --git a/hermes_cli/gateway_chat.py b/hermes_cli/gateway_chat.py
+index 1c8c724db6..75673ceb01 100644
+--- a/hermes_cli/gateway_chat.py
++++ b/hermes_cli/gateway_chat.py
+@@ -16,10 +16,10 @@ from hermes_cli.gateway_client import GatewayClientError, connect_gateway
+ _UNSUPPORTED = (
+     "image", "worktree", "w",
+     "no_restore_cwd",
+-    "run_budget", "verbose", "compact",
++    "verbose", "compact",
+ )
+ _POLICY = ("model", "provider", "reasoning", "toolsets", "max_turns", "base_url", "ignore_rules", "api_key",
+-           "yolo", "safe_mode", "ignore_user_config", "skills", "checkpoints", "accept_hooks", "pass_session_id")
++           "yolo", "safe_mode", "ignore_user_config", "skills", "checkpoints", "accept_hooks", "pass_session_id", "run_budget")
+ # Where each refused option lives now; the refusal names it so the user is not left guessing.
+ _RELOCATED = {
+     "image": "`hermes --tui` or the Desktop app to attach the image",
