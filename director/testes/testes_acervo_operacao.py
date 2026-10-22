@@ -55,6 +55,27 @@ class Operacao(unittest.TestCase):
             with patch.object(A,'PADRAO',str(self.root/'Director/db.sqlite3')):
                 with self.assertRaises(ValueError):O.baixar({**self.pedido(),'max_bytes':1},self.db)
 
+    def test_queda_na_dependencia_retoma_sem_rebaixar_principal(self):
+        dep=b'dependencia pequena'
+        arquivo_dep={'caminho':'Articulated_objects/teste/textura.png','bytes':len(dep),
+                     'sha256':hashlib.sha256(dep).hexdigest()}
+        with A.abrir(self.db,escrita=True) as c:
+            A.caracteristica(c,self.oid,'arquivos',[self.arquivo,arquivo_dep],'teste','teste')
+        with patch.object(A,'PADRAO',str(self.root/'Director/db.sqlite3')):
+            with patch.object(O.urllib.request,'urlopen',side_effect=[io.BytesIO(self.raw),OSError('rede interrompida')]):
+                with self.assertRaisesRegex(OSError,'rede interrompida'):O.baixar(self.pedido(),self.db)
+            self.assertFalse(list(self.root.rglob('*.part')))
+            with A.abrir(self.db) as c:
+                self.assertEqual(c.execute('select count(*) from arquivos').fetchone()[0],0)
+            with patch.object(O.urllib.request,'urlopen',return_value=io.BytesIO(dep)) as rede:
+                r=O.baixar(self.pedido(),self.db)
+                self.assertEqual(rede.call_count,1)
+            self.assertTrue(r['arquivos'][0]['reutilizado'])
+            self.assertFalse(r['arquivos'][1]['reutilizado'])
+        with A.abrir(self.db) as c:
+            self.assertEqual(c.execute('select count(*) from objetos').fetchone()[0],1)
+            self.assertEqual(c.execute('select count(*) from arquivos').fetchone()[0],1)
+
     def test_falha_sql_nao_reexecuta_unreal_e_resultado_ue_permanece(self):
         with patch.object(O,'sincronizar',side_effect=OSError('R indisponivel')):
             r=O.apos_operacao('teste',{'ok':True,'revisao':2})
