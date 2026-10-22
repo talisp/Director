@@ -39,6 +39,11 @@ materiais persistiram apos salvar, carregar L_sala e reabrir o ensaio. Foto
 `madeira-azulejo.png` foi aberta e inspecionada; iluminacao pode tingir o branco,
 nao houve afericao colorimetrica ou ajuste cosmetico de luz.
 
+![Piso de madeira, parede de azulejo e objetos preservados](evidencias/2026-10-22/madeira-azulejo.png)
+
+Imagem capturada no laboratorio pelo MCP, sem edicao generativa. Materiais do
+piloto ambientCG CC0; cadeira do piloto Kenney. Nao e cena cinematografica.
+
 Cinco raios (quatro paredes e piso) e caminho de navegacao antes/depois identicos:
 rota nao parcial de 300 cm entre (50,300) e (350,300). Atores/transformacoes e
 objetos anteriores preservados. Material inexistente recusado e planta inteira
@@ -67,6 +72,22 @@ evidencias no registro existente em pedidos complexos; ajuda especifica antes
 de API generica; retomar ficha pronta; desconhecido nao e aprovado. Nao adiciona
 BOM paralelo, solver ou novas aprovacoes. E orientacao, nao mecanismo automatico
 de certificacao de requisitos; comportamento novo ainda requer medicao futura.
+Instalacao do perfil conferida igual aos templates publicados, com backup da
+skill anterior. Gateway nao foi reiniciado; nenhuma inferencia adicional foi
+feita para afirmar eficacia das instrucoes novas.
+
+## Matriz de retomada (sem perder o pipeline)
+
+| Item | Entregue nesta rodada | Proximo gate |
+|---|---|---|
+| 1 Acervo nativo | Dois USDs v2, escala/montagem e reuso conferidos | Associacao de instancia/parte e provas por variante importada |
+| 2 Funcionalidade | Colisao ruim reproduzida; uma alternativa nativa reprovada | Outra solucao/candidato para interacao interna; juntas Chaos nao implementadas |
+| 3 Interface Topview | Ajuda acionavel e protocolo na skill, usando registros existentes | Validar lista de requisitos e evidencias na conversa; sem BOM paralelo |
+| 4 Ciclo Luna | Escolha de cadeira pronta, colocacao, fisica breve e correcao preservando objetos | Repetir sem intervencao em variante; aquisicao remota + cena no mesmo pedido nao comprovadas |
+| 5 Materiais | Piso/parede, foto, salvar/reabrir, colisao/nav identicos, recusa de inexistente | Criterios escritos da #35 satisfeitos; nao e certificacao de todo material |
+| 6 Topview | Um boneco e duas poses no SQL, procedencia/rig/arquivo/importacao; idempotente | Importacao/conversao automatica pelo operador e um movimento Mixamo |
+| 7 PA/contexto | Dois pedidos pequenos e uma retomada, sucessos e falhas preservados | Variacoes/corredor/casa e comparacao Qwen Q8/Q4 quando disponiveis |
+| 8 Publicacao | PR85/86/87 e checkpoint final; estavel atualizado por bloco | Manter a mesma rotina nas proximas entregas |
 
 Proximos gates: validade por parte/variante e montagem generica (#75/#36);
 colisao funcional da estante ainda reprovada (uma tentativa nativa, sem ajuste
