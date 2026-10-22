@@ -1,0 +1,17 @@
+{
+  "base": "60f56a6b13c8eb9a9e088c6fc1165257c92f7e11",
+  "arquivos": {
+    "gateway/session_local.py": {
+      "antes": "9ba7c3646cc63c74662e4899566b1bfe19b19185ba9ca6975e7c57853510db35",
+      "depois": "4a3739aeeb7fcc4cf9300690e71847f7520bc8bbb521974dd09b576cfc1c7184"
+    },
+    "gateway/session_policy.py": {
+      "antes": "13ab3f97c205903b3bf6ae721751380679f88ffc4e7f0deb5571a2081087a877",
+      "depois": "4b526e2bce8ace431e7b8db22a7828afae08bb1881463c8fa133c9a6eeeab0a9"
+    },
+    "hermes_cli/gateway_chat.py": {
+      "antes": "69a21c27a5e94b1ddafcc68ff4f0620818c17c721f209711547134bb643409d8",
+      "depois": "f2393555ffc1176c293fd994c49c051375176ef2530c8531fc87c0f4b7142377"
+    }
+  }
+}

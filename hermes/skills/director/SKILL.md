@@ -1,7 +1,7 @@
 ---
 name: director
 description: "Operação e investigação de cenas no laboratório do Unreal pelo Director, Hermes e ferramentas locais."
-version: 0.5.18
+version: 0.5.20
 author: Talis / Codex
 license: MIT
 platforms: [windows]
@@ -186,6 +186,11 @@ na escrivaninha. Não escreva script do editor para isso.
 **Peça fixa:** `"fixo":true` (padrão para as categorias box, box_chuveiro, chuveiro, vaso_sanitario, pia,
 bancada, divisoria, parede) registra sem simular física: o box é parte da casa, não um móvel que cai.
 O `verificar` só exige que ela fique parada.
+**Malha importada sem física simulada:** malhas do acervo com colisao ComplexAsSimple
+(`CTF_USE_COMPLEX_AS_SIMPLE`, comum em importação USD `modo_usd:"malhas"`) recusam
+`simular:true`: a conferencia do `objeto` falha e reverte a cena inteira. Se a peça é
+pequena e pousada sobre um apoio, recoloque com `simular:false` (fica registrada no
+`sobre` e acompanha o móvel); não troque a colisão do asset só para forçar a simulação.
 **Completar por etapas:** preserve os moveis aprovados. Para parede, `objeto` aceita
 `na_parede:norte|sul|leste|oeste`, `posicao_m` ao longo dela e `z_m` da base. Largura e
 altura seguem a parede, profundidade avanca para dentro. A ancora e fixa, cinco raios
@@ -204,6 +209,26 @@ conferida outra vez. Nicho entre amostras pode nao aparecer; ausencia de candida
 prova ausencia de apoio. Ao escalar/mover apoio, verifique novamente estabilidade.
 Malha dinamica pode virar StaticMesh pela GeometryScript nativa; comportamento de Blueprint nao e transferido.
 Use `mudar`/`remover` pelo ID para objetos registrados; mover o comodo nao autoriza apagar seu conteudo.
+`objeto` exige arquivo JSON no disco: nao aceita objeto literal nem stdin ao contrario de
+`acervo pedido`; salvar a ficha em `work/fichas/` antes de chamar evita erro de entrada
+que nao toca na cena. Antes de `sobre:"movel1"`, confirme com `observar CENA ID` em qual
+sala o movel esta registrado: `sobre` so aceita movel da MESMA sala declarada na ficha,
+e presumir a sala pelo nome do comodo pedindo recusa com "precisa ser um movel registrado".
+Modelos USD importados do acervo costumam vir em varias StaticMeshes; `acao:colocar` recebe
+UMA mesh por vez — escolha a principal pelas `dimensoes_cm` de `preparacao` e informe que o
+visual e parcial se houver partes restantes (capa, base).
+**Movel ausente da planta:** `estado`/`observar` so listam objetos registrados — moveis de
+ensaios anteriores ficam invisiveis e fazem o comodo parecer vazio. Procure com
+`procurar TERMO` (origem cena) e confira `verificar` (`fora_da_planta`) e `observar --real` (`fora_do_plano`) antes
+de concluir que falta o movel. Para usar um desses atores como apoio: mova-o por ensaio
+(`set_actor_location`) ate ficar inteiro dentro do comodo (a adocao recusa ator penetrando
+parede ou "encostada" fora), depois `acao:adotar` e por fim `acao:colocar` com `sobre`.
+**Ator de malha pura tem origem no centro:** StaticMeshActor simples (ex.: Cube escalado)
+reporta `get_actor_location().z` na altura do CENTRO da caixa, nao na base — ao mover por
+ensaio, preserve esse z; gravar o z do piso afunda metade do movel dentro do piso.
+**Trocar o apoio:** `mudar` recusa mover o objeto para fora do tampo do `sobre` atual
+("sairia para fora de <movel>"); o caminho e `remover` + `acao:colocar` novamente com o
+novo `sobre` — nao tente empurrar o `mudar` com coordenadas.
 Depois use `verificar` para confirmar geometria, apoio e fisica. Recusa da planta nao comprova falta de asset.
 
 ## Revisao depois de medir
@@ -300,6 +325,12 @@ o ensaio nao promete rollback automatico nem qualidade integral por retornar `ok
 1. Entenda o pedido e leia o estado real e as capacidades. Se o usuário pediu só análise, não altere a cena.
 2. Para objetos, procure primeiro assets já importados no projeto. Examine nome, classe, dimensões, orientação e ponto de origem antes de posicionar. Não improvise uma montagem de vários cubos se existe um asset único adequado; um objeto simples substituto é aceitável quando não há asset utilizável ou o usuário prefere um bloco provisório.
 3. Planeje relações espaciais e alterações locais. Pergunte em conjunto apenas o que for indispensável; para detalhes secundários, escolha um padrão plausível, informe a escolha e avance.
+   **Ambiguidade de alvo não é detalhe secundário:** se o móvel/comodo nomeado pelo usuário não
+   existe na cena, existe em outra sala ou há mais de um candidato plausível, pergunte antes de
+   agir. Informar a divergência e executar do mesmo jeito é o erro que o usuário já reprovou:
+   "avisei e coloquei mesmo assim" conta como fazer errado. Reusar ficha antiga não elimina a
+   dúvida — releia o `sala`/`sobre` do arquivo antes de reexecutar, pois campos vencidos repetem
+   a colocação errada em silêncio.
 4. Execute no laboratório. A instrução do usuário basta para as operações necessárias; não crie uma rodada extra de aprovação. Para fichas, use `python -m director fazer <cena> <arquivo.json>`. Respeite a trava do Unreal e a recuperação do Director.
 5. Consulte novamente `estado`, inventário ou a ponte para verificar atores, IDs, dimensões, posições, colisões e diferenças. Um retorno `ok: true` comprova a execução da ferramenta, não a qualidade integral do pedido humano.
 6. Se houver divergência, corrija apenas o necessário e verifique outra vez. Pare quando a mesma falha se repetir sem nova hipótese útil; relate o limite com precisão.
@@ -377,3 +408,13 @@ aprova quando da porta se chega a area de uso de cada movel (`acessos`); um cant
 isolado sem uso nao reprova. A cadeira `na_frente_de` nao conta como bloqueio (e
 afastada para usar a mesa). Mantenha `verificar` com boneco. A regra de janela
 somente em parede externa nao faz parte desta implementacao parcial da #29.
+
+
+## Restricao de sessao e consultas offline (0.5.20)
+Se o usuario disser sem Unreal, nao execute contexto, estado, observar, preparar, inspecionar_usd, importar, comandos lab ou qualquer ponte, mesmo para conferir. Acervo buscar, planejar_download, baixar, ficha e anotar funcionam sem editor; baixar exige autorizacao/licenca/limite e guarda em R:. Nao escreva SQL diretamente nem afirme fisica aprovada.
+
+Hierarquia USD: `acervo pedido` com `acao:ficha, objeto:ID, assunto:partes` devolve contagem total e ate 12 partes. `limite_partes` aceita 1..50. Para matriz/atributos completos de uma parte, acrescente `parte:CAMINHO_EXATO`. Fonte declarada nao certifica montagem Unreal ou junta Chaos. Coletor novo pode exigir reinspecao: em sessao sem Unreal, relate como pendente; nao contorne a restricao.
+
+Revisao pode receber `referencias_layout:[ID_AMOSTRA_SQL]`; estatistica espacial e referencia com fonte/unidade/limites, nao nota automatica nem distancia obrigatoria. Materiais locais ja importados devem ser procurados antes de baixar texturas.
+
+As orientacoes de mover/adotar atores nao autorizam reposicionar moveis por conta propria para satisfazer pre-condicao da ferramenta. Se o alvo nao existe ou e ambiguo, pergunte. Se a alternativa exige substituir ator para trocar apoio, explique o efeito na identidade e obtenha autorizacao para essa alternativa.
